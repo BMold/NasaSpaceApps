@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "sitio": "Mount Sharp, crater Gale (SINTETICO)",
+  "fuente_dem": "sintetico: generate_mocks.py, semilla 42",
+  "origen": {
+    "x": 0.0,
+    "y": 0.0,
+    "nota": "pendiente: esquina suroeste de la malla"
+  },
+  "marco": "ENU local (x = Este, y = Norte, z = arriba), metros",
+  "tam_celda_m": 2.5,
+  "filas": 96,
+  "columnas": 96,
+  "fila_0": "sur",
+  "capas": {
+    "elevacion": {
+      "archivo": "elevacion.bin",
+      "dtype": "float32",
+      "unidad": "m"
+    },
+    "eta_terreno": {
+      "archivo": "eta_terreno.bin",
+      "dtype": "float32",
+      "rango": [
+        1,
+        2
+      ]
+    },
+    "peligro": {
+      "archivo": "peligro.bin",
+      "dtype": "uint8",
+      "valores": {
+        "0": "libre",
+        "1": "bloqueo"
+      }
+    }
+  },
+  "sitios": "sitios.json",
+  "habitat": {
+    "id": "H",
+    "x": 120.0,
+    "y": 120.0
+  }
+}
