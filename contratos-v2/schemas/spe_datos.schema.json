@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "nivel": {
+      "enum": [
+        "alerta",
+        "critico"
+      ],
+      "title": "Nivel",
+      "type": "string"
+    },
+    "llegada_s": {
+      "ge": 0,
+      "title": "Llegada S",
+      "type": "number"
+    }
+  },
+  "required": [
+    "nivel",
+    "llegada_s"
+  ],
+  "title": "SPEDatos",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:spe_datos"
+}

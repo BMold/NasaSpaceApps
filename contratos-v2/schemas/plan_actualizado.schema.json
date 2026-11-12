@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "Parada": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "llegada_s": {
+          "ge": 0,
+          "title": "Llegada S",
+          "type": "number"
+        },
+        "salida_s": {
+          "ge": 0,
+          "title": "Salida S",
+          "type": "number"
+        },
+        "O2_acum_L": {
+          "ge": 0,
+          "title": "O2 Acum L",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "x",
+        "y",
+        "llegada_s",
+        "salida_s",
+        "O2_acum_L"
+      ],
+      "title": "Parada",
+      "type": "object"
+    },
+    "PlanSalida": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "1.0",
+          "title": "Version",
+          "type": "string"
+        },
+        "plan_id": {
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "factible": {
+          "title": "Factible",
+          "type": "boolean"
+        },
+        "orden": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "const": "H",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Orden",
+          "type": "array"
+        },
+        "polilinea": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Polilinea",
+          "type": "array"
+        },
+        "paradas": {
+          "items": {
+            "$ref": "#/$defs/Parada"
+          },
+          "title": "Paradas",
+          "type": "array"
+        },
+        "O2_total_L": {
+          "ge": 0,
+          "title": "O2 Total L",
+          "type": "number"
+        },
+        "O2_reserva_L": {
+          "ge": 0,
+          "title": "O2 Reserva L",
+          "type": "number"
+        },
+        "ciencia_Z": {
+          "ge": 0,
+          "title": "Ciencia Z",
+          "type": "number"
+        },
+        "ruta_escape": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Ruta Escape",
+          "type": "array"
+        },
+        "tiempo_calculo_ms": {
+          "ge": 0,
+          "title": "Tiempo Calculo Ms",
+          "type": "number"
+        },
+        "optimo": {
+          "title": "Optimo",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "version",
+        "plan_id",
+        "factible",
+        "orden",
+        "polilinea",
+        "paradas",
+        "O2_total_L",
+        "O2_reserva_L",
+        "ciencia_Z",
+        "ruta_escape",
+        "tiempo_calculo_ms",
+        "optimo"
+      ],
+      "title": "PlanSalida",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "tipo": {
+      "const": "plan_actualizado",
+      "title": "Tipo",
+      "type": "string"
+    },
+    "t": {
+      "ge": 0,
+      "title": "T",
+      "type": "number"
+    },
+    "motivo": {
+      "enum": [
+        "inicial",
+        "pedido",
+        "peligro",
+        "recalibracion",
+        "ventana",
+        "spe_alerta"
+      ],
+      "title": "Motivo",
+      "type": "string"
+    },
+    "seq_evento": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Seq Evento"
+    },
+    "plan": {
+      "$ref": "#/$defs/PlanSalida"
+    }
+  },
+  "required": [
+    "version",
+    "tipo",
+    "t",
+    "motivo",
+    "seq_evento",
+    "plan"
+  ],
+  "title": "PlanActualizado",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:plan_actualizado"
+}

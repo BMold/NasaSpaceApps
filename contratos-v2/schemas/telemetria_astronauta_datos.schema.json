@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "x": {
+      "title": "X",
+      "type": "number"
+    },
+    "y": {
+      "title": "Y",
+      "type": "number"
+    },
+    "sigma_m": {
+      "ge": 0,
+      "title": "Sigma M",
+      "type": "number"
+    },
+    "O2_restante_L": {
+      "ge": 0,
+      "title": "O2 Restante L",
+      "type": "number"
+    },
+    "VO2_L_min": {
+      "ge": 0,
+      "title": "Vo2 L Min",
+      "type": "number"
+    },
+    "FC_lpm": {
+      "ge": 0,
+      "le": 250,
+      "title": "Fc Lpm",
+      "type": "number"
+    },
+    "velocidad_m_s": {
+      "ge": 0,
+      "title": "Velocidad M S",
+      "type": "number"
+    },
+    "carga_kg": {
+      "ge": 0,
+      "title": "Carga Kg",
+      "type": "number"
+    }
+  },
+  "required": [
+    "x",
+    "y",
+    "sigma_m",
+    "O2_restante_L",
+    "VO2_L_min",
+    "FC_lpm",
+    "velocidad_m_s",
+    "carga_kg"
+  ],
+  "title": "AstronautaDatos",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:telemetria_astronauta_datos"
+}

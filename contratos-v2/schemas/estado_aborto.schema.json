@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "tipo": {
+      "const": "estado_aborto",
+      "title": "Tipo",
+      "type": "string"
+    },
+    "t": {
+      "ge": 0,
+      "title": "T",
+      "type": "number"
+    },
+    "O2_restante_L": {
+      "ge": 0,
+      "title": "O2 Restante L",
+      "type": "number"
+    },
+    "R_L": {
+      "ge": 0,
+      "title": "R L",
+      "type": "number"
+    },
+    "O2_minimo_L": {
+      "ge": 0,
+      "title": "O2 Minimo L",
+      "type": "number"
+    },
+    "margen_pct": {
+      "title": "Margen Pct",
+      "type": "number"
+    }
+  },
+  "required": [
+    "version",
+    "tipo",
+    "t",
+    "O2_restante_L",
+    "R_L",
+    "O2_minimo_L",
+    "margen_pct"
+  ],
+  "title": "EstadoAborto",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:estado_aborto"
+}

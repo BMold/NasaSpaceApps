@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "t": {
+      "ge": 0,
+      "title": "T",
+      "type": "number"
+    },
+    "hora_solar": {
+      "ge": 0,
+      "le": 24,
+      "title": "Hora Solar",
+      "type": "number"
+    },
+    "seq": {
+      "minimum": 1,
+      "title": "Seq",
+      "type": "integer"
+    },
+    "tipo": {
+      "title": "Tipo",
+      "type": "string"
+    },
+    "datos": {
+      "additionalProperties": true,
+      "title": "Datos",
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "t",
+    "hora_solar",
+    "seq",
+    "tipo",
+    "datos"
+  ],
+  "title": "CabeceraEvento",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:evento"
+}

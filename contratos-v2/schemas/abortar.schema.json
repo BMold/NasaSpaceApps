@@ -1,0 +1,72 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "tipo": {
+      "const": "abortar",
+      "title": "Tipo",
+      "type": "string"
+    },
+    "t": {
+      "ge": 0,
+      "title": "T",
+      "type": "number"
+    },
+    "motivo": {
+      "enum": [
+        "spe_critico",
+        "no_retorno"
+      ],
+      "title": "Motivo",
+      "type": "string"
+    },
+    "seq_evento": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Seq Evento"
+    },
+    "ruta_escape": {
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Ruta Escape",
+      "type": "array"
+    },
+    "O2_previsto_L": {
+      "title": "O2 Previsto L",
+      "type": "number"
+    }
+  },
+  "required": [
+    "version",
+    "tipo",
+    "t",
+    "motivo",
+    "seq_evento",
+    "ruta_escape",
+    "O2_previsto_L"
+  ],
+  "title": "Abortar",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:abortar"
+}

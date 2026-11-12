@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "x": {
+      "title": "X",
+      "type": "number"
+    },
+    "y": {
+      "title": "Y",
+      "type": "number"
+    },
+    "id": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "forma": {
+      "const": "circulo",
+      "title": "Forma",
+      "type": "string"
+    },
+    "radio_m": {
+      "ge": 0,
+      "title": "Radio M",
+      "type": "number"
+    },
+    "efecto": {
+      "enum": [
+        "bloqueo",
+        "multiplicador"
+      ],
+      "title": "Efecto",
+      "type": "string"
+    },
+    "factor": {
+      "ge": 1,
+      "le": 5,
+      "title": "Factor",
+      "type": "number"
+    }
+  },
+  "required": [
+    "x",
+    "y",
+    "id",
+    "forma",
+    "radio_m",
+    "efecto",
+    "factor"
+  ],
+  "title": "PeligroDatos",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:peligro_datos"
+}

@@ -1,0 +1,54 @@
+{
+  "$defs": {
+    "VentanaSitio": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "title": "Id",
+          "type": "integer"
+        },
+        "ventana": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "ge": 0,
+              "le": 24,
+              "type": "number"
+            },
+            {
+              "ge": 0,
+              "le": 24,
+              "type": "number"
+            }
+          ],
+          "title": "Ventana",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "ventana"
+      ],
+      "title": "VentanaSitio",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sitios": {
+      "items": {
+        "$ref": "#/$defs/VentanaSitio"
+      },
+      "title": "Sitios",
+      "type": "array"
+    }
+  },
+  "required": [
+    "sitios"
+  ],
+  "title": "VentanasDatos",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:ventanas_datos"
+}

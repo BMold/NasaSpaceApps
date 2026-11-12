@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "x": {
+      "title": "X",
+      "type": "number"
+    },
+    "y": {
+      "title": "Y",
+      "type": "number"
+    },
+    "bateria_pct": {
+      "ge": 0,
+      "le": 100,
+      "title": "Bateria Pct",
+      "type": "number"
+    }
+  },
+  "required": [
+    "x",
+    "y",
+    "bateria_pct"
+  ],
+  "title": "RoverDatos",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:telemetria_rover_datos"
+}

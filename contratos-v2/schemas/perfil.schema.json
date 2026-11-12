@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "Astronauta": {
+      "additionalProperties": false,
+      "properties": {
+        "masa_kg": {
+          "gt": 0,
+          "title": "Masa Kg",
+          "type": "number"
+        },
+        "masa_traje_kg": {
+          "ge": 0,
+          "title": "Masa Traje Kg",
+          "type": "number"
+        },
+        "v0_m_s": {
+          "gt": 0,
+          "title": "V0 M S",
+          "type": "number"
+        },
+        "kappa_O2_L_W_min": {
+          "gt": 0,
+          "title": "Kappa O2 L W Min",
+          "type": "number"
+        },
+        "O2_inicial_L": {
+          "gt": 0,
+          "title": "O2 Inicial L",
+          "type": "number"
+        },
+        "capacidad_muestras_kg": {
+          "ge": 0,
+          "title": "Capacidad Muestras Kg",
+          "type": "number"
+        }
+      },
+      "required": [
+        "masa_kg",
+        "masa_traje_kg",
+        "v0_m_s",
+        "kappa_O2_L_W_min",
+        "O2_inicial_L",
+        "capacidad_muestras_kg"
+      ],
+      "title": "Astronauta",
+      "type": "object"
+    },
+    "Rover": {
+      "additionalProperties": false,
+      "properties": {
+        "v_m_s": {
+          "gt": 0,
+          "title": "V M S",
+          "type": "number"
+        },
+        "R_comm_m": {
+          "gt": 0,
+          "title": "R Comm M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "v_m_s",
+        "R_comm_m"
+      ],
+      "title": "Rover",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "tipo": {
+      "const": "perfil",
+      "title": "Tipo",
+      "type": "string"
+    },
+    "escenario_id": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Escenario Id",
+      "type": "string"
+    },
+    "semilla": {
+      "title": "Semilla",
+      "type": "integer"
+    },
+    "t0_hora_solar": {
+      "ge": 0,
+      "le": 24,
+      "title": "T0 Hora Solar",
+      "type": "number"
+    },
+    "factor_tiempo": {
+      "gt": 0,
+      "title": "Factor Tiempo",
+      "type": "number"
+    },
+    "duracion_eva_s": {
+      "gt": 0,
+      "title": "Duracion Eva S",
+      "type": "number"
+    },
+    "astronauta": {
+      "$ref": "#/$defs/Astronauta"
+    },
+    "rover": {
+      "$ref": "#/$defs/Rover"
+    }
+  },
+  "required": [
+    "version",
+    "tipo",
+    "escenario_id",
+    "semilla",
+    "t0_hora_solar",
+    "factor_tiempo",
+    "duracion_eva_s",
+    "astronauta",
+    "rover"
+  ],
+  "title": "Perfil",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:perfil"
+}

@@ -1,0 +1,143 @@
+{
+  "$defs": {
+    "Sitio": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "id": {
+          "minimum": 1,
+          "title": "Id",
+          "type": "integer"
+        },
+        "valor": {
+          "ge": 1,
+          "le": 10,
+          "title": "Valor",
+          "type": "number"
+        },
+        "mineral": {
+          "enum": [
+            "filosilicatos",
+            "sulfatos",
+            "hematita",
+            "silice"
+          ],
+          "title": "Mineral",
+          "type": "string"
+        },
+        "masa_kg": {
+          "ge": 0,
+          "title": "Masa Kg",
+          "type": "number"
+        },
+        "perforacion_min": {
+          "ge": 0,
+          "title": "Perforacion Min",
+          "type": "number"
+        },
+        "ventana": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "ge": 0,
+              "le": 24,
+              "type": "number"
+            },
+            {
+              "ge": 0,
+              "le": 24,
+              "type": "number"
+            }
+          ],
+          "title": "Ventana",
+          "type": "array"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "id",
+        "valor",
+        "mineral",
+        "masa_kg",
+        "perforacion_min",
+        "ventana"
+      ],
+      "title": "Sitio",
+      "type": "object"
+    },
+    "XY": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "XY",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "inicio": {
+      "$ref": "#/$defs/XY"
+    },
+    "hora_solar": {
+      "ge": 0,
+      "le": 24,
+      "title": "Hora Solar",
+      "type": "number"
+    },
+    "O2_disponible_L": {
+      "ge": 0,
+      "title": "O2 Disponible L",
+      "type": "number"
+    },
+    "capacidad_kg": {
+      "ge": 0,
+      "title": "Capacidad Kg",
+      "type": "number"
+    },
+    "sitios": {
+      "items": {
+        "$ref": "#/$defs/Sitio"
+      },
+      "maxItems": 12,
+      "title": "Sitios",
+      "type": "array"
+    }
+  },
+  "required": [
+    "version",
+    "inicio",
+    "hora_solar",
+    "O2_disponible_L",
+    "capacidad_kg",
+    "sitios"
+  ],
+  "title": "Pedido",
+  "type": "object",
+  "$id": "urn:ares-twin:v1:pedido"
+}
