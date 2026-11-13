@@ -1,51 +1,57 @@
 # CLAUDE.md — ARES-TWIN (NASA Space Apps · Martian Map)
 
-Referencia técnica para agentes de programación. Contratos v1.0, al 2026-11-11.
+Referencia técnica para agentes de programación. Contratos v1.0, al 2026-11-12 (terreno con datos reales).
 Si algo de aquí contradice el código, **este archivo manda** hasta que se cambie con versión nueva.
 
 ---
 
 ## 1. Qué es
 
-Optimizador de rutas de EVA en Marte (Mount Sharp, cráter Gale). Planifica qué sitios científicos visita un astronauta y en qué orden, con el **O₂ como única unidad de costo**, una reserva para abortar y replanificación ante eventos en vivo (peligros, sombra, fatiga, tormenta solar). Lo acompañan un front 3D (tres vistas), un VR y una simulación de telemetría en streaming.
+Optimizador de rutas de EVA en Marte (Mount Sharp, cráter Gale). Planifica qué sitios científicos visita un astronauta y en qué orden, con el **O₂ como única unidad de costo**, una reserva para abortar y replanificación ante eventos en vivo (peligros, sombra, fatiga, tormenta solar). Lo acompañan un frontend de mapa por capas y HUD, una simulación 3D/VR y una telemetría simulada en streaming. El contrato de integración completo está en `contratos/INTEGRACION.md`.
 
 ## 2. Equipo y dueños
 
 | Parte | Dueño | Carpeta |
 |---|---|---|
-| Optimizador (A* + CTOPTW), paquete de terreno | Ignacio | `optimizador/`, `terreno/` |
-| Simulación de biodatos y eventos (streaming) | Dana | `simulacion/` |
+| Optimizador (A* + CTOPTW), datos y paquete de terreno | Ignacio | `optimizador/`, `terreno/`, `herramientas/` |
+| Telemetría: biodatos y eventos simulados (streaming) | Dana, Erick | `telemetria/` |
 | Backend (API, WebSocket) | Albert | `backend/` |
-| Front 3D y HUD; modelo Blender de Mount Sharp | Carla, Anni | `front/` |
-| VR | Luis | `vr/` |
+| Frontend: mapa por capas y HUD | Frank | `front/` |
+| Simulación 3D y VR | Luis | `vr/` |
 | Contratos compartidos | todos | `contratos/` |
 
-Cada dueño define su propio contrato. Este archivo recoge los contratos del **optimizador** y de **Dana**, y las convenciones de visualización acordadas.
+Cada dueño define su propio contrato. Este archivo recoge los contratos del **optimizador** y de la **telemetría**, y las convenciones de visualización acordadas. En el resto del documento, "Dana" = equipo de telemetría (Dana y Erick).
 
 ## 3. Estado de las decisiones
 
-**Decidido:** sitio = Mount Sharp · un solo agente en v1 · contratos v1.0 de abajo · constantes de §7.
+**Decidido:** sitio = Mount Sharp, unidad de sulfatos (ventana de 480 × 480 m con esquina SO en 137,408172° E, −4,827169°) · DEM = USGS *Mars MSL Gale Merged DEM 1m v3* · un solo paquete `terreno/` para todos · marco local ENU con origen en la esquina SO y fila 0 = sur · un solo agente en v1 · contratos v1.0 · constantes de §7.
 
 **Pendiente (no asumir):**
-- Fuente del DEM y de las capas (lo definen con Carla y Anni).
-- Marco de coordenadas exacto: origen, orientación de filas, conversión de ejes al front.
-- Contrato propio del backend (rutas HTTP, roles del WebSocket, formato de error del servidor): lo define Albert.
+- Conversión de ejes del marco local a la escena 3D (Luis y Frank).
+- Contrato propio del backend (rutas HTTP, roles del WebSocket, formato de error del servidor): lo define Albert. Propuesta en `contratos/INTEGRACION.md` §7.
 - Término de riesgo λ en la función objetivo.
+- Capa térmica: el archivo descargado (TES) no trae georreferencia y no se pudo usar.
 
 **Fechas:** contratos v1 congelados el 2026-11-18 · prueba de integración el 2026-11-25.
 
 ## 4. Estructura del repo
 
 ```
-terreno/            manifest.json + capas binarias (generadas por script de Ignacio)
+terreno/            paquete REAL: manifest.json, capas .bin, ortofoto.jpg, sitios.json, SHA256SUMS
+datos_crudos/       descargas originales (fuera de git; ver datos_crudos/LEEME.md)
+herramientas/       construir_terreno.py, corregistro.py, generar_registro.py, lectura remota (gale.py, remoto.py)
 contratos/
+  INTEGRACION.md    contrato de integración de todo el sistema (quién envía y recibe qué, datos compartidos)
+  validar.py        valida mensajes, registros .jsonl y el paquete terreno/ contra schemas/
   schemas/          un JSON Schema por mensaje
-  ejemplos/         pedido, respuesta, guion_demo.json
-optimizador/        librería Python: Motor, MotorFalso, pandolf()
-simulacion/         Dana
+  ejemplos/         pedido.json, guion_mision.json
+optimizador/        librería Python: Motor, pandolf(); pruebas/ (test_nucleo.py, simular_guion.py)
+demo/               visor autónomo con capas y botones de salto (visor_mision.html)
+logs/               sesion-<fecha>-mision.jsonl + .marcadores.json
+telemetria/         Dana, Erick
 backend/            Albert
-front/  vr/         Carla, Anni / Luis
-logs/               sesion-<fecha>.jsonl
+front/              Frank
+vr/                 Luis
 ```
 
 ## 5. Convenciones globales
@@ -61,18 +67,21 @@ logs/               sesion-<fecha>.jsonl
 | Tiempo `t` | segundos simulados desde el inicio de la EVA (float) |
 | `hora_solar` | hora solar local de Marte, horas decimales: `t0_hora_solar + t / 3699` |
 | `seq` | entero creciente de 1 en 1 por emisor; nunca baja |
-| Escala demo | factor ×30 · EVA de 240 min simulados = 8 min reales |
+| Escala demo | factor ×30 (misión de ~152 min simulados ≈ 5 min reales); el visor permite saltar entre hitos |
 | Telemetría | cada 10 s simulados (~3 mensajes/s reales) |
 
-## 6. Terreno (propuesta; fuente y marco pendientes)
+## 6. Terreno (datos reales; detalle en `contratos/INTEGRACION.md` §3)
 
-- Malla de 96 × 96 celdas de 2,5 m (240 m de lado). Ampliable a 400 × 400 (1 km).
-- Centro de la celda (i, j): `x = (j + 0.5)·2.5`, `y = (i + 0.5)·2.5`. Propuesta: fila 0 = sur. Escribirlo en el manifiesto.
-- Capas en float32 little-endian, fila por fila: `elevacion`, `eta_terreno`, `peligro` (u8), más `sitios.json`.
-- `manifest.json`: `sitio`, `fuente_dem`, `origen`, `marco`, `tam_celda_m`, `filas`, `columnas`, `fila_0`, `capas`, `habitat`.
-- Sin exageración vertical en los datos (solo en la escena, si se quiere).
-- η: rugosidad local del DEM, con THEMIS como valor base. THEMIS (~100 m/píxel) es demasiado grueso para la malla.
-- El front pega la ruta al terreno con raycast sobre su propia malla, usando solo `x`, `y`.
+- Malla de **192 × 192 celdas de 2,5 m (480 m de lado)**. El tamaño lo limita el ancho útil de la imagen HiRISE en color (~495 m).
+- Centro de la celda (i, j): `x = (j + 0.5)·2.5`, `y = (i + 0.5)·2.5`. Fila 0 = sur. Origen = esquina suroeste.
+- Capas float32 little-endian, fila por fila: `elevacion` (altura sobre `z_ref_m`), `eta_terreno`, `pendiente_deg`, `crism_*` (NaN = sin dato); `peligro` (u8); `ortofoto.jpg` (1920 × 1920, **fila 0 = norte**); `sitios.json`.
+- `manifest.json`: `sitio`, `fuente_dem`, `origen`, `marco`, `tam_celda_m`, `filas`, `columnas`, `fila_0`, `capas`, `habitat`; además `georreferencia`, `corregistro`, `supuestos`, `z_ref_m`.
+- Fuentes: DEM de USGS (1 m) · HiRISE `ESP_087149_1750_COLOR` (0,25 m) · CRISM `FRT0000B6F1` MTRDR (18 m). El DEM es la referencia; HiRISE y CRISM se **corregistran** (−9 / −136 m y +126 / −90 m).
+- `peligro` = pendiente > 30° (supuesto de diseño). η = desviación típica de la pendiente en ventana 3 × 3, normalizada a [1, 2].
+- Sitios = máximos locales de los índices CRISM por encima del percentil 90 de la escena. En esta ventana hay sulfatos, filosilicatos y sílice débil; **no hay hematita**. `masa_kg`, `perforacion_min` y `ventana` son supuestos de escenario.
+- En esta ventana el DEM **no tiene depresiones de refugio**: no hay `refugios` y el aborto por tormenta va al hábitat. La clave `refugios` (lista de `{id, x, y, radio_m, profundidad_m}`) sigue soportada.
+- Sin exageración vertical en los datos. El front pega la ruta al terreno con raycast sobre su propia malla, usando solo `x`, `y`.
+- Se reconstruye con `python herramientas/construir_terreno.py`; nunca se edita a mano.
 
 ## 7. Constantes
 
@@ -88,7 +97,7 @@ logs/               sesion-<fecha>.jsonl
 | ρ (reserva) | 0,15; 0,25 con SPE en alerta | aborto |
 | α (diversidad) | 0,5 | ψ |
 | N máx. de sitios | 12 | branch & bound exacto |
-| Tope del solver | 2 s (anytime) | latencia |
+| Tope del solver | 200 000 nodos (~1 s) y, como red de seguridad, 2 s (anytime) | latencia y determinismo |
 | Duración de la EVA | 14 400 s | límite duro |
 | R_comm (UHF) | 150 m | solo aviso visual en v1 |
 | Rover v | 0,8 m/s | solo para dibujar |
@@ -132,7 +141,7 @@ Podar j si:
 - `kg + q_j > Q_kg`
 - `Z + cota_sup(restantes) ≤ mejor` (cota: suma de S_i restantes con ψ = 1 que aún quepan)
 
-Al llegar al tope de tiempo: devolver la mejor solución encontrada con `optimo: false`.
+Al llegar al tope (de nodos o de tiempo): devolver la mejor solución encontrada con `optimo: false`. El tope de nodos hace que el resultado no dependa de la velocidad de la máquina.
 
 ## 9. Reglas de negocio en vivo
 
@@ -220,6 +229,7 @@ Sin ruta factible: `factible: false`, `orden: ["H", "H"]` y la polilínea de vue
 { "version": "1.0", "tipo": "estado_aborto", "t": 1230.0,
   "O2_restante_L": 31.2, "R_L": 6.8, "O2_minimo_L": 7.8, "margen_pct": 359 }
 ```
+- `abortar` lleva además el campo **opcional** `destino: {tipo: "habitat"|"refugio", id, x, y}` (propuesta, aditivo: quien no lo conozca lo ignora). Con `spe_critico` y `refugios` en el terreno, el destino es el refugio más barato en O₂ si cuesta menos que el hábitat; `ruta_escape` y `O2_previsto_L` van hasta ese destino. Con `no_retorno`, siempre el hábitat.
 - `seq_evento` es `null` si el plan vino de un pedido.
 - El primer plan de la sesión también se emite como `plan_actualizado` con `motivo: "inicial"`.
 
@@ -234,9 +244,9 @@ Sin ruta factible: `factible: false`, `orden: ["H", "H"]` y la polilínea de vue
 ## 12. Interfaz Python del optimizador
 
 ```python
-from optimizador import Motor          # MotorFalso: misma interfaz, respuestas fijas de contratos/ejemplos/
+from optimizador import Motor
 
-motor = Motor(ruta_terreno="terreno/")                   # ~5 s, una vez
+motor = Motor(ruta_terreno="terreno/")                   # < 1 s, una vez
 motor.cargar_perfil(perfil: dict) -> None                # reinicia la sesión
 motor.planificar(pedido: dict) -> dict                   # ≤ 2 s
 motor.procesar_evento(evento: dict) -> list[dict]        # telemetría < 5 ms; otros ≤ 2 s
@@ -250,21 +260,31 @@ motor.estado() -> dict                                   # plan vigente, último
 - **Garantías:** siempre hay `ruta_escape` · nunca más de 2 s · determinista con la misma entrada y la misma semilla.
 - **Si el backend no es Python:** servicio FastAPI en `:8001`: `POST /perfil`, `POST /plan`, `POST /evento` (devuelve una lista), `GET /estado`.
 
-## 13. Guion de demo (semilla 42)
+## 13. Guion de misión (`contratos/ejemplos/guion_mision.json`)
 
-| Min. sim. | Real | Evento | Esperado |
-|---|---|---|---|
-| 0 | 0:00 | perfil + telemetría | `plan_actualizado` inicial |
-| 4 | 0:08 | `peligro` p1, `bloqueo`, r = 6 m, sobre el tramo siguiente | ruta lo rodea |
-| 10 | 0:20 | fatiga: VO₂ ×1,3 durante 5 min | ~min 11: `recalibracion` |
-| 16 | 0:32 | `ventanas`: cierra la de un sitio pendiente | sitio fuera del plan |
-| 22 | 0:44 | `SPE` `alerta`, `llegada_s` = 600 | ρ = 0,25 (recorta el plan solo si ya no cabe) |
-| 26 | 0:52 | `SPE` `critico` | `abortar` + escape |
-| ~28 | ~0:56 | llega al hábitat | O₂ por encima de la reserva |
+Terreno real `terreno/` · O₂ inicial 170 L (parámetro del escenario en el perfil; la constante del contrato sigue siendo 40 L, que solo da ~50 min) · ~152 min simulados · 7 muestras (sulfatos, filosilicatos, sílice).
 
-Guion corto: con 40 L de O₂ y κ_O₂ = 0,00298 la EVA no pasa de ~50 min simulados (250 W en reposo = 0,745 L/min), así que el guion original de 175 min no era alcanzable. A ×30 dura ~1 min real: **pendiente** decidir si la demo baja el `factor_tiempo`.
+| Min. sim. | Evento | Reacción |
+|---|---|---|
+| 0 | salida del hábitat | plan inicial de 9 sitios |
+| 22–143 | 7 muestras (sitios 1, 3, 2, 6, 7, 10, 4) | hitos `muestra` |
+| 24,5 | roca de 3 m que el mapa no mostraba, a 30 m sobre la ruta (`bloqueo`) | `peligro`: rodea |
+| 55 | la sombra cierra la ventana de un sitio pendiente | `ventana`: sale del plan |
+| 81 | fatiga VO₂ ×1,3 de min 80 a 95 | `recalibracion` |
+| 88 | arena suelta, ×3 en O₂ (`multiplicador`) | `peligro`: replanifica |
+| 125 | `SPE` `alerta`, `llegada_s` = 1500 | ρ = 0,25 |
+| 150 | `SPE` `critico` | `abortar` al hábitat |
+| 152 | llega al hábitat | quedan ~54 L |
 
-Se guarda en `contratos/ejemplos/guion_demo.json` (terreno sintético de `generate_mocks.py`, semilla 42). Los minutos exactos se ajustan cuando esté el mapa. Se reproduce con `python -m optimizador.pruebas.simular_guion`.
+```
+python herramientas/generar_registro.py     # logs/sesion-<fecha>-mision.jsonl + .marcadores.json + demo/visor_mision.html
+python -m optimizador.pruebas.simular_guion # la misma corrida, solo por consola
+```
+
+- La tormenta solar y los demás eventos son **del escenario**, no datos medidos.
+- El `.jsonl` trae un mensaje por línea y, además de los del contrato, líneas `hito` (`llegada`, `muestra`, `fin`); quien ignore tipos desconocidos las salta.
+- `*.marcadores.json` es la lista de saltos: `{id, t, min, clase, titulo, detalle, linea, nivel}`. `nivel` 1 = botón; `nivel` 2 = llegadas. **Saltar a un instante `t` = reaplicar sobre un estado vacío todos los mensajes con `m.t ≤ t`**. Referencia: `demo/visor_mision.html` (doble clic).
+- Los eventos del guion se colocan solos sobre la ruta vigente (`sobre_ruta_m`, `sitio_en_plan`): si cambia el terreno, el guion sigue siendo válido, pero conviene revisar que cada evento caiga donde se quiere.
 
 ## 14. Visualización (acordado; detalle en la guía del front)
 
@@ -274,16 +294,18 @@ Se guarda en `contratos/ejemplos/guion_demo.json` (terreno sintético de `genera
 - Ruta por recorrer: línea gruesa clara · recorrida: gris al 40 % · escape: punteada · al replanificar, la ruta vieja se desvanece en 2 s.
 - Vistas: lejana (orbital), astronauta (tercera persona, sobre el hombro), rover. Al llegar un `abortar`: 3 s en la vista lejana.
 - Barra de O₂ con una línea fija en `O2_minimo_L`. Cada `plan_actualizado` con `motivo` distinto de `inicial` muestra un aviso de 4 s.
-- VR: recorrido de 60–90 s reproduciendo el registro JSONL; plan B: video 360° desde Blender.
+- VR: recorrido de 60–90 s reproduciendo el registro JSONL; plan B: video 360° grabado de la misma corrida.
 
 ## 15. Pruebas mínimas del optimizador
 
-- [ ] El pedido de ejemplo da un plan factible en menos de 2 s.
-- [ ] Sin O₂ suficiente → `factible: false` con la vuelta directa.
-- [ ] El guion de demo produce la reacción esperada en cada evento.
-- [ ] La telemetría se procesa en menos de 5 ms.
-- [ ] Dos corridas con la semilla 42 dan exactamente los mismos mensajes.
-- [ ] Toda salida valida contra `contratos/schemas/`.
+- [x] El pedido de ejemplo da un plan factible en menos de 2 s.
+- [x] Sin O₂ suficiente → `factible: false` con la vuelta directa.
+- [x] El guion de misión produce la reacción esperada en cada evento.
+- [x] La telemetría se procesa en menos de 5 ms.
+- [x] Dos corridas con la semilla 42 dan exactamente los mismos mensajes.
+- [x] Toda salida valida contra `contratos/schemas/`.
+
+Las cubre `python -m optimizador.pruebas.test_nucleo` (12 pruebas sobre el terreno real).
 
 ## 16. Advertencias
 
@@ -291,3 +313,6 @@ Se guarda en `contratos/ejemplos/guion_demo.json` (terreno sintético de `genera
 - No afirmar compatibilidad con hardware de vuelo (RAD750) sin benchmarks propios.
 - Los valores de VO₂ y frecuencia cardíaca son órdenes de magnitud para la demo, no datos fisiológicos validados.
 - La cifra "3,4 veces" que aparecía en material anterior no tiene fuente: no usarla.
+- Los índices CRISM son **indicios** espectrales, no detecciones confirmadas: `BD2210_2` (sílice) es débil y ambiguo con arcillas de Al. El `valor` de cada sitio es un criterio nuestro, no una prioridad de la NASA.
+- El corregistro de CRISM tiene ±9 m; a esa escala un sitio puede caer en el píxel vecino.
+- El umbral de 30° de `peligro` y los parámetros de cada parada son supuestos, no datos.

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/reinicio.json",
+  "title": "Reinicio de estado de las vistas (PROPUESTA)",
+  "description": "Backend -> vistas. Vaciar el estado; a continuacion llegan todos los mensajes con t <= `t`.",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/mensaje_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "reinicio"
+        },
+        "motivo": {
+          "enum": [
+            "saltar",
+            "nueva_sesion"
+          ]
+        }
+      },
+      "required": [
+        "motivo"
+      ]
+    }
+  ]
+}

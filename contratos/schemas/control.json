@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/control.json",
+  "title": "Control de reproduccion (PROPUESTA)",
+  "description": "Vista -> backend, solo en modo reproduccion.",
+  "allOf": [
+    {
+      "type": "object",
+      "required": [
+        "version",
+        "tipo"
+      ],
+      "properties": {
+        "version": {
+          "$ref": "comunes.json#/$defs/version"
+        },
+        "t": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "control"
+        },
+        "accion": {
+          "enum": [
+            "play",
+            "pause",
+            "saltar",
+            "velocidad"
+          ]
+        },
+        "factor": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "accion"
+      ]
+    },
+    {
+      "if": {
+        "properties": {
+          "accion": {
+            "const": "saltar"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "t"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "accion": {
+            "const": "velocidad"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "factor"
+        ]
+      }
+    }
+  ]
+}

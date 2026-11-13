@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/telemetria_astronauta.json",
+  "title": "Evento telemetria_astronauta (§10.3)",
+  "description": "Cada 10 s simulados. Dana es la unica que descuenta el O2.",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/evento_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "telemetria_astronauta"
+        },
+        "datos": {
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "sigma_m",
+            "O2_restante_L",
+            "VO2_L_min",
+            "FC_lpm",
+            "velocidad_m_s",
+            "carga_kg"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "sigma_m": {
+              "type": "number"
+            },
+            "O2_restante_L": {
+              "type": "number"
+            },
+            "VO2_L_min": {
+              "type": "number"
+            },
+            "FC_lpm": {
+              "type": "number"
+            },
+            "velocidad_m_s": {
+              "type": "number"
+            },
+            "carga_kg": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

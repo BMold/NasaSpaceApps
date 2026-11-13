@@ -36,6 +36,7 @@ class Terreno:
         self.eta = eta
         self.peligro = peligro          # u8: 0 libre, >0 bloqueo estatico
         self.habitat = manifest["habitat"]
+        self.refugios = manifest.get("refugios", [])    # propuesta: crateres de refugio (SPE)
         self.sitios = sitios
 
     @classmethod

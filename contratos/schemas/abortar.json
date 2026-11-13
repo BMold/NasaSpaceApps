@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/abortar.json",
+  "title": "Aborto (§11.3)",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/mensaje_base"
+    },
+    {
+      "required": [
+        "motivo",
+        "seq_evento",
+        "ruta_escape",
+        "O2_previsto_L"
+      ],
+      "properties": {
+        "tipo": {
+          "const": "abortar"
+        },
+        "motivo": {
+          "enum": [
+            "spe_critico",
+            "no_retorno"
+          ]
+        },
+        "seq_evento": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "destino": {
+          "$ref": "comunes.json#/$defs/destino",
+          "description": "Opcional (propuesta aditiva): habitat o refugio"
+        },
+        "ruta_escape": {
+          "$ref": "comunes.json#/$defs/polilinea"
+        },
+        "O2_previsto_L": {
+          "type": "number"
+        }
+      }
+    }
+  ]
+}

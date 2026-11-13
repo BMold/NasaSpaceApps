@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/marcadores.json",
+  "title": "Marcadores de salto del registro (§13.1)",
+  "type": "object",
+  "required": [
+    "version",
+    "jsonl",
+    "marcadores"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "jsonl": {
+      "type": "string"
+    },
+    "marcadores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "t",
+          "min",
+          "clase",
+          "titulo",
+          "detalle",
+          "linea",
+          "nivel"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "t": {
+            "type": "number",
+            "minimum": 0
+          },
+          "min": {
+            "type": "number"
+          },
+          "clase": {
+            "type": "string"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "detalle": {
+            "type": "string"
+          },
+          "linea": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nivel": {
+            "enum": [
+              1,
+              2
+            ]
+          },
+          "sitio_id": {
+            "$ref": "comunes.json#/$defs/id_sitio"
+          },
+          "mineral": {
+            "$ref": "comunes.json#/$defs/mineral"
+          },
+          "reaccion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

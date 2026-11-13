@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/sitios.json",
+  "title": "Sitios cientificos del terreno",
+  "type": "object",
+  "required": [
+    "sitios"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "sitios": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "$ref": "comunes.json#/$defs/sitio"
+      }
+    }
+  }
+}

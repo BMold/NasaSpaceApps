@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/ventanas.json",
+  "title": "Evento ventanas (§10.3)",
+  "description": "Solo los sitios cuya ventana cambia.",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/evento_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "ventanas"
+        },
+        "datos": {
+          "type": "object",
+          "required": [
+            "sitios"
+          ],
+          "properties": {
+            "sitios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "ventana"
+                ],
+                "properties": {
+                  "id": {
+                    "$ref": "comunes.json#/$defs/id_sitio"
+                  },
+                  "ventana": {
+                    "$ref": "comunes.json#/$defs/ventana"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/peligro.json",
+  "title": "Evento peligro (§10.3)",
+  "description": "",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/evento_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "peligro"
+        },
+        "datos": {
+          "type": "object",
+          "required": [
+            "id",
+            "forma",
+            "x",
+            "y",
+            "radio_m",
+            "efecto",
+            "factor"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^p[0-9]+$"
+            },
+            "forma": {
+              "const": "circulo"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "radio_m": {
+              "type": "number",
+              "minimum": 0,
+              "description": "0 = quita el peligro"
+            },
+            "efecto": {
+              "enum": [
+                "bloqueo",
+                "multiplicador"
+              ]
+            },
+            "factor": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5
+            }
+          }
+        }
+      }
+    }
+  ]
+}

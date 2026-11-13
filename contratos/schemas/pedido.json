@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/pedido.json",
+  "title": "Pedido de plan (§11.1)",
+  "type": "object",
+  "required": [
+    "version",
+    "inicio",
+    "hora_solar",
+    "O2_disponible_L",
+    "capacidad_kg",
+    "sitios"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "inicio": {
+      "type": "object",
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "hora_solar": {
+      "type": "number"
+    },
+    "O2_disponible_L": {
+      "type": "number",
+      "minimum": 0
+    },
+    "capacidad_kg": {
+      "type": "number",
+      "minimum": 0
+    },
+    "sitios": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "$ref": "comunes.json#/$defs/sitio"
+      }
+    }
+  }
+}

@@ -1,0 +1,263 @@
+{
+ "version": "1.0",
+ "jsonl": "sesion-2026-11-12-mision.jsonl",
+ "marcadores": [
+  {
+   "id": "m01",
+   "t": 0.0,
+   "min": 0.0,
+   "clase": "inicio",
+   "titulo": "Salida del habitat",
+   "detalle": "Plan inicial calculado por el optimizador.",
+   "linea": 0,
+   "nivel": 1
+  },
+  {
+   "id": "m02",
+   "t": 434.8,
+   "min": 7.2,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 1",
+   "detalle": "sulfatos, valor 10, perforacion 15 min.",
+   "linea": 89,
+   "nivel": 2,
+   "sitio_id": 1
+  },
+  {
+   "id": "m03",
+   "t": 1334.8,
+   "min": 22.2,
+   "clase": "muestra",
+   "titulo": "Muestra 1: sulfatos (sitio 1)",
+   "detalle": "Valor 10, 0.3 kg. Carga acumulada 0.30 kg.",
+   "linea": 270,
+   "nivel": 1,
+   "sitio_id": 1,
+   "mineral": "sulfatos"
+  },
+  {
+   "id": "m04",
+   "t": 1470.0,
+   "min": 24.5,
+   "clase": "peligro",
+   "titulo": "Roca que no estaba en el mapa",
+   "detalle": "A mitad de camino aparece un bloque de ~3 m que el DEM no mostraba. La ruta se recalcula para rodearlo.",
+   "linea": 299,
+   "nivel": 1,
+   "reaccion": "peligro"
+  },
+  {
+   "id": "m05",
+   "t": 1641.6,
+   "min": 27.4,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 3",
+   "detalle": "filosilicatos, valor 4, perforacion 15 min.",
+   "linea": 335,
+   "nivel": 2,
+   "sitio_id": 3
+  },
+  {
+   "id": "m06",
+   "t": 2541.6,
+   "min": 42.4,
+   "clase": "muestra",
+   "titulo": "Muestra 2: filosilicatos (sitio 3)",
+   "detalle": "Valor 4, 0.3 kg. Carga acumulada 0.60 kg.",
+   "linea": 516,
+   "nivel": 1,
+   "sitio_id": 3,
+   "mineral": "filosilicatos"
+  },
+  {
+   "id": "m07",
+   "t": 2802.3,
+   "min": 46.7,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 2",
+   "detalle": "sulfatos, valor 6, perforacion 15 min.",
+   "linea": 569,
+   "nivel": 2,
+   "sitio_id": 2
+  },
+  {
+   "id": "m08",
+   "t": 3300.0,
+   "min": 55.0,
+   "clase": "ventana",
+   "titulo": "La sombra cierra la ventana de un sitio",
+   "detalle": "La sombra de la ladera llega antes de lo previsto a un sitio pendiente: sale del plan.",
+   "linea": 670,
+   "nivel": 1,
+   "reaccion": "ventana"
+  },
+  {
+   "id": "m09",
+   "t": 3702.3,
+   "min": 61.7,
+   "clase": "muestra",
+   "titulo": "Muestra 3: sulfatos (sitio 2)",
+   "detalle": "Valor 6, 0.3 kg. Carga acumulada 0.90 kg.",
+   "linea": 752,
+   "nivel": 1,
+   "sitio_id": 2,
+   "mineral": "sulfatos"
+  },
+  {
+   "id": "m10",
+   "t": 4066.6,
+   "min": 67.8,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 6",
+   "detalle": "sulfatos, valor 3, perforacion 15 min.",
+   "linea": 825,
+   "nivel": 2,
+   "sitio_id": 6
+  },
+  {
+   "id": "m11",
+   "t": 4850.0,
+   "min": 80.8,
+   "clase": "recalibracion",
+   "titulo": "Fatiga detectada",
+   "detalle": "VO2 medido muy por encima del previsto: se recalibra kappa y se replanifica.",
+   "linea": 984,
+   "nivel": 1
+  },
+  {
+   "id": "m12",
+   "t": 4966.6,
+   "min": 82.8,
+   "clase": "muestra",
+   "titulo": "Muestra 4: sulfatos (sitio 6)",
+   "detalle": "Valor 3, 0.3 kg. Carga acumulada 1.20 kg.",
+   "linea": 1007,
+   "nivel": 1,
+   "sitio_id": 6,
+   "mineral": "sulfatos"
+  },
+  {
+   "id": "m13",
+   "t": 5280.0,
+   "min": 88.0,
+   "clase": "peligro",
+   "titulo": "Arena suelta en la ruta",
+   "detalle": "Una zona de regolito suelto encarece el paso (x3 en O2) pero no lo impide.",
+   "linea": 1072,
+   "nivel": 1,
+   "reaccion": "peligro"
+  },
+  {
+   "id": "m14",
+   "t": 5479.7,
+   "min": 91.3,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 7",
+   "detalle": "silice, valor 2, perforacion 15 min.",
+   "linea": 1112,
+   "nivel": 2,
+   "sitio_id": 7
+  },
+  {
+   "id": "m15",
+   "t": 6379.7,
+   "min": 106.3,
+   "clase": "muestra",
+   "titulo": "Muestra 5: silice (sitio 7)",
+   "detalle": "Valor 2, 0.3 kg. Carga acumulada 1.50 kg.",
+   "linea": 1293,
+   "nivel": 1,
+   "sitio_id": 7,
+   "mineral": "silice"
+  },
+  {
+   "id": "m16",
+   "t": 6570.8,
+   "min": 109.5,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 10",
+   "detalle": "silice, valor 1, perforacion 15 min.",
+   "linea": 1334,
+   "nivel": 2,
+   "sitio_id": 10
+  },
+  {
+   "id": "m17",
+   "t": 7470.8,
+   "min": 124.5,
+   "clase": "muestra",
+   "titulo": "Muestra 6: silice (sitio 10)",
+   "detalle": "Valor 1, 0.3 kg. Carga acumulada 1.80 kg.",
+   "linea": 1515,
+   "nivel": 1,
+   "sitio_id": 10,
+   "mineral": "silice"
+  },
+  {
+   "id": "m18",
+   "t": 7500.0,
+   "min": 125.0,
+   "clase": "spe_alerta",
+   "titulo": "Alerta de tormenta solar",
+   "detalle": "Se avisa de un evento de particulas solares en ~25 min. La reserva de aborto sube al 25 % y el plan se recorta.",
+   "linea": 1522,
+   "nivel": 1,
+   "reaccion": "spe_alerta"
+  },
+  {
+   "id": "m19",
+   "t": 7671.8,
+   "min": 127.9,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 4",
+   "detalle": "sulfatos, valor 3, perforacion 15 min.",
+   "linea": 1558,
+   "nivel": 2,
+   "sitio_id": 4
+  },
+  {
+   "id": "m20",
+   "t": 8571.8,
+   "min": 142.9,
+   "clase": "muestra",
+   "titulo": "Muestra 7: sulfatos (sitio 4)",
+   "detalle": "Valor 3, 0.3 kg. Carga acumulada 2.10 kg.",
+   "linea": 1739,
+   "nivel": 1,
+   "sitio_id": 4,
+   "mineral": "sulfatos"
+  },
+  {
+   "id": "m21",
+   "t": 8676.4,
+   "min": 144.6,
+   "clase": "llegada",
+   "titulo": "Llega al sitio 5",
+   "detalle": "sulfatos, valor 3, perforacion 15 min.",
+   "linea": 1760,
+   "nivel": 2,
+   "sitio_id": 5
+  },
+  {
+   "id": "m22",
+   "t": 9000.0,
+   "min": 150.0,
+   "clase": "spe_critico",
+   "titulo": "Tormenta solar: regreso de emergencia",
+   "detalle": "Llega el frente de particulas. Se aborta la EVA y se calcula la ruta de escape mas barata en O2. El DEM de esta ventana no tiene depresiones que sirvan de refugio, asi que el destino es el habitat.",
+   "linea": 1827,
+   "nivel": 1,
+   "reaccion": "spe_critico"
+  },
+  {
+   "id": "m23",
+   "t": 9130.0,
+   "min": 152.2,
+   "clase": "fin",
+   "titulo": "Regreso al habitat",
+   "detalle": "Mision completa con 54.4 L de O2 restantes.",
+   "linea": 1855,
+   "nivel": 1
+  }
+ ]
+}
