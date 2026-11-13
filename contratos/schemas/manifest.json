@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/manifest.json",
+  "title": "Manifiesto del paquete de terreno (§6)",
+  "type": "object",
+  "required": [
+    "sitio",
+    "fuente_dem",
+    "origen",
+    "marco",
+    "tam_celda_m",
+    "filas",
+    "columnas",
+    "fila_0",
+    "capas",
+    "habitat"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "sitio": {
+      "type": "string"
+    },
+    "fuente_dem": {
+      "type": "string"
+    },
+    "origen": {
+      "type": "object",
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "nota": {
+          "type": "string"
+        }
+      }
+    },
+    "marco": {
+      "type": "string"
+    },
+    "tam_celda_m": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "filas": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "columnas": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "fila_0": {
+      "enum": [
+        "sur",
+        "norte"
+      ]
+    },
+    "capas": {
+      "type": "object",
+      "required": [
+        "elevacion"
+      ],
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "archivo"
+        ],
+        "properties": {
+          "archivo": {
+            "type": "string"
+          },
+          "dtype": {
+            "enum": [
+              "float32",
+              "uint8"
+            ]
+          },
+          "formato": {
+            "enum": [
+              "float32",
+              "uint8",
+              "png",
+              "jpg"
+            ]
+          },
+          "unidad": {
+            "type": "string"
+          },
+          "rango": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "valores": {
+            "type": "object"
+          },
+          "filas": {
+            "type": "integer"
+          },
+          "columnas": {
+            "type": "integer"
+          },
+          "tam_celda_m": {
+            "type": "number"
+          },
+          "sin_dato": {
+            "type": "string"
+          },
+          "fuente": {
+            "type": "string"
+          },
+          "resolucion_nativa_m": {
+            "type": "number"
+          },
+          "descripcion": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sitios": {
+      "type": "string"
+    },
+    "habitat": {
+      "type": "object",
+      "required": [
+        "id",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "id": {
+          "const": "H"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "refugios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "x",
+          "y",
+          "radio_m"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "radio_m": {
+            "type": "number"
+          },
+          "profundidad_m": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "georreferencia": {
+      "type": "object",
+      "description": "Propuesta: como pasar del marco local a lon/lat de Marte",
+      "properties": {
+        "proyeccion": {
+          "type": "string"
+        },
+        "radio_m": {
+          "type": "number"
+        },
+        "esquina_sw": {
+          "type": "object",
+          "properties": {
+            "lon_este_deg": {
+              "type": "number"
+            },
+            "lat_deg": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

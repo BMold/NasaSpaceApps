@@ -16,6 +16,7 @@ ALFA = 0.5                      # diversidad (psi)
 LAMBDA_RIESGO = 0.0             # v1: termino de riesgo apagado
 N_MAX_SITIOS = 12
 TOPE_SOLVER_S = 2.0
+TOPE_SOLVER_NODOS = 200_000     # ~0,8 s en un portatil; hace determinista el resultado "anytime"
 DURACION_EVA_S = 14400.0
 SEG_POR_HORA_SOLAR = 3699.0
 

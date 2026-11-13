@@ -22,7 +22,8 @@ def psi(n: int, alfa: float = K.ALFA) -> float:
 
 def resolver(D, T, valor, mineral, masa, o2_muestreo, tau_s, ventana_s,
              o2_util, capacidad_kg, t_max, o2_espera_L_s,
-             tope_s=K.TOPE_SOLVER_S, alfa=K.ALFA, lam=K.LAMBDA_RIESGO, riesgo=None):
+             tope_s=K.TOPE_SOLVER_S, alfa=K.ALFA, lam=K.LAMBDA_RIESGO, riesgo=None,
+             max_nodos=K.TOPE_SOLVER_NODOS):
     """Devuelve dict(orden, Z, O2, optimo, nodos). `orden` = indices de sitio (1..n).
 
     valor, mineral, masa, o2_muestreo, tau_s, ventana_s: listas indexadas 1..n
@@ -40,7 +41,8 @@ def resolver(D, T, valor, mineral, masa, o2_muestreo, tau_s, ventana_s,
     def dfs(i, o2, t, kg, Z, restantes):
         nonlocal nodos
         nodos += 1
-        if nodos & 255 == 0 and time.perf_counter() > fin:
+        # Tope determinista por nodos (mismo resultado en cualquier maquina) y tope de tiempo como red de seguridad
+        if nodos >= max_nodos or (nodos & 255 == 0 and time.perf_counter() > fin):
             raise _Tope
 
         # cerrar la ruta aqui

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/perfil.json",
+  "title": "Perfil de la sesion (§10.1)",
+  "type": "object",
+  "required": [
+    "version",
+    "tipo",
+    "escenario_id",
+    "semilla",
+    "t0_hora_solar",
+    "factor_tiempo",
+    "duracion_eva_s",
+    "astronauta",
+    "rover"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "tipo": {
+      "const": "perfil"
+    },
+    "escenario_id": {
+      "type": "string"
+    },
+    "semilla": {
+      "type": "integer"
+    },
+    "t0_hora_solar": {
+      "type": "number"
+    },
+    "factor_tiempo": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "duracion_eva_s": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "astronauta": {
+      "type": "object",
+      "required": [
+        "masa_kg",
+        "masa_traje_kg",
+        "v0_m_s",
+        "kappa_O2_L_W_min",
+        "O2_inicial_L",
+        "capacidad_muestras_kg"
+      ],
+      "properties": {
+        "masa_kg": {
+          "type": "number"
+        },
+        "masa_traje_kg": {
+          "type": "number"
+        },
+        "v0_m_s": {
+          "type": "number"
+        },
+        "kappa_O2_L_W_min": {
+          "type": "number"
+        },
+        "O2_inicial_L": {
+          "type": "number"
+        },
+        "capacidad_muestras_kg": {
+          "type": "number"
+        }
+      }
+    },
+    "rover": {
+      "type": "object",
+      "required": [
+        "v_m_s",
+        "R_comm_m"
+      ],
+      "properties": {
+        "v_m_s": {
+          "type": "number"
+        },
+        "R_comm_m": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

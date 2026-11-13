@@ -1,0 +1,95 @@
+{
+  "version": "1.0",
+  "nota": "Mision completa (~2,6 h simuladas) sobre el terreno REAL de terreno/ (herramientas/construir_terreno.py). O2 inicial 170 L: parametro del escenario, no del contrato. La tormenta solar es un evento de escenario, no un dato medido.",
+  "terreno": "terreno",
+  "perfil": {
+    "version": "1.0",
+    "tipo": "perfil",
+    "escenario_id": "mision-01",
+    "semilla": 42,
+    "t0_hora_solar": 10.0,
+    "factor_tiempo": 30,
+    "duracion_eva_s": 14400,
+    "astronauta": {
+      "masa_kg": 80,
+      "masa_traje_kg": 150,
+      "v0_m_s": 1.2,
+      "kappa_O2_L_W_min": 0.00298,
+      "O2_inicial_L": 170,
+      "capacidad_muestras_kg": 5
+    },
+    "rover": {
+      "v_m_s": 0.8,
+      "R_comm_m": 150
+    }
+  },
+  "fatiga": [
+    {
+      "t_ini": 4800,
+      "t_fin": 5700,
+      "factor": 1.3
+    }
+  ],
+  "eventos": [
+    {
+      "t": 1470,
+      "tipo": "peligro",
+      "sobre_ruta_m": 30,
+      "clase": "peligro",
+      "titulo": "Roca que no estaba en el mapa",
+      "detalle": "A mitad de camino aparece un bloque de ~3 m que el DEM no mostraba. La ruta se recalcula para rodearlo.",
+      "datos": {
+        "id": "p1",
+        "radio_m": 3,
+        "efecto": "bloqueo",
+        "factor": 1
+      }
+    },
+    {
+      "t": 3300,
+      "tipo": "ventanas",
+      "sitio_en_plan": 1,
+      "cierra_en_min": 5,
+      "clase": "ventana",
+      "titulo": "La sombra cierra la ventana de un sitio",
+      "detalle": "La sombra de la ladera llega antes de lo previsto a un sitio pendiente: sale del plan.",
+      "datos": {}
+    },
+    {
+      "t": 5280,
+      "tipo": "peligro",
+      "sobre_ruta_m": 45,
+      "clase": "peligro",
+      "titulo": "Arena suelta en la ruta",
+      "detalle": "Una zona de regolito suelto encarece el paso (x3 en O2) pero no lo impide.",
+      "datos": {
+        "id": "p2",
+        "radio_m": 14,
+        "efecto": "multiplicador",
+        "factor": 3
+      }
+    },
+    {
+      "t": 7500,
+      "tipo": "SPE",
+      "clase": "spe_alerta",
+      "titulo": "Alerta de tormenta solar",
+      "detalle": "Se avisa de un evento de particulas solares en ~25 min. La reserva de aborto sube al 25 % y el plan se recorta.",
+      "datos": {
+        "nivel": "alerta",
+        "llegada_s": 1500
+      }
+    },
+    {
+      "t": 9000,
+      "tipo": "SPE",
+      "clase": "spe_critico",
+      "titulo": "Tormenta solar: regreso de emergencia",
+      "detalle": "Llega el frente de particulas. Se aborta la EVA y se calcula la ruta de escape mas barata en O2. El DEM de esta ventana no tiene depresiones que sirvan de refugio, asi que el destino es el habitat.",
+      "datos": {
+        "nivel": "critico",
+        "llegada_s": 0
+      }
+    }
+  ]
+}

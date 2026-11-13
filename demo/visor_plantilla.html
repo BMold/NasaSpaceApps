@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARES-TWIN · Visor de misión</title>
+<style>
+:root{--bg:#0e1116;--panel:#171c24;--panel2:#1f2733;--line:#2a3340;--tx:#e6e9ee;--mut:#8b95a5;
+  --ok:#3fb950;--warn:#e3a008;--bad:#f0443a;--acc:#6cb6ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px;padding:12px 16px;max-width:1320px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+h1{font-size:15px;margin:0 0 2px;font-weight:600}
+h2{font-size:12px;margin:0 0 8px;color:var(--mut);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.sub{color:var(--mut);font-size:12px}
+.mapwrap{position:relative}
+canvas{display:block;width:100%;aspect-ratio:1;border-radius:8px;background:#000}
+.aviso{position:absolute;left:12px;right:12px;top:12px;padding:10px 14px;border-radius:8px;font-weight:600;
+  background:rgba(23,28,36,.92);border:1px solid var(--warn);color:var(--warn);opacity:0;transform:translateY(-6px);
+  transition:opacity .25s,transform .25s;pointer-events:none}
+.aviso.on{opacity:1;transform:none}
+.aviso.bad{border-color:var(--bad);color:var(--bad)}
+.bar{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+button,select{font:inherit;color:var(--tx);background:var(--panel2);border:1px solid var(--line);border-radius:7px;
+  padding:7px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--acc)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.play{min-width:92px;font-weight:600}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--acc)}
+.reloj{font-variant-numeric:tabular-nums;min-width:150px;text-align:right}
+.side{display:flex;flex-direction:column;gap:12px}
+.o2{position:relative;height:22px;background:var(--panel2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.o2 i{position:absolute;left:0;top:0;bottom:0;background:var(--ok);transition:width .2s}
+.o2 b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--tx)}
+.fila{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums}
+.fila span:first-child{color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;min-height:24px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;background:var(--panel2);
+  border:1px solid var(--line);font-size:12px}
+.chip i{width:9px;height:9px;display:inline-block}
+.estado{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+.estado.warn{color:var(--warn);border-color:var(--warn)}.estado.bad{color:var(--bad);border-color:var(--bad)}
+.estado.ok{color:var(--ok);border-color:var(--ok)}
+.hito{border-left:3px solid var(--acc);padding-left:10px}
+.hito b{display:block}
+.lista{display:flex;flex-direction:column;gap:4px;max-height:330px;overflow:auto;padding-right:2px}
+.lista button{text-align:left;display:flex;gap:10px;align-items:baseline;padding:6px 10px;background:transparent}
+.lista button .min{color:var(--mut);min-width:48px;font-variant-numeric:tabular-nums}
+.lista button.pas{color:var(--mut)}
+.lista button.act{background:var(--panel2);border-color:var(--acc);color:var(--tx)}
+.lista button.ev{font-weight:600}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut);margin-top:8px}
+.kbd{font-size:11px;color:var(--mut);margin-top:8px}
+@media(max-width:940px){.app{grid-template-columns:1fr}.lista{max-height:240px}}
+@media(prefers-reduced-motion:reduce){.aviso,.o2 i{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="card">
+    <h1>ARES-TWIN · Misión en Mount Sharp <span class="sub">(datos reales de Gale · Pandolf a 0,38 g sin validar)</span></h1>
+    <div class="sub">Reproducción de un registro JSONL del optimizador. Este visor no calcula nada: todo número sale de un mensaje.</div>
+    <div class="mapwrap" style="margin-top:10px">
+      <canvas id="mapa" role="img" aria-label="Mapa cenital de la misión con ruta, sitios, peligros y astronauta"></canvas>
+      <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+    </div>
+    <div class="bar">
+      <button id="prev" title="Hito anterior (←)">⏮ Anterior</button>
+      <button id="play" class="play" title="Reproducir / pausar (espacio)">▶ Reproducir</button>
+      <button id="next" title="Siguiente hito (→)">Siguiente ⏭</button>
+      <label class="sub">Velocidad
+        <select id="vel"><option value="10">×10</option><option value="30">×30 (demo)</option>
+          <option value="60" selected>×60</option><option value="120">×120</option><option value="240">×240</option></select>
+      </label>
+      <span id="reloj" class="reloj"></span>
+    </div>
+    <div class="bar">
+      <label class="sub">Base <select id="base"><option value="orto">Imagen HiRISE (falso color)</option><option value="relieve">Relieve del DEM</option></select></label>
+      <label class="sub">Capa <select id="capa"><option value="">ninguna</option></select></label>
+      <span class="sub" id="capainfo"></span>
+    </div>
+    <div class="bar"><input id="cursor" type="range" min="0" value="0" step="1" aria-label="Tiempo de la misión"></div>
+    <div class="kbd">Atajos: espacio = reproducir/pausar · ← → = hito anterior/siguiente. Al saltar a un hito se empieza unos segundos antes para ver cómo ocurre.</div>
+  </main>
+  <aside class="side">
+    <section class="card">
+      <h2>Oxígeno</h2>
+      <div class="o2" aria-hidden="true"><i id="o2fill"></i><b id="o2min"></b></div>
+      <div class="fila"><span>O₂ restante</span><span id="o2txt">—</span></div>
+      <div class="fila"><span>Mínimo para volver (línea blanca)</span><span id="o2mintxt">—</span></div>
+      <div class="fila"><span>Margen de seguridad</span><span id="margen">—</span></div>
+      <div class="fila"><span>Estado</span><span id="estado">—</span></div>
+    </section>
+    <section class="card">
+      <h2>Objetivos</h2>
+      <div class="fila"><span>Muestras recogidas</span><span id="nmu">0</span></div>
+      <div class="fila"><span>Carga</span><span id="carga">0 kg</span></div>
+      <div class="chips" id="chips"></div>
+      <div class="fila"><span>Plan vigente</span><span id="plan">—</span></div>
+      <div class="fila"><span>Sitios pendientes</span><span id="pend">—</span></div>
+      <div class="leyenda" id="leyenda"></div>
+    </section>
+    <section class="card">
+      <h2>Último hito</h2>
+      <div class="hito" id="hito"><b>—</b><span class="sub"></span></div>
+    </section>
+    <section class="card">
+      <h2>Saltar a…</h2>
+      <div class="lista" id="lista"></div>
+    </section>
+  </aside>
+</div>
+<script>
+const D = /*__DATOS__*/null;
+const TER = D.terreno, L = D.log, MARC = D.marcadores, PERF = D.perfil;
+const COL = {filosilicatos:'#7F77DD', sulfatos:'#D4537E', hematita:'#712B13', silice:'#378ADD'};
+const FORMA = {filosilicatos:'circulo', sulfatos:'rombo', hematita:'triangulo', silice:'cuadrado'};
+const AVISOS = {peligro:'Peligro en la ruta: se recalcula', recalibracion:'Fatiga detectada: κ recalibrada y plan recalculado',
+  ventana:'Ventana cerrada: un sitio sale del plan', spe_alerta:'Alerta de tormenta solar: reserva de aborto al 25 %',
+  spe_critico:'TORMENTA SOLAR · ABORTAR · ruta de escape', no_retorno:'SIN RETORNO · ABORTAR'};
+const $ = id => document.getElementById(id);
+const TELE = L.filter(m => m.tipo === 'telemetria_astronauta');
+const KEY = MARC.filter(m => m.nivel === 1);
+const TMAX = L[L.length - 1].t;
+const lead = m => (['muestra','fin','inicio'].includes(m.clase) ? 20 : 40);
+const salto = m => Math.max(0, m.t - lead(m));
+const sitios = TER.sitios, SIT = Object.fromEntries(sitios.map(s => [s.id, s]));
+
+// ---------- terreno sombreado ----------
+const terrenoCv = (() => {
+  const {filas:F, columnas:C, tam, elev} = TER;
+  const cv = document.createElement('canvas'); cv.width = C; cv.height = F;
+  const g = cv.getContext('2d'), img = g.createImageData(C, F);
+  let lo = Infinity, hi = -Infinity; for (const v of elev) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const z = (i, j) => elev[Math.min(F-1, Math.max(0, i)) * C + Math.min(C-1, Math.max(0, j))] / 100;
+  for (let i = 0; i < F; i++) for (let j = 0; j < C; j++) {
+    const dx = (z(i, j+1) - z(i, j-1)) / (2*tam), dy = (z(i+1, j) - z(i-1, j)) / (2*tam);
+    const sh = Math.max(0.6, Math.min(1.4, 1 + 3.2 * (dx - 1.33*dy)));
+    const t = (elev[i*C + j] - lo) / (hi - lo), k = ((F-1-i) * C + j) * 4;
+    img.data[k]   = Math.min(255, (104 + 58*t) * sh);
+    img.data[k+1] = Math.min(255, (92 + 50*t) * sh);
+    img.data[k+2] = Math.min(255, (82 + 42*t) * sh);
+    img.data[k+3] = 255;
+  }
+  g.putImageData(img, 0, 0); return cv;
+})();
+
+const ortoImg = new Image(); let ortoLista = false;
+if (TER.ortofoto) { ortoImg.onload = () => { ortoLista = true; }; ortoImg.src = TER.ortofoto; }
+const CAPA_COLOR = {crism_bd1900_2:[212,83,126], crism_bd2100_2:[212,83,126], crism_d2300:[127,119,221], crism_bd2210_2:[55,138,221],
+  crism_bd860_2:[113,43,19], pendiente_deg:[240,68,58]};
+const capasCv = {};
+function capaCanvas(id) {
+  if (capasCv[id]) return capasCv[id];
+  const sp = TER.superposiciones.find(s => s.id === id), {filas:F, columnas:C} = TER;
+  const cv = document.createElement('canvas'); cv.width = C; cv.height = F;
+  const g = cv.getContext('2d'), img = g.createImageData(C, F), col = CAPA_COLOR[id] || [255,255,255];
+  const v = sp.datos.filter(x => x !== null).sort((a, b) => a - b);
+  // de p75 a p99.5 de la ventana (pendiente: de 15 a 30 grados): solo se pinta lo que destaca
+  const lo = id === 'pendiente_deg' ? 15 * sp.escala : Math.max(0, v[Math.floor(v.length * .75)]), hi = id === 'pendiente_deg' ? 30 * sp.escala : v[Math.floor(v.length * .995)];
+  for (let i = 0; i < F; i++) for (let j = 0; j < C; j++) {
+    const x = sp.datos[i*C + j], k = ((F-1-i) * C + j) * 4, a = x === null ? 0 : Math.max(0, Math.min(1, (x - lo) / (hi - lo)));
+    img.data[k] = col[0]; img.data[k+1] = col[1]; img.data[k+2] = col[2]; img.data[k+3] = a * 200;
+  }
+  g.putImageData(img, 0, 0); sp.rango = [lo / sp.escala, hi / sp.escala]; return capasCv[id] = cv;
+}
+
+// ---------- estado reconstruido desde el registro ----------
+let S, idx, T = 0, playing = false, ultimoFrame = null, actAnterior = -1;
+function nuevo() { return {tele:null, est:null, plan:null, motivo:null, old:null, abort:null, hz:{}, trail:[],
+  muestras:[], spe:null, fin:null, aviso:null}; }
+function aplicar(m, vivo) {
+  switch (m.tipo) {
+    case 'telemetria_astronauta': S.tele = m; S.trail.push([m.datos.x, m.datos.y]); break;
+    case 'estado_aborto': S.est = m; break;
+    case 'plan_actualizado':
+      if (vivo && S.plan) S.old = {poly: S.plan.polilinea, t0: performance.now()};
+      S.plan = m.plan; S.motivo = m.motivo;
+      if (vivo && m.motivo !== 'inicial') avisar(m.motivo); break;
+    case 'abortar': S.abort = m; if (vivo) avisar(m.motivo); break;
+    case 'peligro': if (m.datos.radio_m > 0) S.hz[m.datos.id] = m.datos; else delete S.hz[m.datos.id]; break;
+    case 'SPE': S.spe = m.datos.nivel; break;
+    case 'hito': if (m.clase === 'muestra') S.muestras.push(m); if (m.clase === 'fin') S.fin = m; break;
+  }
+}
+function avisar(motivo) { S.aviso = {txt: AVISOS[motivo] || motivo, bad: /critico|retorno/.test(motivo), t0: performance.now()}; }
+function avanzar(t, vivo) { while (idx < L.length && L[idx].t <= t) aplicar(L[idx++], vivo); }
+function saltar(t, reproducir) { S = nuevo(); idx = 0; T = Math.max(0, Math.min(TMAX, t)); avanzar(T, false);
+  if (reproducir !== undefined) setPlay(reproducir); frame(performance.now(), true); }
+
+// ---------- dibujo ----------
+const cv = $('mapa'), ctx = cv.getContext('2d');
+function ajustar() { const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  cv.width = Math.round(r.width * d); cv.height = Math.round(r.width * d); }
+function posEn(t) {
+  let lo = 0, hi = TELE.length - 1;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (TELE[mid].t <= t) lo = mid; else hi = mid - 1; }
+  const a = TELE[lo], b = TELE[Math.min(lo + 1, TELE.length - 1)];
+  const u = b.t > a.t && t > a.t ? Math.min(1, (t - a.t) / (b.t - a.t)) : 0;
+  return [a.datos.x + (b.datos.x - a.datos.x) * u, a.datos.y + (b.datos.y - a.datos.y) * u];
+}
+function forma(g, tipo, x, y, r) {
+  g.beginPath();
+  if (tipo === 'circulo') g.arc(x, y, r, 0, 7);
+  else if (tipo === 'rombo') { g.moveTo(x, y-r*1.2); g.lineTo(x+r*1.2, y); g.lineTo(x, y+r*1.2); g.lineTo(x-r*1.2, y); g.closePath(); }
+  else if (tipo === 'triangulo') { g.moveTo(x, y-r*1.15); g.lineTo(x+r*1.1, y+r*.85); g.lineTo(x-r*1.1, y+r*.85); g.closePath(); }
+  else g.rect(x-r*.9, y-r*.9, r*1.8, r*1.8);
+}
+function linea(g, poly, X, Y) { g.beginPath(); poly.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke(); }
+function dibujar(now) {
+  const W = cv.width, d = W / 700, s = W / (TER.columnas * TER.tam), X = x => x * s, Y = y => W - y * s;
+  ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled = true;
+  ctx.drawImage($('base').value === 'orto' && ortoLista ? ortoImg : terrenoCv, 0, 0, W, W);
+  if ($('capa').value) ctx.drawImage(capaCanvas($('capa').value), 0, 0, W, W);
+  ctx.lineJoin = ctx.lineCap = 'round';
+  // refugios y habitat
+  const destino = S.abort && S.abort.destino;
+  for (const r of TER.refugios) {
+    const es = destino && destino.id === r.id;
+    ctx.setLineDash([5*d, 4*d]); ctx.lineWidth = (es ? 3 : 1.6) * d; ctx.strokeStyle = es ? '#fff' : 'rgba(255,255,255,.6)';
+    ctx.beginPath(); ctx.arc(X(r.x), Y(r.y), r.radio_m * s, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#fff'; ctx.font = `${11*d}px system-ui`; ctx.fillText('refugio ' + r.id, X(r.x) + r.radio_m*s + 4*d, Y(r.y) + 4*d);
+  }
+  // peligros
+  for (const h of Object.values(S.hz)) {
+    const bloq = h.efecto === 'bloqueo', c = bloq ? '240,68,58' : '227,160,8';
+    ctx.fillStyle = `rgba(${c},.32)`; ctx.strokeStyle = `rgb(${c})`; ctx.lineWidth = 2*d; ctx.setLineDash(bloq ? [] : [4*d, 3*d]);
+    ctx.beginPath(); ctx.arc(X(h.x), Y(h.y), Math.max(h.radio_m * s, 4*d), 0, 7); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = `rgb(${c})`; ctx.font = `bold ${11*d}px system-ui`;
+    ctx.fillText(h.id + (bloq ? '' : ' ×' + h.factor), X(h.x) + h.radio_m*s + 4*d, Y(h.y) - 4*d);
+  }
+  // ruta vieja (se desvanece 2 s), ruta por recorrer, recorrida, escape
+  if (S.old) { const a = 1 - (now - S.old.t0) / 2000; if (a > 0) { ctx.strokeStyle = `rgba(255,255,255,${.7*a})`; ctx.lineWidth = 4*d; linea(ctx, S.old.poly, X, Y); } else S.old = null; }
+  if (S.plan && !S.abort) { ctx.strokeStyle = 'rgba(255,255,255,.88)'; ctx.lineWidth = 3.5*d; linea(ctx, S.plan.polilinea, X, Y); }
+  if (S.trail.length > 1) { ctx.strokeStyle = 'rgba(70,70,76,.75)'; ctx.lineWidth = 3.5*d; linea(ctx, S.trail, X, Y); }
+  if (S.abort) { ctx.setLineDash([8*d, 6*d]); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3*d; linea(ctx, S.abort.ruta_escape, X, Y); ctx.setLineDash([]); }
+  // sitios
+  const enPlan = new Set(S.plan && !S.abort ? S.plan.paradas.map(p => p.id) : []), hechos = new Set(S.muestras.map(m => m.sitio_id));
+  for (const st of sitios) {
+    const x = X(st.x), y = Y(st.y), c = COL[st.mineral], ok = hechos.has(st.id), pen = enPlan.has(st.id);
+    ctx.globalAlpha = ok || pen ? 1 : .5;
+    forma(ctx, FORMA[st.mineral], x, y, 7.5*d);
+    if (ok || pen) { ctx.fillStyle = c; ctx.fill(); ctx.lineWidth = (ok ? 2.5 : 1.5) * d; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    else { ctx.lineWidth = 2*d; ctx.strokeStyle = '#fff'; ctx.stroke(); forma(ctx, FORMA[st.mineral], x, y, 5*d); ctx.fillStyle = c; ctx.fill(); }
+    ctx.globalAlpha = 1;
+    if (ok) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2*d; ctx.beginPath(); ctx.moveTo(x-3.5*d, y); ctx.lineTo(x-1*d, y+3*d); ctx.lineTo(x+4*d, y-3.5*d); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `bold ${11*d}px system-ui`; ctx.fillText(st.id, x + 10*d, y - 8*d);
+  }
+  // habitat
+  const hx = X(TER.habitat.x), hy = Y(TER.habitat.y);
+  ctx.fillStyle = '#fff'; ctx.fillRect(hx - 8*d, hy - 8*d, 16*d, 16*d);
+  ctx.fillStyle = '#111'; ctx.font = `bold ${11*d}px system-ui`; ctx.textAlign = 'center'; ctx.fillText('H', hx, hy + 4*d); ctx.textAlign = 'left';
+  // astronauta
+  const [ax, ay] = posEn(T), px = X(ax), py = Y(ay);
+  ctx.fillStyle = 'rgba(108,182,255,.25)'; ctx.beginPath(); ctx.arc(px, py, (11 + 2*Math.sin(now/300)) * d, 0, 7); ctx.fill();
+  ctx.fillStyle = '#6cb6ff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2*d; ctx.beginPath(); ctx.arc(px, py, 6*d, 0, 7); ctx.fill(); ctx.stroke();
+}
+
+// ---------- panel ----------
+const f1 = v => (Math.round(v * 10) / 10).toLocaleString('es');
+function horaSolar(h) { const H = Math.floor(h), M = Math.round((h - H) * 60); return String(H).padStart(2,'0') + ':' + String(M % 60).padStart(2,'0'); }
+function panel(now) {
+  $('reloj').textContent = `min ${f1(T/60)} · ${S.tele ? horaSolar(S.tele.hora_solar) + ' solar' : ''}`;
+  $('cursor').value = T;
+  const e = S.est;
+  if (e) {
+    const max = PERF.astronauta.O2_inicial_L, m = e.margen_pct, col = m > 30 ? 'ok' : m > 15 ? 'warn' : 'bad';
+    $('o2fill').style.width = Math.max(0, e.O2_restante_L / max * 100) + '%';
+    $('o2fill').style.background = `var(--${col})`;
+    $('o2min').style.left = (e.O2_minimo_L / max * 100) + '%';
+    $('o2txt').textContent = f1(e.O2_restante_L) + ' L'; $('o2mintxt').textContent = f1(e.O2_minimo_L) + ' L';
+    $('margen').textContent = m > 999 ? '> 999 %' : Math.round(m) + ' %';
+    const est = S.fin ? ['A salvo', 'ok'] : S.abort ? ['ABORTANDO', 'bad'] : S.spe === 'alerta' ? ['Alerta solar', 'warn']
+      : m <= 15 ? ['Zona de aborto', 'bad'] : m <= 30 ? ['Margen bajo', 'warn'] : ['Nominal', 'ok'];
+    $('estado').innerHTML = `<span class="estado ${est[1]}">${est[0]}</span>`;
+  }
+  $('nmu').textContent = S.muestras.length;
+  $('carga').textContent = f1(S.tele ? S.tele.datos.carga_kg : 0) + ' kg';
+  $('chips').innerHTML = S.muestras.map(m => `<span class="chip"><i style="background:${COL[m.mineral]};${FORMA[m.mineral]==='circulo'?'border-radius:50%':''}"></i>${m.sitio_id} ${m.mineral}</span>`).join('');
+  if (S.plan) { $('plan').textContent = S.abort ? 'cancelado (aborto)' : `${S.plan.plan_id} · ${S.motivo}`;
+    $('pend').textContent = S.abort ? '—' : S.plan.paradas.length ? S.plan.paradas.map(p => p.id).join(', ') : 'ninguno'; }
+  const ult = [...KEY].reverse().find(m => m.t <= T + 0.01);
+  if (ult) $('hito').innerHTML = `<b>min ${f1(ult.t/60)} · ${ult.titulo}</b><span class="sub">${ult.detalle}</span>`;
+  const ai = ult ? KEY.indexOf(ult) : -1;
+  document.querySelectorAll('#lista button').forEach((b, i) => { b.classList.toggle('act', i === ai); b.classList.toggle('pas', i < ai); });
+  if (ai !== actAnterior) { actAnterior = ai; const li = $('lista'), b = li.children[ai]; if (b) li.scrollTop = b.offsetTop - li.clientHeight / 2; }
+  const av = $('aviso');
+  if (S.aviso && now - S.aviso.t0 < 4000) { av.textContent = S.aviso.txt; av.className = 'aviso on' + (S.aviso.bad ? ' bad' : ''); }
+  else av.className = 'aviso';
+}
+function frame(now, forzar) {
+  if (playing && ultimoFrame !== null && !forzar) {
+    T = Math.min(TMAX, T + (now - ultimoFrame) / 1000 * Number($('vel').value));
+    avanzar(T, true); if (T >= TMAX) setPlay(false);
+  }
+  ultimoFrame = now; dibujar(now); panel(now);
+}
+function setPlay(v) { playing = v; $('play').textContent = v ? '⏸ Pausar' : (T >= TMAX ? '↺ Repetir' : '▶ Reproducir'); }
+function loop(now) { frame(now); requestAnimationFrame(loop); }
+
+// ---------- controles ----------
+KEY.forEach(m => {
+  const b = document.createElement('button'); b.type = 'button';
+  b.className = ['muestra','fin','inicio'].includes(m.clase) ? '' : 'ev';
+  b.innerHTML = `<span class="min">min ${f1(m.t/60)}</span><span>${m.titulo}</span>`;
+  b.onclick = () => saltar(salto(m), true); $('lista').appendChild(b);
+});
+$('play').onclick = () => { if (!playing && T >= TMAX) saltar(0, true); else setPlay(!playing); };
+$('next').onclick = () => { const m = KEY.find(m => salto(m) > T + 1); if (m) saltar(salto(m), true); };
+$('prev').onclick = () => { const m = [...KEY].reverse().find(m => salto(m) < T - 2); saltar(m ? salto(m) : 0, true); };
+$('cursor').max = Math.ceil(TMAX); $('cursor').oninput = e => saltar(Number(e.target.value));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
+  if (e.code === 'ArrowRight') $('next').click(); if (e.code === 'ArrowLeft') $('prev').click();
+});
+$('leyenda').innerHTML = Object.keys(COL).map(k => `<span><span style="color:${COL[k]}">${{circulo:'●',rombo:'◆',triangulo:'▲',cuadrado:'■'}[FORMA[k]]}</span> ${k}</span>`).join('') +
+  '<span>▭ H hábitat</span>' + (TER.refugios.length ? '<span>◌ refugio</span>' : '');
+TER.superposiciones.forEach(sp => { const o = document.createElement('option'); o.value = sp.id; o.textContent = sp.titulo; $('capa').appendChild(o); });
+if (!TER.ortofoto) $('base').value = 'relieve';
+$('capa').onchange = () => { const id = $('capa').value, sp = TER.superposiciones.find(s => s.id === id);
+  if (sp) { capaCanvas(id); $('capainfo').textContent = `${sp.fuente} · color de ${sp.rango[0].toFixed(id === 'pendiente_deg' ? 0 : 4)} a ${sp.rango[1].toFixed(id === 'pendiente_deg' ? 0 : 4)}`; }
+  else $('capainfo').textContent = ''; };
+window.addEventListener('resize', () => { ajustar(); frame(performance.now(), true); });
+ajustar(); saltar(0, false); requestAnimationFrame(loop);
+window.__visor = {saltar, get T() { return T; }, get S() { return S; }, KEY};
+</script>
+</body>
+</html>

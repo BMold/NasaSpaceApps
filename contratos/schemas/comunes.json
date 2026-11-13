@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/comunes.json",
+  "title": "Definiciones comunes (CLAUDE.md §5)",
+  "description": "Solo $defs. Los campos extra en cualquier mensaje se permiten (cambios aditivos).",
+  "$defs": {
+    "version": {
+      "const": "1.0"
+    },
+    "punto": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[x, y] en metros, marco local ENU"
+    },
+    "polilinea": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/punto"
+      },
+      "minItems": 1
+    },
+    "id_sitio": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mineral": {
+      "enum": [
+        "filosilicatos",
+        "sulfatos",
+        "hematita",
+        "silice"
+      ]
+    },
+    "ventana": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[ini_h, fin_h] en hora_solar"
+    },
+    "destino": {
+      "type": "object",
+      "required": [
+        "tipo",
+        "id"
+      ],
+      "properties": {
+        "tipo": {
+          "enum": [
+            "habitat",
+            "refugio"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "mensaje_base": {
+      "type": "object",
+      "required": [
+        "version",
+        "tipo",
+        "t"
+      ],
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "t": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "evento_base": {
+      "type": "object",
+      "required": [
+        "version",
+        "t",
+        "hora_solar",
+        "seq",
+        "tipo",
+        "datos"
+      ],
+      "description": "Envoltorio de los eventos que emite la simulacion (CLAUDE.md §10.2)",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hora_solar": {
+          "type": "number"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tipo": {
+          "type": "string"
+        },
+        "datos": {
+          "type": "object"
+        }
+      }
+    },
+    "sitio": {
+      "type": "object",
+      "required": [
+        "id",
+        "x",
+        "y",
+        "valor",
+        "mineral",
+        "masa_kg",
+        "perforacion_min",
+        "ventana"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id_sitio"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "valor": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "mineral": {
+          "$ref": "#/$defs/mineral"
+        },
+        "masa_kg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "perforacion_min": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ventana": {
+          "$ref": "#/$defs/ventana"
+        },
+        "lon": {
+          "type": "number"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "fuente": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,8 +1,16 @@
-"""Pruebas del nucleo. Sin dependencias: `python -m optimizador.pruebas.test_nucleo`
-(tambien las recoge pytest). Requiere haber corrido generate_mocks.py."""
+"""Pruebas del optimizador sobre el terreno REAL de terreno/.
+
+    python -m optimizador.pruebas.test_nucleo        (tambien las recoge pytest)
+
+No dependen de coordenadas fijas: leen el habitat y los sitios del paquete de terreno.
+"""
 import copy
+import functools
 import json
 import math
+import shutil
+import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -11,17 +19,24 @@ from optimizador import constantes as K
 from optimizador.solver import psi
 
 RAIZ = Path(__file__).resolve().parents[2]
-PERFIL = {"version": "1.0", "tipo": "perfil", "escenario_id": "demo-01", "semilla": 42,
+sys.path.insert(0, str(RAIZ))
+
+# Perfil con las constantes del contrato (40 L). El guion de mision usa su propio perfil (170 L).
+PERFIL = {"version": "1.0", "tipo": "perfil", "escenario_id": "prueba-01", "semilla": 42,
           "t0_hora_solar": 10.0, "factor_tiempo": 30, "duracion_eva_s": 14400,
           "astronauta": {"masa_kg": 80, "masa_traje_kg": 150, "v0_m_s": 1.2,
                          "kappa_O2_L_W_min": 0.00298, "O2_inicial_L": 40, "capacidad_muestras_kg": 5},
           "rover": {"v_m_s": 0.8, "R_comm_m": 150}}
 
 
-def _motor():
-    m = Motor(RAIZ / "terreno")
+def _motor(terreno=None):
+    m = Motor(terreno or RAIZ / "terreno")
     m.cargar_perfil(PERFIL)
     return m
+
+
+def _hab(m):
+    return float(m.terreno.habitat["x"]), float(m.terreno.habitat["y"])
 
 
 def _pedido():
@@ -39,6 +54,14 @@ def _ev(t, seq, tipo, datos):
     return {"version": "1.0", "t": t, "hora_solar": 10 + t / 3699, "seq": seq, "tipo": tipo, "datos": datos}
 
 
+@functools.lru_cache(maxsize=None)
+def _mision():
+    """Una corrida completa del guion de mision (se reutiliza entre pruebas)."""
+    from optimizador.pruebas.simular_guion import simular
+    g = json.loads((RAIZ / "contratos/ejemplos/guion_mision.json").read_text(encoding="utf-8"))
+    return simular(g)
+
+
 def test_pandolf():
     assert pandolf(10, 1.0) > pandolf(0, 1.0) > 0            # subir cuesta mas
     assert pandolf(10, 1.0) != pandolf(-10, 1.0)             # asimetrico
@@ -46,12 +69,26 @@ def test_pandolf():
     assert abs(250 * 6 * 0.00298 - 4.47) < 1e-9              # muestreo de 6 min
 
 
+def test_terreno_real():
+    ter = _motor().terreno
+    m = ter.manifest
+    assert "SINTETICO" not in m["sitio"].upper() and "USGS" in m["fuente_dem"]
+    assert ter.elevacion.shape == (m["filas"], m["columnas"]) and 1.0 <= ter.eta.min() and ter.eta.max() <= 2.0
+    assert 0 < ter.peligro.mean() < 0.2                      # hay bloqueos reales, pero el terreno es transitable
+    assert 1 <= len(ter.sitios) <= K.N_MAX_SITIOS and len({s["mineral"] for s in ter.sitios}) >= 2
+    for s in ter.sitios:                                     # ningun sitio ni el habitat sobre una celda bloqueada
+        i, j = ter.celda(s["x"], s["y"])
+        assert ter.peligro[i, j] == 0 and "CRISM" in s["fuente"]
+    i, j = ter.celda(*[ter.habitat[k] for k in ("x", "y")])
+    assert ter.peligro[i, j] == 0
+
+
 def test_a_estrella_igual_a_dijkstra():
     m = _motor()
     g, ter = m._grafo, m.terreno
-    for s in ter.sitios[:4]:
+    dist, _ = g.desde([m._h])
+    for s in ter.sitios[:3]:
         c = ter.indice(s["x"], s["y"])
-        dist, _ = g.desde([m._h])
         costo, cam = g.a_estrella(m._h, c)
         assert abs(costo - dist[0, c]) < 1e-9 and cam[0] == m._h and cam[-1] == c
         vuelta, _ = g.a_estrella(c, m._h)
@@ -61,24 +98,28 @@ def test_a_estrella_igual_a_dijkstra():
 
 def test_plan_de_ejemplo():
     m, p = _motor(), _pedido()
+    hab = [round(v, 2) for v in _hab(m)]
     t = time.perf_counter()
     r = m.planificar(p)
     assert time.perf_counter() - t < 2.0
     assert r["factible"] and r["orden"][0] == "H" and r["orden"][-1] == "H"
-    assert r["O2_total_L"] <= 40 * (1 - K.RHO) + 1e-6 and r["O2_reserva_L"] == 6.0
+    assert r["O2_total_L"] <= p["O2_disponible_L"] * (1 - K.RHO) + 1e-6
+    assert abs(r["O2_reserva_L"] - K.RHO * p["O2_disponible_L"]) < 1e-6
     sitios = {s["id"]: s for s in p["sitios"]}
-    assert sum(sitios[i]["masa_kg"] for i in r["orden"][1:-1]) <= 5.0 + 1e-9
-    # ciencia: recalcular Z con psi; ventanas y tiempos coherentes
+    assert sum(sitios[i]["masa_kg"] for i in r["orden"][1:-1]) <= p["capacidad_kg"] + 1e-9
     cuenta, Z = {}, 0.0
-    for par in r["paradas"]:
+    for par in r["paradas"]:                                 # ciencia recalculada con psi; ventanas y tiempos
         s = sitios[par["id"]]
         cuenta[s["mineral"]] = cuenta.get(s["mineral"], 0) + 1
         Z += s["valor"] * psi(cuenta[s["mineral"]])
-        hora = 10.0 + par["llegada_s"] / 3699
+        hora = p["hora_solar"] + par["llegada_s"] / 3699
         assert s["ventana"][0] - 1e-6 <= hora <= s["ventana"][1] + 1e-6
         assert abs(par["salida_s"] - par["llegada_s"] - 60 * s["perforacion_min"]) < 0.2
     assert abs(Z - r["ciencia_Z"]) < 1e-2
-    assert r["polilinea"][0] == [120.0, 120.0] and r["polilinea"][-1] == [120.0, 120.0]
+    assert r["polilinea"][0] == hab and r["polilinea"][-1] == hab
+    # la ruta nunca pisa una celda bloqueada del terreno real
+    ter = m.terreno
+    assert all(ter.peligro[ter.celda(x, y)] == 0 for x, y in r["polilinea"])
     assert r["ruta_escape"] and m.como_mensaje(r)["motivo"] == "pedido"
     return r
 
@@ -94,8 +135,8 @@ def test_sin_o2():
 def _guion(m):
     """Mini guion: telemetria, peligro sobre la ruta, ventana, SPE alerta y critico."""
     sal = []
-    hab = m.terreno.habitat
-    sal += m.procesar_evento(_tele(0, 1, hab["x"], hab["y"], 40.0))
+    hx, hy = _hab(m)
+    sal += m.procesar_evento(_tele(0, 1, hx, hy, 40.0))
     plan = sal[-1]["plan"]
     pol = plan["polilinea"]
     medio = pol[len(pol) // 3]
@@ -106,7 +147,7 @@ def _guion(m):
     sal += m.procesar_evento(_ev(30, 4, "SPE", {"nivel": "alerta", "llegada_s": 600}))
     sal += m.procesar_evento(_ev(40, 5, "telemetria_rover", {"x": 1, "y": 1, "bateria_pct": 90}))
     sal += m.procesar_evento(_ev(50, 6, "SPE", {"nivel": "critico", "llegada_s": 0}))
-    sal += m.procesar_evento(_tele(60, 7, hab["x"], hab["y"], 39.0))
+    sal += m.procesar_evento(_tele(60, 7, hx, hy, 39.0))
     sal += m.procesar_evento(_ev(70, 8, "SPE", {"nivel": "alerta", "llegada_s": 600}))
     return sal, medio, ultimo
 
@@ -122,26 +163,45 @@ def test_eventos():
     rodeo = sal[2]["plan"]["polilinea"]
     assert all(math.hypot(x - medio[0], y - medio[1]) > 4.0 for x, y in rodeo)   # rodea el bloqueo
     assert ultimo not in sal[3]["plan"]["orden"]                                  # ventana cerrada
-    assert sal[4]["plan"]["O2_reserva_L"] == 10.0                                 # rho = 0,25
+    assert sal[4]["plan"]["O2_reserva_L"] == 10.0                                 # rho = 0,25 de 40 L
     assert sal[4]["plan"]["O2_total_L"] <= 30.0 + 1e-6
-    assert sal[5]["ruta_escape"] and m.estado()["abortado"]
+    assert sal[5]["ruta_escape"] and sal[5]["destino"]["tipo"] == "habitat" and m.estado()["abortado"]
+
+
+def test_refugio_en_spe_critico():
+    """El terreno real no tiene depresiones de refugio: se prueba con una copia a la que se le anade una."""
+    base = _motor().terreno
+    s = base.sitios[0]
+    with tempfile.TemporaryDirectory() as tmp:
+        copia = Path(tmp) / "terreno"
+        shutil.copytree(RAIZ / "terreno", copia)
+        man = json.loads((copia / "manifest.json").read_text(encoding="utf-8"))
+        man["refugios"] = [{"id": "r1", "x": s["x"], "y": s["y"], "radio_m": 10.0, "profundidad_m": 2.0}]
+        (copia / "manifest.json").write_text(json.dumps(man), encoding="utf-8")
+        m = _motor(copia)
+        m.procesar_evento(_tele(0, 1, *_hab(m), 40.0))
+        m.procesar_evento(_tele(10, 2, s["x"] + 5.0, s["y"], 39.0))
+        ab = m.procesar_evento(_ev(20, 3, "SPE", {"nivel": "critico", "llegada_s": 0}))[0]
+        assert ab["destino"] == {"tipo": "refugio", "id": "r1", "x": s["x"], "y": s["y"]}
+        assert ab["ruta_escape"][-1] == [s["x"], s["y"]] and ab["O2_previsto_L"] > 38.0
 
 
 def test_no_retorno_y_recalibracion():
     m = _motor()
-    s = m.terreno.sitios[0]
-    m.procesar_evento(_tele(0, 1, 120.0, 120.0, 40.0))
+    hx, hy = _hab(m)
+    s = max(m.terreno.sitios, key=lambda q: float(m._R[m.terreno.indice(q["x"], q["y"])]))   # el mas caro de volver
+    m.procesar_evento(_tele(0, 1, hx, hy, 40.0))
     R = float(m._R[m.terreno.indice(s["x"], s["y"])])
     sal = m.procesar_evento(_tele(10, 2, s["x"], s["y"], R * 1.10))
     assert [x["tipo"] for x in sal] == ["estado_aborto", "abortar"] and sal[1]["motivo"] == "no_retorno"
     assert sal[0]["margen_pct"] <= 15 and abs(sal[0]["O2_minimo_L"] - 1.15 * sal[0]["R_L"]) < 2e-3
 
     m = _motor()
-    m.procesar_evento(_tele(0, 1, 120.0, 120.0, 40.0))
+    m.procesar_evento(_tele(0, 1, hx, hy, 40.0))
     kappa = m.estado()["kappa_O2_L_W_min"]
     motivos = []
     for k in range(1, 12):                                   # parado, VO2 x1,3 del previsto
-        for x in m.procesar_evento(_tele(10 * k, k + 1, 120.0, 120.0, 40 - 0.15 * k,
+        for x in m.procesar_evento(_tele(10 * k, k + 1, hx, hy, 40 - 0.15 * k,
                                          vo2=1.3 * 250 * kappa, vel=0.0)):
             if x["tipo"] == "plan_actualizado":
                 motivos.append((10 * k, x["motivo"]))
@@ -159,34 +219,90 @@ def test_determinismo_y_latencia():
     assert limpio(_guion(_motor())[0]) == limpio(_guion(_motor())[0])
 
     m = _motor()
-    m.procesar_evento(_tele(0, 1, 120.0, 120.0, 40.0))
+    hx, hy = _hab(m)
+    m.procesar_evento(_tele(0, 1, hx, hy, 40.0))
     t = time.perf_counter()
     for k in range(1, 201):
-        m.procesar_evento(_tele(10 * k, k + 1, 120.0 + 0.1 * k, 120.0, 40.0 - 0.01 * k, vo2=0.66))
+        m.procesar_evento(_tele(10 * k, k + 1, hx + 0.05 * k, hy, 40.0 - 0.01 * k, vo2=0.66))
     ms = 1000 * (time.perf_counter() - t) / 200
     assert ms < 5.0, ms
     return ms
 
 
-def test_guion_demo():
-    from optimizador.pruebas.simular_guion import correr
-    reg, fin = correr()
-    assert [m["motivo"] for m in reg] == ["inicial", "peligro", "recalibracion", "ventana",
-                                          "spe_alerta", "spe_critico"], [m["motivo"] for m in reg]
-    assert all(math.hypot(x - 197.5, y - 85.5) > 4.0 for x, y in reg[1]["plan"]["polilinea"])
-    assert 6 in reg[2]["plan"]["orden"] and 6 not in reg[3]["plan"]["orden"]
-    assert reg[4]["plan"]["O2_reserva_L"] > reg[3]["plan"]["O2_reserva_L"] * 0.25 / 0.15 * 0.7
-    assert reg[5]["tipo"] == "abortar" and fin["O2_final_L"] > 6.0 and fin["margen_min_pct"] > 15
-    reg2, fin2 = correr()
-    quitar = lambda r: [{k: v for k, v in m.get("plan", m).items() if k != "tiempo_calculo_ms"} for m in r]
-    assert quitar(reg) == quitar(reg2) and fin == fin2
+def test_mision_completa():
+    log, marcas, fin = _mision()
+    sal = [m for m in log if m["tipo"] in ("plan_actualizado", "abortar")]
+    assert [m["motivo"] for m in sal] == ["inicial", "peligro", "ventana", "recalibracion", "peligro",
+                                          "spe_alerta", "spe_critico"], [m["motivo"] for m in sal]
+    assert all(m["plan"]["tiempo_calculo_ms"] < 2000 for m in sal if "plan" in m)
+    p1 = next(m for m in log if m["tipo"] == "peligro")["datos"]
+    assert all(math.hypot(x - p1["x"], y - p1["y"]) > p1["radio_m"] for x, y in sal[1]["plan"]["polilinea"])
+    o2_alerta = [m for m in log if m["tipo"] == "telemetria_astronauta" and m["t"] == sal[5]["t"]][0]["datos"]["O2_restante_L"]
+    assert abs(sal[5]["plan"]["O2_reserva_L"] - 0.25 * o2_alerta) < 0.01      # rho = 0,25 sobre el O2 restante
+    ab = sal[-1]
+    assert ab["ruta_escape"][-1] == [ab["destino"]["x"], ab["destino"]["y"]]
+    assert fin["muestras"] >= 6 and fin["O2_final_L"] > 6.0 and fin["margen_min_pct"] > 15
+    assert len({m["mineral"] for m in marcas if m["clase"] == "muestra"}) >= 2   # diversidad real de minerales
+    assert [m["t"] for m in log] == sorted(m["t"] for m in log)                # el visor depende de este orden
+    assert sum(m["clase"] == "muestra" for m in marcas) == fin["muestras"]
+    assert all(0 <= m["linea"] < len(log) for m in marcas)
+    # el astronauta nunca pisa una celda bloqueada
+    ter = _motor().terreno
+    assert all(ter.peligro[ter.celda(m["datos"]["x"], m["datos"]["y"])] == 0
+               for m in log if m["tipo"] == "telemetria_astronauta")
+
+
+def test_mision_determinista():
+    from optimizador.pruebas.simular_guion import simular
+    g = json.loads((RAIZ / "contratos/ejemplos/guion_mision.json").read_text(encoding="utf-8"))
+    quitar = lambda r: json.dumps([{k: v for k, v in (m.get("plan") or m).items() if k != "tiempo_calculo_ms"}
+                                   for m in r], sort_keys=True)
+    assert quitar(_mision()[0]) == quitar(simular(g)[0])
+
+
+def test_esquemas():
+    from contratos.validar import validar_jsonl, validar_mensaje, validar_terreno
+    log = _mision()[0]
+    # 1) todo lo que produce el sistema valida
+    assert all(not validar_mensaje(m) for m in log), [validar_mensaje(m) for m in log if validar_mensaje(m)][:2]
+    assert not validar_mensaje(_pedido()) and not validar_mensaje(PERFIL)
+    assert not validar_terreno(RAIZ / "terreno")
+    for f in sorted((RAIZ / "logs").glob("*.jsonl")):
+        _, _, malos, desorden = validar_jsonl(f)
+        assert malos == 0 and desorden == 0, f
+    # 2) los esquemas rechazan lo incorrecto
+    plan = next(m for m in log if m["tipo"] == "plan_actualizado")
+    tele = next(m for m in log if m["tipo"] == "telemetria_astronauta")
+
+    def roto(m, ruta, valor):
+        m = copy.deepcopy(m)
+        d = m
+        for k in ruta[:-1]:
+            d = d[k]
+        if valor is KeyError:
+            del d[ruta[-1]]
+        else:
+            d[ruta[-1]] = valor
+        return validar_mensaje(m)
+    assert roto(plan, ["motivo"], "inventado")
+    assert roto(plan, ["plan", "orden"], ["H"])
+    assert roto(plan, ["plan", "tiempo_calculo_ms"], 2500)
+    assert roto(plan, ["version"], "2.0")
+    assert roto(tele, ["datos", "O2_restante_L"], "mucho")
+    assert roto(tele, ["datos", "x"], KeyError)
+    assert roto(tele, ["seq"], 0)
+    assert not validar_mensaje({"version": "1.0", "tipo": "tipo_futuro", "t": 1})          # tipo desconocido: se ignora
+    assert validar_mensaje({"version": "1.0", "tipo": "SPE", "t": 1, "hora_solar": 10, "seq": 1, "datos": {"nivel": "grave", "llegada_s": 1}})
+    # 3) mensajes de transporte propuestos
+    assert not validar_mensaje({"version": "1.0", "tipo": "control", "accion": "saltar", "t": 600})
+    assert validar_mensaje({"version": "1.0", "tipo": "control", "accion": "saltar"})
+    assert not validar_mensaje({"version": "1.0", "tipo": "reinicio", "t": 600, "motivo": "saltar"})
+    assert not validar_mensaje({"version": "1.0", "tipo": "error", "codigo": "sin_perfil", "detalle": "falta perfil"})
 
 
 if __name__ == "__main__":
     for nombre, f in list(globals().items()):
         if nombre.startswith("test_"):
+            t0 = time.perf_counter()
             r = f()
-            print(f"ok  {nombre}" + (f"  ({r:.3f} ms/telemetria)" if isinstance(r, float) else ""))
-    r = test_plan_de_ejemplo()
-    print(json.dumps({k: v for k, v in r.items() if k not in ("polilinea", "ruta_escape")}, indent=1))
-    print("puntos en la polilinea:", len(r["polilinea"]))
+            print(f"ok  {nombre}  ({time.perf_counter() - t0:.1f} s)" + (f"  [{r:.3f} ms/telemetria]" if isinstance(r, float) else ""))

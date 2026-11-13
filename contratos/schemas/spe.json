@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/spe.json",
+  "title": "Evento SPE (§10.3)",
+  "description": "llegada_s: segundos simulados hasta el frente de particulas.",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/evento_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "SPE"
+        },
+        "datos": {
+          "type": "object",
+          "required": [
+            "nivel",
+            "llegada_s"
+          ],
+          "properties": {
+            "nivel": {
+              "enum": [
+                "alerta",
+                "critico"
+              ]
+            },
+            "llegada_s": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/plan.json",
+  "title": "Respuesta del plan (§11.2)",
+  "type": "object",
+  "required": [
+    "version",
+    "plan_id",
+    "factible",
+    "orden",
+    "polilinea",
+    "paradas",
+    "O2_total_L",
+    "O2_reserva_L",
+    "ciencia_Z",
+    "ruta_escape",
+    "tiempo_calculo_ms",
+    "optimo"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "comunes.json#/$defs/version"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^pl-[0-9]{4,}$"
+    },
+    "factible": {
+      "type": "boolean"
+    },
+    "orden": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "oneOf": [
+          {
+            "const": "H"
+          },
+          {
+            "$ref": "comunes.json#/$defs/id_sitio"
+          }
+        ]
+      }
+    },
+    "polilinea": {
+      "$ref": "comunes.json#/$defs/polilinea"
+    },
+    "paradas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "x",
+          "y",
+          "llegada_s",
+          "salida_s",
+          "O2_acum_L"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "comunes.json#/$defs/id_sitio"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "llegada_s": {
+            "type": "number"
+          },
+          "salida_s": {
+            "type": "number"
+          },
+          "O2_acum_L": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "O2_total_L": {
+      "type": "number"
+    },
+    "O2_reserva_L": {
+      "type": "number"
+    },
+    "ciencia_Z": {
+      "type": "number"
+    },
+    "ruta_escape": {
+      "$ref": "comunes.json#/$defs/polilinea"
+    },
+    "tiempo_calculo_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2000
+    },
+    "optimo": {
+      "type": "boolean"
+    }
+  }
+}

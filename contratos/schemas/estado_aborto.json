@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/estado_aborto.json",
+  "title": "Estado de aborto (§11.3)",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/mensaje_base"
+    },
+    {
+      "required": [
+        "O2_restante_L",
+        "R_L",
+        "O2_minimo_L",
+        "margen_pct"
+      ],
+      "properties": {
+        "tipo": {
+          "const": "estado_aborto"
+        },
+        "O2_restante_L": {
+          "type": "number"
+        },
+        "R_L": {
+          "type": "number",
+          "minimum": 0
+        },
+        "O2_minimo_L": {
+          "type": "number",
+          "minimum": 0
+        },
+        "margen_pct": {
+          "type": "number"
+        }
+      }
+    }
+  ]
+}

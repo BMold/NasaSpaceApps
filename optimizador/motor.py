@@ -66,6 +66,12 @@ class Motor:
         self._grafo = Grafo(ter, self._astro, mult, bloq)
         self._h = ter.indice(ter.habitat["x"], ter.habitat["y"])
         self._R, self._sig = self._grafo.campo_retorno(self._h)
+        # campos de retorno a cada refugio: (refugio, R, sig, celda)
+        self._refugios = []
+        for r in ter.refugios:
+            c = ter.indice(r["x"], r["y"])
+            R, sig = self._grafo.campo_retorno(c)
+            self._refugios.append((r, R, sig, c))
 
     # ----------------------------------------------------------------- pedidos
     def planificar(self, pedido: dict) -> dict:
@@ -256,17 +262,27 @@ class Motor:
         self._abortado = True
         x, y = self._posicion()
         c = self.terreno.indice(x, y)
-        R = float(self._R[c])
+        hab = self.terreno.habitat
+        R, sig, meta = float(self._R[c]), self._sig, self._h
+        destino = {"tipo": "habitat", "id": "H", "x": hab["x"], "y": hab["y"]}
+        if motivo == "spe_critico":
+            # tormenta solar: el refugio (crater) mas barato en O2, si es mejor que el habitat
+            for r, Rr, sr, cr in self._refugios:
+                if float(Rr[c]) < R:
+                    R, sig, meta = float(Rr[c]), sr, cr
+                    destino = {"tipo": "refugio", "id": r["id"], "x": r["x"], "y": r["y"]}
         o2 = self._tele["O2"] if self._tele else self._astro["O2_inicial_L"]
         return {"version": K.VERSION, "tipo": "abortar", "t": t, "motivo": motivo,
-                "seq_evento": seq, "ruta_escape": self._escape(x, y),
+                "seq_evento": seq, "destino": destino,
+                "ruta_escape": self._escape(x, y, sig, meta, destino),
                 "O2_previsto_L": round(o2 - R, 3) if math.isfinite(R) else 0.0}
 
-    def _escape(self, x, y):
-        """Polilinea de vuelta al habitat desde (x, y) por el campo de retorno."""
-        hab = self.terreno.habitat
-        cam = Grafo.camino_retorno(self._sig, self.terreno.indice(x, y), self._h)
-        return self._polilinea(cam, (x, y), (hab["x"], hab["y"]))
+    def _escape(self, x, y, sig=None, meta=None, destino=None):
+        """Polilinea de vuelta (por defecto al habitat) desde (x, y) por el campo de retorno."""
+        d = destino or self.terreno.habitat
+        cam = Grafo.camino_retorno(self._sig if sig is None else sig,
+                                   self.terreno.indice(x, y), self._h if meta is None else meta)
+        return self._polilinea(cam, (x, y), (d["x"], d["y"]))
 
     def _polilinea(self, cam, ini, fin):
         """Puntos exactos en los extremos, centros de celda en el medio. Sin camino: recta."""

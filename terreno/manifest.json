@@ -1,22 +1,40 @@
 {
   "version": "1.0",
-  "sitio": "Mount Sharp, crater Gale (SINTETICO)",
-  "fuente_dem": "sintetico: generate_mocks.py, semilla 42",
+  "sitio": "Mount Sharp (Aeolis Mons), crater Gale, Marte: unidad de sulfatos, ladera norte",
+  "fuente_dem": "USGS Astrogeology, Mars MSL Gale Merged DEM 1m v3 (HRSC/CTX/HiRISE sobre MOLA)",
   "origen": {
     "x": 0.0,
     "y": 0.0,
-    "nota": "pendiente: esquina suroeste de la malla"
+    "nota": "esquina suroeste de la ventana"
   },
   "marco": "ENU local (x = Este, y = Norte, z = arriba), metros",
   "tam_celda_m": 2.5,
-  "filas": 96,
-  "columnas": 96,
+  "filas": 192,
+  "columnas": 192,
   "fila_0": "sur",
+  "z_ref_m": -3420.0,
+  "georreferencia": {
+    "proyeccion": "equirectangular, latitud estandar 0, longitud central 0, positiva al este",
+    "radio_m": 3396190.0,
+    "esquina_sw": {
+      "lon_este_deg": 137.408172,
+      "lat_deg": -4.827169
+    },
+    "esquina_ne": {
+      "lon_este_deg": 137.416269,
+      "lat_deg": -4.819071
+    },
+    "x_sw_m": 8144827.804195119,
+    "y_sw_m": -286129.0
+  },
   "capas": {
     "elevacion": {
       "archivo": "elevacion.bin",
       "dtype": "float32",
-      "unidad": "m"
+      "unidad": "m",
+      "fuente": "USGS Astrogeology, Mars MSL Gale Merged DEM 1m v3 (HRSC/CTX/HiRISE sobre MOLA)",
+      "resolucion_nativa_m": 1.0,
+      "descripcion": "altura sobre z_ref = -3420 m (areoide MOLA)"
     },
     "eta_terreno": {
       "archivo": "eta_terreno.bin",
@@ -24,7 +42,9 @@
       "rango": [
         1,
         2
-      ]
+      ],
+      "fuente": "derivada de elevacion",
+      "descripcion": "desviacion tipica de la pendiente en ventana 3x3, normalizada a [1, 2]"
     },
     "peligro": {
       "archivo": "peligro.bin",
@@ -32,13 +52,92 @@
       "valores": {
         "0": "libre",
         "1": "bloqueo"
-      }
+      },
+      "fuente": "derivada de elevacion",
+      "descripcion": "pendiente > 30 grados"
+    },
+    "pendiente_deg": {
+      "archivo": "pendiente_deg.bin",
+      "dtype": "float32",
+      "unidad": "grados",
+      "fuente": "derivada de elevacion"
+    },
+    "ortofoto": {
+      "archivo": "ortofoto.jpg",
+      "formato": "jpg",
+      "filas": 1920,
+      "columnas": 1920,
+      "tam_celda_m": 0.25,
+      "fuente": "ESP_087149_1750_COLOR (MRO HiRISE RDR, 2025-02-28)",
+      "resolucion_nativa_m": 0.25,
+      "descripcion": "falso color (R,G,B) = (IR, RED, BG); fila 0 de la imagen = NORTE; estirada por percentiles"
+    },
+    "crism_bd1900_2": {
+      "archivo": "crism_bd1900_2.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen BD1900_2 (indicio de sulfatos); p90 de la escena = 0.0047"
+    },
+    "crism_bd2100_2": {
+      "archivo": "crism_bd2100_2.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen BD2100_2 (indicio de sulfatos); p90 de la escena = 0.0088"
+    },
+    "crism_bd2210_2": {
+      "archivo": "crism_bd2210_2.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen BD2210_2 (indicio de silice); p90 de la escena = 0.0032"
+    },
+    "crism_bd860_2": {
+      "archivo": "crism_bd860_2.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen BD860_2 (indicio de hematita); p90 de la escena = -0.0051"
+    },
+    "crism_d2300": {
+      "archivo": "crism_d2300.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen D2300 (indicio de filosilicatos); p90 de la escena = 0.0013"
     }
   },
   "sitios": "sitios.json",
   "habitat": {
     "id": "H",
-    "x": 120.0,
-    "y": 120.0
+    "x": 238.75,
+    "y": 231.25
+  },
+  "corregistro": {
+    "referencia": "DEM de USGS",
+    "nota": "coordenada en el producto = coordenada DEM + desfase (este, norte), m",
+    "hirise_m": [
+      -9.0,
+      -136.0
+    ],
+    "crism_m": [
+      126.0,
+      -90.0
+    ],
+    "precision_m": {
+      "hirise": 1,
+      "crism": 9
+    }
+  },
+  "supuestos": {
+    "pendiente_bloqueo_deg": 30.0,
+    "pendiente_max_sitio_deg": 15.0,
+    "sitios": "maximos locales de cada indice CRISM por encima del p90 de la escena; valor = 1 + 9*(v - p90)/(p99.9 - p90); masa, perforacion y ventana son supuestos de escenario; habitat = celda mas llana del tercio central"
   }
 }

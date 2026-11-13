@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/error.json",
+  "title": "Error del sistema (PROPUESTA)",
+  "allOf": [
+    {
+      "type": "object",
+      "required": [
+        "version",
+        "tipo"
+      ],
+      "properties": {
+        "version": {
+          "$ref": "comunes.json#/$defs/version"
+        },
+        "t": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "error"
+        },
+        "codigo": {
+          "enum": [
+            "pedido_invalido",
+            "version_no_soportada",
+            "sin_perfil",
+            "seq_fuera_de_orden",
+            "optimizador_no_disponible",
+            "interno"
+          ]
+        },
+        "detalle": {
+          "type": "string"
+        },
+        "seq_evento": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "codigo",
+        "detalle"
+      ]
+    }
+  ]
+}

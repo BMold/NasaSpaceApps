@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ares-twin.local/schemas/hito.json",
+  "title": "Hito de la simulacion (auxiliar; lo emite Dana o el generador de registros)",
+  "description": "Tipo auxiliar: quien no lo conozca lo ignora. Sirve a los marcadores y al panel de objetivos.",
+  "allOf": [
+    {
+      "$ref": "comunes.json#/$defs/mensaje_base"
+    },
+    {
+      "properties": {
+        "tipo": {
+          "const": "hito"
+        },
+        "clase": {
+          "enum": [
+            "llegada",
+            "muestra",
+            "fin"
+          ]
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "clase"
+      ]
+    },
+    {
+      "if": {
+        "properties": {
+          "clase": {
+            "const": "llegada"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "sitio_id",
+          "mineral"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "clase": {
+            "const": "muestra"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "sitio_id",
+          "mineral",
+          "masa_kg",
+          "n_muestras",
+          "carga_kg"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "clase": {
+            "const": "fin"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "destino",
+          "O2_restante_L"
+        ],
+        "properties": {
+          "destino": {
+            "$ref": "comunes.json#/$defs/destino"
+          }
+        }
+      }
+    }
+  ]
+}
