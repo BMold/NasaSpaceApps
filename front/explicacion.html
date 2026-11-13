@@ -1,0 +1,1577 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0d14" />
+    <title>Cómo decide el rover · ARES-TWIN</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23c1440e'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%2300f0ff' stroke-width='2'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #0a0d14;
+  --panel: #111722;
+  --panel-2: #0d121b;
+  --line: #243041;
+  --text: #dbe4ee;
+  --muted: #94a3b6;
+  --cyan: #00f0ff;
+  --amber: #ff9900;
+  --red: #ff003c;
+  --green: #00ff78;
+  --yellow: #ffc800;
+  --violet: #aa5aff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 Inter, system-ui, sans-serif;
+}
+
+a {
+  color: var(--cyan);
+}
+
+code,
+.eq,
+output,
+table,
+.sum,
+.verify {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+code {
+  font-size: 0.86em;
+  color: #9fe9f2;
+}
+
+var {
+  font-style: italic;
+  color: #fff;
+}
+
+.hero,
+main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero {
+  padding-top: 40px;
+  padding-bottom: 12px;
+}
+
+.back {
+  font-size: 14px;
+  text-decoration: none;
+}
+
+h1 {
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.12;
+  margin: 18px 0 14px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  max-width: 76ch;
+  font-size: 18px;
+  color: #c3cfdc;
+}
+
+.pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+}
+
+.pipeline a {
+  display: block;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  background: var(--panel-2);
+}
+
+.pipeline a:hover {
+  border-color: var(--cyan);
+}
+
+.pipeline b {
+  color: var(--cyan);
+  margin-right: 4px;
+}
+
+section {
+  padding: 44px 0 12px;
+  border-bottom: 1px solid #18202c;
+  scroll-margin-top: 8px;
+}
+
+section:last-child {
+  border-bottom: 0;
+  padding-bottom: 80px;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: clamp(23px, 3vw, 30px);
+  line-height: 1.2;
+  margin: 6px 0 12px;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+
+.cy {
+  color: var(--cyan);
+}
+
+.am {
+  color: var(--amber);
+}
+
+section > p {
+  max-width: 78ch;
+}
+
+.eq {
+  margin: 14px 0;
+  padding: 12px 16px;
+  background: var(--panel-2);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-x: auto;
+}
+
+.eq.calc {
+  margin: 12px 0 0;
+  border-left-color: var(--amber);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.eq .res {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.widget {
+  margin: 18px 0;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.widget.two,
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.controls label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #c3cfdc;
+}
+
+label output {
+  float: right;
+  color: var(--cyan);
+  font-size: 13px;
+}
+
+input[type='range'] {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  accent-color: var(--cyan);
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+label.check.inline {
+  display: inline-flex;
+  margin: 0;
+  font-size: 13px;
+}
+
+input[type='checkbox'] {
+  accent-color: var(--cyan);
+  width: 16px;
+  height: 16px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+svg {
+  display: block;
+  width: 100%;
+}
+
+svg.wide {
+  margin: 18px 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+button,
+select {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 11px;
+  min-height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--cyan);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+button.on {
+  border-color: var(--cyan);
+  background: #083a42;
+}
+
+button.primary {
+  background: #06606b;
+  border-color: var(--cyan);
+  color: #fff;
+  font-weight: 600;
+}
+
+button i,
+.legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tlabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 4px 0 2px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.player .grow {
+  flex: 1 1 240px;
+  margin-left: 8px;
+  font-size: 13px;
+  color: #c3cfdc;
+}
+
+.player .grow output {
+  float: none;
+  margin-left: 4px;
+}
+
+.board {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.sum {
+  margin: 8px 0 2px;
+  font-size: 13px;
+  color: #fff;
+}
+
+.stepdesc {
+  margin: 4px 0 8px;
+  min-height: 3.2em;
+  font-size: 14px;
+  color: #c3cfdc;
+}
+
+.tablewrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  text-align: right;
+  color: var(--muted);
+  font-weight: 400;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+td {
+  text-align: right;
+  padding: 3px 6px;
+  border-bottom: 1px solid #1a2331;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+tr.win td {
+  color: var(--green);
+  font-weight: 600;
+}
+
+tr.dim td {
+  color: #6f7d90;
+}
+
+.mapgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+#realMap {
+  cursor: crosshair;
+  image-rendering: pixelated;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: #c3cfdc;
+}
+
+.verify {
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--green);
+}
+
+.verify.bad {
+  color: var(--red);
+}
+
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 78ch;
+}
+
+.limits {
+  max-width: 82ch;
+  padding-left: 20px;
+}
+
+.limits li {
+  margin-bottom: 10px;
+}
+
+.limits b {
+  color: #fff;
+}
+
+.guia {
+  margin-top: 28px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.guia h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+
+.guia > p {
+  margin-top: 0;
+  max-width: 78ch;
+}
+
+.tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 14px 22px;
+  margin: 0;
+}
+
+.tipos dt {
+  margin-bottom: 4px;
+}
+
+.tipos dd {
+  margin: 0;
+  font-size: 14px;
+  color: #c3cfdc;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 600 11px/1.5 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.tag.teorema {
+  color: var(--green);
+}
+.tag.algoritmo {
+  color: var(--cyan);
+}
+.tag.metodo {
+  color: #8ab8ff;
+}
+.tag.definicion {
+  color: #c3cfdc;
+}
+.tag.modelo {
+  color: #c79bff;
+}
+.tag.propia {
+  color: #ffb340;
+}
+
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 20px;
+}
+
+.ficha {
+  padding: 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.ficha.ancha {
+  grid-column: 1 / -1;
+}
+
+.ficha > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+
+.ficha h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.ficha dl {
+  margin: 0;
+}
+
+.ficha dt {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.ficha dt:first-child {
+  margin-top: 0;
+}
+
+.ficha dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #c9d4e0;
+}
+
+.ficha dd b {
+  color: #fff;
+}
+
+.ficha details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.ficha summary {
+  color: var(--cyan);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ficha details p {
+  margin: 8px 0;
+  color: #c9d4e0;
+}
+
+.ficha .eq {
+  margin: 8px 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ficha .eq.mini {
+  margin: 0 0 12px;
+}
+
+.resumen table {
+  font-size: 13px;
+}
+
+.resumen td,
+.resumen th {
+  text-align: left;
+  padding: 7px 10px 7px 0;
+  white-space: normal;
+  min-width: 96px;
+}
+
+.resumen .tag {
+  font-size: 10px;
+}
+
+.refs-title {
+  margin-top: 34px;
+}
+
+.refs {
+  max-width: 88ch;
+  padding-left: 24px;
+  font-size: 14px;
+  color: #c3cfdc;
+}
+
+.refs li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 820px) {
+  .fichas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .widget.two,
+  .split,
+  .mapgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero,
+  main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .widget {
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+</style>
+  </head>
+  <body>
+    <!-- Generado desde src/explicacion/template.html con: npm run explicacion -->
+    <header class="hero">
+      <a class="back" href="/">← Volver al simulador</a>
+      <h1>Cómo decide y avanza el rover</h1>
+      <p class="lead">
+        Es una <b>cuadrícula convertida en grafo dirigido</b>: el terreno se discretiza en 96 × 96 celdas de 2,5 m y cada paso
+        entre celdas cuesta los <b>litros de O₂</b> que gasta el astronauta (modelo de Pandolf, con la pendiente con signo: subir
+        cuesta más que bajar). Sobre ese grafo, A* busca cada tramo, un Dijkstra inverso calcula cuánto O₂ hace falta para volver
+        desde cualquier punto, y un optimizador elige qué sitios científicos visitar y en qué orden según la hora marciana.
+        Cada número de esta página usa las fórmulas del código del simulador.
+      </p>
+      <ol class="pipeline" aria-label="Etapas del cálculo">
+        <li><a href="#terreno"><b>1</b> Terreno → pendiente</a></li>
+        <li><a href="#costo"><b>2</b> Pendiente → litros de O₂</a></li>
+        <li><a href="#grafo"><b>3</b> Grafo dirigido</a></li>
+        <li><a href="#algoritmos"><b>4</b> A* y voraz</a></li>
+        <li><a href="#mapa"><b>5</b> Mapa real</a></li>
+        <li><a href="#suavizado"><b>6</b> Suavizado</a></li>
+        <li><a href="#avance"><b>7</b> Avance</a></li>
+        <li><a href="#giro"><b>8</b> Giro y rescate</a></li>
+        <li><a href="#replan"><b>9</b> Replanificación</a></li>
+        <li><a href="#consumo"><b>10</b> Consumo</a></li>
+        <li><a href="#hora"><b>11</b> Hora marciana</a></li>
+        <li><a href="#retorno"><b>12</b> Punto de no retorno</a></li>
+        <li><a href="#tour"><b>13</b> Tour científico</a></li>
+        <li><a href="#refugio"><b>14</b> Refugio</a></li>
+        <li><a href="#limites"><b>15</b> Límites</a></li>
+        <li><a href="#fuentes"><b>16</b> Todas las fórmulas y fuentes</a></li>
+      </ol>
+      <div class="guia">
+        <h2>Cómo leer cada fórmula</h2>
+        <p>Cada fórmula tiene una ficha que dice qué hace, si es un teorema, quién la creó y cómo la usa este rover. Hay seis tipos, y conviene no mezclarlos:</p>
+        <dl class="tipos">
+          <div><dt><span class="tag teorema">Teorema</span></dt><dd>Está demostrado matemáticamente: es cierto siempre que se cumplan sus condiciones.</dd></div>
+          <div><dt><span class="tag algoritmo">Algoritmo</span></dt><dd>Una receta de pasos, publicada por alguien. Puede venir acompañada de un teorema o no.</dd></div>
+          <div><dt><span class="tag metodo">Método numérico</span></dt><dd>Una forma de aproximar con cuentas algo continuo, como una derivada o una integral.</dd></div>
+          <div><dt><span class="tag definicion">Definición</span></dt><dd>Una convención o una cuenta directa. No se demuestra: se adopta.</dd></div>
+          <div><dt><span class="tag modelo">Modelo</span></dt><dd>Una simplificación de la realidad, útil pero nunca exacta.</dd></div>
+          <div><dt><span class="tag propia">Decisión del proyecto</span></dt><dd>Lo diseñamos para esta demo. No sale de un paper ni de datos de misión.</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <main>
+      <section id="terreno">
+        <p class="kicker">Paso 1 · <code>src/lib/terrain.ts</code></p>
+        <h2>De la altura a la pendiente</h2>
+        <p>
+          El terreno es una malla de alturas de 241 × 241 puntos (1 m entre puntos). Para saber qué tan empinado está un lugar se
+          comparan las alturas a cada lado, a una distancia <var>e</var> = 1,25 m: son diferencias centrales.
+        </p>
+        <div class="eq">
+          g<sub>x</sub> = (h(x+e, z) − h(x−e, z)) / 2e &nbsp;&nbsp; g<sub>z</sub> = (h(x, z+e) − h(x, z−e)) / 2e<br />
+          s = atan( √(g<sub>x</sub>² + g<sub>z</sub>²) ) · 180/π
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Diferencia central: g<sub>x</sub>, g<sub>z</sub></h3><span class="tag metodo">Método numérico</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Estima cuánto sube el terreno por metro en cada eje. Como la malla sólo tiene alturas sueltas, aproxima la derivada con la diferencia entre dos puntos.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una aproximación, pero su error sí se demuestra con el teorema de Taylor.</dd>
+              <dt>Origen</dt><dd>Sin un único creador: viene del cálculo de diferencias finitas (siglos XVII y XVIII, con Newton y Brook Taylor, 1715). En análisis de terreno, esta variante de 4 vecinos se asocia a Zevenbergen y Thorne (1987).</dd>
+              <dt>En este rover</dt><dd>Mide la pendiente de cada celda con <var>e</var> = 1,25 m, la mitad de una celda.</dd>
+            </dl>
+            <details>
+              <summary>Ver por qué funciona</summary>
+              <p>Taylor desarrolla la altura alrededor de x:</p>
+              <div class="eq">h(x±e) = h ± e·h′ + e²/2·h″ ± e³/6·h‴ + …</div>
+              <p>Al restar los dos casos se cancelan los términos pares:</p>
+              <div class="eq">[h(x+e) − h(x−e)] / 2e = h′ + e²/6·h‴ + …</div>
+              <p>El error es proporcional a e²: con la mitad de <var>e</var>, cae a la cuarta parte.</p>
+            </details>
+          </article>
+          <article class="ficha">
+            <header><h3>Ángulo de pendiente: s</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Junta las dos subidas en un solo número y lo pasa a grados. √(g<sub>x</sub>² + g<sub>z</sub>²) es la subida por metro en la dirección más empinada; atan convierte «subida / avance» en un ángulo.</dd>
+              <dt>¿Es un teorema?</dt><dd>La fórmula en sí es una definición. Que el gradiente marque la dirección más empinada sí es un resultado demostrado.</dd>
+              <dt>Origen</dt><dd>Trigonometría y cálculo vectorial clásicos, sin un autor único.</dd>
+              <dt>En este rover</dt><dd>Decide si una celda tiene apoyo: por encima de 30° es infranqueable en cualquier dirección. El costo usa además la pendiente con signo de cada paso (paso 2).</dd>
+            </dl>
+            <details>
+              <summary>Ver por qué es la dirección más empinada</summary>
+              <p>La subida al caminar en una dirección unitaria <var>u</var> es el producto ∇h·u. La desigualdad de Cauchy–Schwarz acota ese producto:</p>
+              <div class="eq">∇h·u ≤ |∇h|·|u| = |∇h|</div>
+              <p>El máximo se alcanza justo cuando <var>u</var> apunta como ∇h, y vale |∇h|.</p>
+            </details>
+          </article>
+          <article class="ficha">
+            <header><h3>Altura del terreno: h(x, z)</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Da la altura de cada punto del mapa. Suma la pendiente regional real de Marte, ruido fractal y formas diseñadas: una loma de Mount Sharp con un cañón, cráteres con una rampa de acceso y dunas.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una construcción artificial sobre datos reales.</dd>
+              <dt>Origen</dt><dd>En Gale, la pendiente regional sale de ajustar un plano al modelo de elevación HiRISE de Mars Trek, alrededor de la posición de Curiosity. Ese mosaico viene en 8 bits; lo calibramos con 174 alturas medidas por Curiosity (≈ 18,6 m por nivel de gris, error de 5,7 m). En Jezero y Meridiani se usa el altímetro MOLA comprimido. El ruido es de Ken Perlin (1985); la loma, el cañón y los cráteres son nuestros.</dd>
+              <dt>En este rover</dt><dd>Es la misma malla para dibujar, calcular pendientes y apoyar las ruedas.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>h(x−e) oeste <output id="hW"></output><input id="inW" type="range" min="0" max="6" step="0.1" value="1.0" /></label>
+            <label>h(x+e) este <output id="hE"></output><input id="inE" type="range" min="0" max="6" step="0.1" value="1.6" /></label>
+            <label>h(z−e) norte <output id="hN"></output><input id="inN" type="range" min="0" max="6" step="0.1" value="1.5" /></label>
+            <label>h(z+e) sur <output id="hS"></output><input id="inS" type="range" min="0" max="6" step="0.1" value="1.8" /></label>
+          </div>
+          <div>
+            <svg id="rampa" viewBox="0 0 320 130" role="img" aria-label="Rampa con el ángulo de pendiente calculado"></svg>
+            <div class="eq calc" id="slopeCalc"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="costo">
+        <p class="kicker">Paso 2 · <code>src/lib/energy.ts</code> y <code>src/lib/costmap.ts</code></p>
+        <h2>De la pendiente a los litros de O₂</h2>
+        <p>
+          El costo de caminar no es un número inventado: es el oxígeno que consume el astronauta. Se calcula con la ecuación de
+          Pandolf, adaptada a la gravedad de Marte, usando la <b>pendiente con signo</b> <var>G</var> (en %) del paso: subir y bajar
+          cuestan distinto. La velocidad cae con la pendiente y con el terreno blando (η, más alto en arena).
+        </p>
+        <div class="eq">
+          G = 100 · (z<sub>b</sub> − z<sub>a</sub>) / Δd &nbsp;&nbsp; Δd = 2,5 m ó 2,5·√2 m<br />
+          L<sub>eff</sub> = (W + m<sub>traje</sub>) · g<sub>M</sub>/g<sub>T</sub> − W &nbsp;&nbsp; (80 kg, 150 kg, 0,38 → 7,4 kg)<br />
+          v = v<sub>0</sub> · e<sup>−0,042·|G|</sup> · (1 − 0,28·η) &nbsp;&nbsp; v<sub>0</sub> = 1,2 m/s, η = 1 + 0,9·arena<br />
+          M = 1,5·W + 2·(W + L<sub>eff</sub>)·(L<sub>eff</sub>/W)² + η·(W + L<sub>eff</sub>)·(1,5·v² + máx(0; 0,35·v·G)) &nbsp;[W]<br />
+          w<sub>O₂</sub> = M · Δd / (60·v) · κ &nbsp;&nbsp; κ = 0,00298 L/(W·min)
+        </div>
+        <div class="fichas">
+          <article class="ficha ancha">
+            <header><h3>Ecuación de Pandolf: M</h3><span class="tag modelo">Modelo empírico</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Da la potencia metabólica (en watts) de una persona que camina con carga, según su masa, la carga, la velocidad, el tipo de terreno y la pendiente. Multiplicada por el tiempo y por κ, da litros de O₂.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una regresión ajustada con mediciones de soldados caminando en la Tierra. Funciona bien en su rango, pero nadie la validó para un traje espacial en Marte.</dd>
+              <dt>Origen</dt><dd>Pandolf, Givoni y Goldman (1977). La adaptación a 0,38 g con una «carga efectiva» L<sub>eff</sub>, la fórmula de velocidad y los factores de terreno vienen del documento de cálculos del equipo. κ ≈ 0,00298 sale de que un litro de O₂ libera unos 20,1 kJ. Bajando, el término de pendiente se acota a cero; el documento del equipo cita a Santee et al. (2001) para una corrección más fina, que no usamos.</dd>
+              <dt>En este rover</dt><dd>Es el peso de cada arista del grafo y también el consumo real que descuenta la telemetría en cada instante: planificador, alertas y tablero usan los mismos litros.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Factores de riesgo</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Multiplican el O₂ de una arista para que el planificador evite lo peligroso aunque no gaste más oxígeno: sin mapear ×7, dentro de una zona a −100 °C ×4, sombra de día ×1,08, caminar hacia un Sol más bajo que 15° ×1,25.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Los valores son nuestros.</dd>
+              <dt>Origen</dt><dd>Pesar el riesgo dentro del costo es práctica común en mapas de transitabilidad (por ejemplo, GESTALT en Spirit y Opportunity, Goldberg et al., 2002).</dd>
+              <dt>En este rover</dt><dd>Sólo afectan la decisión. El oxígeno que descuenta la telemetría es el de Pandolf sin factores.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Límites físicos</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Una celda con más de 30° de pendiente (en cualquier dirección) no tiene apoyo seguro. Un paso recto con |G| &gt; 45 % (≈ 24°) no se permite. Por eso una ladera de 25° sólo se sube en zigzag: en diagonal, la pendiente del paso baja.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Son umbrales razonables, no medidos con un traje real.</dd>
+              <dt>Origen</dt><dd>Nuestros.</dd>
+              <dt>En este rover</dt><dd>Son la razón de que la ruta pueda cruzar la loma de Mount Sharp sin atravesar paredes imposibles.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Pendiente del paso G <output id="cSo"></output><input id="cS" type="range" min="-45" max="45" step="1" value="12" /></label>
+            <label>Arena (0 a 1) <output id="cAo"></output><input id="cA" type="range" min="0" max="1" step="0.05" value="0.2" /></label>
+            <label class="check"><input id="cU" type="checkbox" /> Cañón sin mapear (×7)</label>
+            <label class="check"><input id="cC" type="checkbox" /> Dentro de la zona fría (×4)</label>
+            <label class="check"><input id="cR" type="checkbox" /> Dentro del campo de rocas (∞)</label>
+            <div class="eq calc" id="costCalc"></div>
+          </div>
+          <div>
+            <canvas id="costPlot" height="240" aria-label="Litros de O₂ cada 100 m según la pendiente con signo"></canvas>
+            <div class="legend">
+              <span><i style="background: var(--cyan)"></i>L de O₂ cada 100 m</span>
+              <span><i style="background: var(--red)"></i>Paso prohibido (|G| &gt; 45 %)</span>
+            </div>
+          </div>
+        </div>
+        <p class="note">
+          La curva no es simétrica: subir 20 % cuesta 4,9 L cada 100 m y bajar 20 % sólo 1,9 L (en terreno firme). En plano, 1,3 L.
+        </p>
+      </section>
+
+      <section id="grafo">
+        <p class="kicker">Paso 3 · <code>src/lib/costmap.ts</code></p>
+        <h2>La cuadrícula es un grafo dirigido</h2>
+        <p>
+          Cada celda es un nodo conectado con sus 8 vecinas. Como subir no cuesta lo mismo que bajar, cada par de celdas tiene
+          <b>dos aristas</b>, una por sentido, con pesos distintos. No se permite cortar una esquina junto a un obstáculo.
+        </p>
+        <div class="eq">w(a → b) = w<sub>O₂</sub>(Δd, G<sub>a→b</sub>, η) · riesgo &nbsp;&nbsp; ≠ &nbsp;&nbsp; w(b → a)</div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Grafo dirigido de 8 vecinas</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Convierte el mapa en nodos (celdas) y aristas con sentido (pasos posibles). Así, «buscar una ruta» pasa a ser un problema matemático conocido.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una forma de representar el problema.</dd>
+              <dt>Origen</dt><dd>La teoría de grafos arranca con Leonhard Euler y los puentes de Königsberg (1736). La cuadrícula de 8 vecinos es una práctica común en robótica, sin un creador claro.</dd>
+              <dt>En este rover</dt><dd>9.216 nodos y hasta 73.728 aristas. Se recalculan cuando cambia el terreno, aparece un peligro o pasan 10 minutos marcianos (las sombras se mueven).</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Peso de una arista: w(a → b)</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Calcula los litros de O₂ de un paso con la pendiente de ese paso, el terreno promedio de las dos celdas y su factor de riesgo.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Aplica el modelo de Pandolf a un tramo de 2,5 m, como si la pendiente fuera constante en ese tramo.</dd>
+              <dt>Origen</dt><dd>Pandolf et al. (1977) para el O₂; la discretización es nuestra.</dd>
+              <dt>En este rover</dt><dd>Sumar todas las <var>w</var> de una ruta da su costo total, y eso es lo que A* minimiza.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Altura de a <output id="ca"></output><input id="inCa" type="range" min="0" max="2" step="0.05" value="0.2" /></label>
+            <label>Altura de b <output id="cb"></output><input id="inCb" type="range" min="0" max="2" step="0.05" value="0.8" /></label>
+            <label class="check"><input id="inDiag" type="checkbox" checked /> Movimiento diagonal</label>
+            <div class="eq calc" id="edgeCalc"></div>
+          </div>
+          <svg id="edgeSvg" viewBox="0 0 300 180" role="img" aria-label="Celda con sus ocho vecinas y la arista seleccionada"></svg>
+        </div>
+      </section>
+
+      <section id="algoritmos">
+        <p class="kicker">Paso 4 · dos filosofías</p>
+        <h2>A* compara todo; el voraz sólo mira a sus vecinas</h2>
+        <div class="split">
+          <div>
+            <h3 class="cy">A* global</h3>
+            <div class="eq">
+              f(n) = g(n) + h(n)<br />
+              h(n) = (máx(Δx, Δz) + (√2−1)·mín(Δx, Δz)) · 2,5 · w<sub>mín</sub>
+            </div>
+            <p>
+              <var>g</var> son los litros acumulados; <var>h</var>, la distancia octil hasta la meta por w<sub>mín</sub>, el menor
+              costo por metro de todas las aristas del mapa. Siempre expande el nodo con menor <var>f</var>. Como ninguna arista es más
+              barata por metro que w<sub>mín</sub>, <var>h</var> nunca sobreestima y el primer camino que cierra la meta es el óptimo.
+            </p>
+          </div>
+          <div>
+            <h3 class="am">Voraz (best-first local)</h3>
+            <div class="eq">
+              score(n) = h(n) + w(actual → n)<br />
+              siguiente = argmin score(n), n sin visitar
+            </div>
+            <p>
+              No guarda <var>g</var>: sólo decide con la celda de al lado. Avanza hasta llegar, y si se queda sin vecinas retrocede
+              una celda. Si da más de 3 veces los pasos de la línea recta, se declara atrapado y el simulador usa A*.
+            </p>
+          </div>
+        </div>
+
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>A*: f = g + h</h3><span class="tag teorema">Algoritmo con teorema</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Para cada nodo suma lo ya gastado (<var>g</var>) y una estimación de lo que falta (<var>h</var>). Siempre continúa por el nodo con menor total, así no pierde tiempo en caminos que van en contra.</dd>
+              <dt>¿Es un teorema?</dt><dd><b>Sí.</b> A* es el algoritmo, y está demostrado que encuentra el camino de menor costo si <var>h</var> nunca sobreestima lo que falta.</dd>
+              <dt>Origen</dt><dd>Peter Hart, Nils Nilsson y Bertram Raphael, del Stanford Research Institute (1968). Extiende el algoritmo de Edsger Dijkstra (1959): con h = 0, A* se comporta como Dijkstra.</dd>
+              <dt>En este rover</dt><dd>Es el planificador de cada tramo. Su <var>h</var> cumple la condición porque usa w<sub>mín</sub>, el menor costo por metro del mapa.</dd>
+            </dl>
+            <details>
+              <summary>Ver la demostración</summary>
+              <p>Sea C* el costo óptimo. Supongamos que A* cierra la meta G con un costo mayor: g(G) &gt; C*.</p>
+              <p>En ese momento, algún nodo <var>n</var> del camino óptimo sigue abierto, con su g correcto. Entonces:</p>
+              <div class="eq">f(n) = g(n) + h(n) ≤ g(n) + h*(n) = C* &lt; g(G) = f(G)</div>
+              <p>Es decir, <var>n</var> tiene menor <var>f</var> que G y debía salir antes: contradicción. Por lo tanto, g(G) = C*.</p>
+              <p>Este código nunca reabre un nodo cerrado, así que además necesita que <var>h</var> sea consistente:</p>
+              <div class="eq">h(a) ≤ w(a, b) + h(b)</div>
+              <p>Se cumple porque la distancia octil respeta la desigualdad triangular y cada arista cuesta al menos su largo por w<sub>mín</sub>.</p>
+            </details>
+          </article>
+          <article class="ficha">
+            <header><h3>Distancia octil: h</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Da la longitud del camino más corto hasta la meta en una cuadrícula de 8 direcciones, sin obstáculos.</dd>
+              <dt>¿Es un teorema?</dt><dd>No se suele llamar así, pero se deduce con una cuenta directa.</dd>
+              <dt>Origen</dt><dd>Es una distancia estándar en búsqueda sobre cuadrículas, sin un creador claro.</dd>
+              <dt>En este rover</dt><dd>Es la estimación <var>h</var> de A* y la parte de «acercarse a la meta» del voraz.</dd>
+            </dl>
+            <details>
+              <summary>Ver de dónde sale</summary>
+              <p>Lo más corto es hacer todas las diagonales posibles y completar en línea recta:</p>
+              <div class="eq">√2·mín + (máx − mín) = máx + (√2 − 1)·mín</div>
+              <p>Si se multiplica por 2,5 m, queda en metros.</p>
+            </details>
+          </article>
+          <article class="ficha ancha">
+            <header><h3>Voraz: score(n)</h3><span class="tag algoritmo">Algoritmo adaptado</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Elige la vecina que parece mejor en ese instante: cerca de la meta y barata. No recuerda lo gastado ni compara rutas completas.</dd>
+              <dt>¿Es un teorema?</dt><dd><b>No, y no hay garantía de óptimo.</b> La «Trampa en U» de abajo lo muestra: entra hasta el fondo antes de rodear.</dd>
+              <dt>Origen</dt><dd>Guiar la búsqueda sólo con una estimación viene de Doran y Michie, con su Graph Traverser (1966). Este score, el retroceso de una celda y el límite de pasos son nuestros.</dd>
+              <dt>En este rover</dt><dd>Representa a un procesador lento y resistente a la radiación. Si queda atrapado, el simulador recurre a A*.</dd>
+            </dl>
+          </article>
+        </div>
+
+        <div class="widget">
+          <div class="toolbar" role="group" aria-label="Escenarios">
+            <span class="tlabel">Escenario</span>
+            <button data-preset="wall" class="on">Muro con brecha</button>
+            <button data-preset="u">Trampa en U</button>
+            <button data-preset="canyon">Cañón sin mapear</button>
+            <button data-preset="mapped">Cañón mapeado</button>
+          </div>
+          <div class="toolbar" role="group" aria-label="Pincel">
+            <span class="tlabel">Dibujar</span>
+            <button data-brush="1"><i style="background: #243041"></i>Libre c=1</button>
+            <button data-brush="4.2"><i style="background: #7a6220"></i>Arena c=4,2</button>
+            <button data-brush="7"><i style="background: #a8541e"></i>Empinado c=7</button>
+            <button data-brush="39"><i style="background: #5a3a91"></i>Sin mapear c=39</button>
+            <button data-brush="inf" class="on"><i style="background: #05070c; border: 1px solid #55617a"></i>Muro ∞</button>
+            <button data-brush="start"><i style="background: var(--green)"></i>Inicio</button>
+            <button data-brush="goal"><i style="background: var(--amber)"></i>Meta</button>
+          </div>
+          <div class="player">
+            <button id="pFirst" aria-label="Volver al inicio">⏮</button>
+            <button id="pPrev" aria-label="Paso anterior">◀</button>
+            <button id="pPlay" class="primary">▶ Reproducir</button>
+            <button id="pNext" aria-label="Paso siguiente">▶|</button>
+            <button id="pLast" aria-label="Ir al final">⏭</button>
+            <label class="grow">Paso <output id="pStep">0</output><input id="pSlider" type="range" min="0" max="100" value="0" /></label>
+          </div>
+          <div class="split gridpair">
+            <div>
+              <h3 class="cy">A*</h3>
+              <canvas class="board" id="gridA" width="640" height="400" aria-label="Búsqueda A* en la cuadrícula"></canvas>
+              <p class="sum" id="sumA"></p>
+              <p class="stepdesc" id="descA"></p>
+              <div class="tablewrap"><table id="tabA"></table></div>
+            </div>
+            <div>
+              <h3 class="am">Voraz</h3>
+              <canvas class="board" id="gridG" width="640" height="400" aria-label="Búsqueda voraz en la cuadrícula"></canvas>
+              <p class="sum" id="sumG"></p>
+              <p class="stepdesc" id="descG"></p>
+              <div class="tablewrap"><table id="tabG"></table></div>
+            </div>
+          </div>
+          <p class="note">Relleno: nodo ya procesado. Borde celeste con número: nodo abierto y su f. Borde blanco: nodo actual. Tocá o arrastrá sobre cualquiera de las dos cuadrículas para cambiar el terreno; se recalcula al instante.</p>
+        </div>
+      </section>
+
+      <section id="mapa">
+        <p class="kicker">Paso 5 · el grafo que usa el simulador</p>
+        <h2>El mapa real de 96 × 96</h2>
+        <p>
+          Este mapa ejecuta <code>computeCostmap</code>, <code>planAStar</code>, <code>planGreedy</code> y
+          <code>evaluateRoute</code> del simulador sobre el mismo terreno, sin copias, con el Sol de las 10:00. La ruta va de A
+          (hábitat) a B (afloramiento). Al inspeccionar una celda se ven los litros de sus aristas hacia cada lado: no son iguales.
+        </p>
+        <div class="widget">
+          <div class="toolbar">
+            <span class="tlabel">Región</span>
+            <select id="region" aria-label="Región de Mars Trek"></select>
+            <span id="regionStatus" class="muted"></span>
+          </div>
+          <div class="toolbar">
+            <span class="tlabel">Acción</span>
+            <button id="animA" class="primary">Animar A*</button>
+            <button id="animG">Animar voraz</button>
+            <label class="check inline"><input id="scanned" type="checkbox" /> Dron ya escaneó el cañón</label>
+            <span class="tlabel">Clic en el mapa</span>
+            <button data-tool="info" class="on">Inspeccionar</button>
+            <button data-tool="cold">Sombra fría</button>
+            <button data-tool="rocks">Rocas</button>
+            <button id="clearHz">Quitar peligros</button>
+          </div>
+          <div class="mapgrid">
+            <canvas id="realMap" width="768" height="768" aria-label="Mapa de costos real con las rutas de A* y voraz"></canvas>
+            <div>
+              <div class="legend">
+                <span><i style="background: var(--cyan)"></i>Ruta A*</span>
+                <span><i style="background: var(--amber)"></i>Ruta voraz</span>
+                <span><i style="background: #fff"></i>Línea recta</span>
+              </div>
+              <div class="tablewrap"><table id="realTable"></table></div>
+              <p class="verify" id="verify"></p>
+              <div class="eq calc" id="cellInfo">Pasá el cursor sobre el mapa para ver el cálculo de una celda.</div>
+            </div>
+          </div>
+          <p class="note" id="canyonNote"></p>
+        </div>
+      </section>
+
+      <section id="suavizado">
+        <p class="kicker">Paso 6 · Chaikin + remuestreo</p>
+        <h2>De una escalera de celdas a una curva</h2>
+        <p>
+          El grafo devuelve un zigzag por centros de celda. Cada pasada de Chaikin reemplaza cada segmento por dos puntos, cortando
+          las esquinas. El simulador hace 3 pasadas (n puntos pasan a 2n cada vez) y después reparte puntos cada 1 m exacto.
+        </p>
+        <div class="eq">
+          Q = ¾·P<sub>i</sub> + ¼·P<sub>i+1</sub> &nbsp;&nbsp; R = ¼·P<sub>i</sub> + ¾·P<sub>i+1</sub>
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Corte de esquinas de Chaikin</h3><span class="tag teorema">Algoritmo con teorema</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Reemplaza cada segmento por dos puntos, a ¼ y ¾ de su largo. Las esquinas se van redondeando con cada pasada.</dd>
+              <dt>¿Es un teorema?</dt><dd>El corte es un algoritmo. Lo demostrado es hacia dónde tiende: con infinitas pasadas, la curva converge a una B-spline cuadrática.</dd>
+              <dt>Origen</dt><dd>George Chaikin (1974) lo publicó para dibujar curvas rápido. Richard Riesenfeld (1975) demostró la relación con las B-splines.</dd>
+              <dt>En este rover</dt><dd>Hace 3 pasadas y mantiene fijos el inicio y la meta. No vuelve a mirar el costo, por eso puede rozar una celda cara (ver Límites).</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Remuestreo cada 1 m</h3><span class="tag metodo">Método numérico</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Reparte puntos a igual distancia sobre la curva, midiendo por los segmentos e interpolando en línea recta.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una cuenta geométrica directa.</dd>
+              <dt>Origen</dt><dd>Se basa en la parametrización por longitud de arco, una idea clásica de geometría, sin un autor único.</dd>
+              <dt>En este rover</dt><dd>Permite que un número <var>s</var> en metros indique una posición exacta sobre la ruta.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Pasadas de Chaikin <output id="chO"></output><input id="chN" type="range" min="0" max="4" value="3" /></label>
+            <label class="check"><input id="chR" type="checkbox" checked /> Mostrar remuestreo cada 1 m</label>
+            <div class="eq calc" id="chCalc"></div>
+          </div>
+          <canvas id="chCanvas" height="260" aria-label="Suavizado de un camino en escalera"></canvas>
+        </div>
+      </section>
+
+      <section id="avance">
+        <p class="kicker">Paso 7 · <code>stepRover</code> en <code>src/store/simEngine.ts</code></p>
+        <h2>Cómo avanza metro a metro</h2>
+        <p>
+          El rover no integra física de ruedas. Su posición es un solo número: <var>s</var>, los metros recorridos sobre la ruta. En
+          cada cuadro elige una velocidad objetivo según la distancia al astronauta, la filtra y avanza. La altura, la inclinación y el
+          rumbo salen de la posición.
+        </p>
+        <div class="eq">
+          gap = s<sub>rover</sub> − s<sub>astro</sub><br />
+          v<sub>obj</sub> = clamp(v<sub>astro</sub> + 0,8·(15 − gap), 0, 1,7·(1 − mín(pendiente, 25)/60))<br />
+          v<sub>k+1</sub> = v<sub>k</sub> + (v<sub>obj</sub> − v<sub>k</sub>)·mín(1, 2,5·Δt) &nbsp;&nbsp; s<sub>k+1</sub> = s<sub>k</sub> + v<sub>k+1</sub>·Δt<br />
+          rumbo = atan2(Δx, −Δz), con giro limitado a ±1,8 rad/s
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Control de distancia: v<sub>obj</sub></h3><span class="tag modelo">Teoría de control</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Mantiene al rover a 15 m. Copia la velocidad del astronauta (prealimentación) y suma una corrección proporcional al error: si está a 13 m, acelera; si está a 17 m, frena.</dd>
+              <dt>¿Es un teorema?</dt><dd>La fórmula no, es un diseño. Su estabilidad sí se demuestra con el criterio de Routh–Hurwitz.</dd>
+              <dt>Origen</dt><dd>El análisis de la realimentación viene de James Clerk Maxwell (1868). Nicolas Minorsky (1922) suele citarse como el primer análisis teórico del control de tres términos, o PID. Aquí sólo se usa el término proporcional. La ganancia 0,8 y el tope 1,7 m/s son nuestros.</dd>
+              <dt>En este rover</dt><dd>El error tiende a cero sin oscilar. El gráfico de abajo lo muestra.</dd>
+            </dl>
+            <details>
+              <summary>Ver la demostración de estabilidad</summary>
+              <p>Con la velocidad del astronauta constante y sin llegar a los topes, sea e = 15 − gap. Sustituyendo el controlador y el filtro:</p>
+              <div class="eq">e″ + 2,5·e′ + 2·e = 0</div>
+              <p>Sus raíces son −1,25 ± 0,66i. Ambas tienen parte real negativa, así que e → 0.</p>
+              <p>El amortiguamiento es ζ = 2,5 / (2·√2) ≈ 0,88: casi sin rebote, se estabiliza en unos 3 s.</p>
+              <p>Si la velocidad choca contra un tope, esta cuenta deja de valer hasta salir de él.</p>
+            </details>
+          </article>
+          <article class="ficha">
+            <header><h3>Filtro de velocidad y paso de Euler</h3><span class="tag metodo">Método numérico</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>La velocidad no salta al objetivo: recorre una fracción de la diferencia en cada cuadro, como un motor que tarda en responder. Después la posición avanza v·Δt.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es la aproximación numérica de una ecuación diferencial: v′ = (v<sub>obj</sub> − v) / τ, con τ = 0,4 s.</dd>
+              <dt>Origen</dt><dd>El método es de Leonhard Euler (<i>Institutiones calculi integralis</i>, 1768). El sistema de primer orden es un modelo clásico de la ingeniería. El valor de τ es nuestro.</dd>
+              <dt>En este rover</dt><dd>Δt es la duración de cada cuadro, con un máximo de 0,05 s para que el cálculo no se vuelva inestable.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Rumbo: atan2(Δx, −Δz)</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Convierte la dirección de la ruta en un ángulo: 0 es el norte y π/2 es el este. A diferencia de atan, distingue los cuatro cuadrantes.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es trigonometría más una convención de ejes.</dd>
+              <dt>Origen</dt><dd>La función atan2 es estándar en programación. La convención de ejes y el tope de 1,8 rad/s son nuestros.</dd>
+              <dt>En este rover</dt><dd>Mira 1,5 m antes y después de su punto para evitar giros bruscos.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Inclinación sobre el terreno</h3><span class="tag metodo">Método geométrico</span></header>
+            <div class="eq mini">
+              f′ = f − (f·n)·n &nbsp; x = n × f′<br />
+              q ← slerp(q, q<sub>obj</sub>, mín(1, 8·Δt))
+            </div>
+            <dl>
+              <dt>Qué hace</dt><dd>Apoya el rover sobre el suelo. Toma la normal <var>n</var> del terreno, proyecta el rumbo <var>f</var> sobre ese plano y arma los ejes del chasis. Después gira suavemente hacia esa orientación.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Son operaciones de álgebra vectorial.</dd>
+              <dt>Origen</dt><dd>La proyección es un paso de Gram–Schmidt. Los cuaterniones son de William Hamilton (1843) y slerp, de Ken Shoemake (1985).</dd>
+              <dt>En este rover</dt><dd>Es lo que da el cabeceo y el alabeo del panel. Es geometría: no simula la suspensión.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Pendiente <output id="gSo"></output><input id="gS" type="range" min="0" max="25" step="1" value="4" /></label>
+            <label>Arena bajo el astronauta <output id="gAo"></output><input id="gA" type="range" min="0" max="1" step="0.05" value="0.1" /></label>
+            <label>Instante t <output id="gTo"></output><input id="gT" type="range" min="0" max="90" step="0.1" value="30" /></label>
+            <div class="eq calc" id="gapCalc"></div>
+          </div>
+          <canvas id="gapPlot" height="300" aria-label="Velocidades y separación en el tiempo"></canvas>
+        </div>
+        <p class="note" id="gapNote"></p>
+      </section>
+
+      <section id="giro">
+        <p class="kicker">Paso 8 · modo tránsito: rescate y regreso</p>
+        <h2>El giro de 180° y la carrera hacia el astronauta</h2>
+        <p>
+          Cuando debe salir de la ruta, el rover cambia de modelo: pasa a un <b>uniciclo</b> que apunta a un punto 2,5 m adelante sobre
+          el nuevo camino. Mientras el error de rumbo es grande casi no avanza, así que gira sobre sí mismo; al alinearse, acelera.
+        </p>
+        <div class="eq">
+          e = rumbo(rover → punto adelantado) − θ &nbsp;&nbsp; θ<sub>k+1</sub> = θ<sub>k</sub> + clamp(3·e, ±2,2)·Δt<br />
+          v<sub>obj</sub> = v<sub>máx</sub> · máx(0,06, cos²(mín(|e|, π/2))) · mín(1, d<sub>fin</sub>/4 + 0,25)<br />
+          x += sen θ · v·Δt &nbsp;&nbsp; z −= cos θ · v·Δt
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Modelo de uniciclo</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Describe al rover como un punto con rumbo: avanza hacia donde mira, y no puede moverse de costado.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una simplificación de un vehículo de seis ruedas.</dd>
+              <dt>Origen</dt><dd>Es el modelo cinemático estándar en robótica móvil, sin un creador único. Se integra con el método de Euler.</dd>
+              <dt>En este rover</dt><dd>Sólo se usa en rescate y al volver a liderar la columna. En marcha normal, el rover sigue la ruta con <var>s</var>.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Punto adelantado y giro: 3·e</h3><span class="tag propia">Inspirado en pure pursuit</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Mira un punto 2,5 m más adelante del camino y gira en proporción al error de rumbo. Apuntar adelante evita que zigzaguee alrededor de la línea.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. No demostramos su estabilidad; lo probamos con la simulación de abajo.</dd>
+              <dt>Origen</dt><dd>La idea de perseguir un punto es la de pure pursuit, documentado por R. Craig Coulter (1992, Carnegie Mellon). Coulter calcula una curvatura; nosotros usamos un control proporcional más simple.</dd>
+              <dt>En este rover</dt><dd>La ganancia 3 y el tope de 2,2 rad/s son nuestros.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Velocidad según alineación: cos²</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Frena cuando el rover no apunta hacia donde debe ir. Con 0° de error va a fondo; con 45°, a la mitad; desde unos 76°, casi detenido, al 6 %. El último factor frena al llegar.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Elegimos cos² porque baja de forma suave y sin saltos.</dd>
+              <dt>Origen</dt><dd>Es nuestra. No sale de ninguna referencia.</dd>
+              <dt>En este rover</dt><dd>Es lo que produce el giro de 180° casi sobre sí mismo en el rescate.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Error de rumbo inicial <output id="tEo"></output><input id="tE" type="range" min="0" max="180" step="1" value="180" /></label>
+            <label>Velocidad máxima <output id="tVo"></output><input id="tV" type="range" min="1" max="3.4" step="0.1" value="3.4" /></label>
+            <button id="tPlay" class="primary">▶ Reproducir</button>
+            <div class="eq calc" id="turnCalc"></div>
+            <p class="note">3,4 m/s es el rescate; 2,4 m/s, el regreso a liderar la columna.</p>
+          </div>
+          <canvas id="turnCanvas" height="400" aria-label="Trayectoria del giro y gráficos de error y velocidad"></canvas>
+        </div>
+      </section>
+
+      <section id="replan">
+        <p class="kicker">Paso 9 · <code>replanMain</code></p>
+        <h2>Qué pasa cuando aparece un peligro</h2>
+        <p>
+          El grafo se recalcula entero y se busca desde cero desde la posición del rover. Para que el astronauta no salte, se conserva el
+          tramo que hay entre él y el rover, y se le pega la ruta nueva.
+        </p>
+        <div class="eq">
+          ruta′ = tramo(s<sub>astro</sub> → s<sub>rover</sub>) ⊕ plan(rover → meta)<br />
+          s′<sub>astro</sub> = 0 &nbsp;&nbsp; s′<sub>rover</sub> = longitud del tramo
+        </div>
+        <div class="fichas">
+          <article class="ficha ancha">
+            <header><h3>Replanificar y empalmar</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Recalcula el costmap, corre el planificador desde el rover y une esa ruta con el tramo que ya estaba delante del astronauta.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Cada búsqueda con A* sigue siendo óptima para el mapa de ese momento, pero la ruta empalmada completa no tiene esa garantía, porque el tramo conservado ya estaba decidido.</dd>
+              <dt>Origen</dt><dd>El empalme es nuestro. Para replanificar sin empezar de cero existen D* (Anthony Stentz, 1994) y D* Lite (Koenig y Likhachev, 2002). Field D* llegó a Spirit y Opportunity con una actualización de software de 2006 (Carsten et al., 2007).</dd>
+              <dt>En este rover</dt><dd>Se hace desde cero porque con 9.216 nodos tarda pocos milisegundos. En un mapa enorme o con un procesador lento, convendría D*.</dd>
+            </dl>
+          </article>
+        </div>
+        <svg id="spliceSvg" class="wide" viewBox="0 0 760 170" role="img" aria-label="La ruta vieja se conserva entre astronauta y rover y se une con la ruta nueva que esquiva el peligro">
+          <path d="M40,120 C140,120 200,120 300,110" stroke="#00f0ff" stroke-width="4" fill="none" />
+          <path d="M300,110 C400,100 480,100 720,70" stroke="#55617a" stroke-width="3" stroke-dasharray="7 6" fill="none" />
+          <path d="M300,110 C380,105 420,150 520,140 C610,132 660,100 720,70" stroke="#00ff78" stroke-width="4" fill="none" />
+          <circle cx="470" cy="93" r="32" fill="#ff003c33" stroke="#ff003c" />
+          <text x="470" y="97" text-anchor="middle" fill="#ff8aa3" font-size="13">peligro</text>
+          <circle cx="110" cy="120" r="7" fill="#fff" /><text x="110" y="148" text-anchor="middle" fill="#dbe4ee" font-size="13">astronauta (s′ = 0)</text>
+          <polygon points="300,100 310,118 290,118" fill="#ff9900" /><text x="300" y="82" text-anchor="middle" fill="#ffb340" font-size="13">rover (s′ = tramo)</text>
+          <text x="190" y="104" text-anchor="middle" fill="#7cf7ff" font-size="13">tramo conservado</text>
+          <text x="600" y="150" text-anchor="middle" fill="#7dffb5" font-size="13">plan nuevo</text>
+          <text x="600" y="62" text-anchor="middle" fill="#8d9bad" font-size="13">ruta vieja descartada</text>
+          <circle cx="720" cy="70" r="7" fill="#ff9900" /><text x="735" y="50" text-anchor="end" fill="#ffb340" font-size="13">B</text>
+        </svg>
+      </section>
+
+      <section id="consumo">
+        <p class="kicker">Paso 10 · <code>src/lib/metrics.ts</code> y la telemetría</p>
+        <h2>Cómo se calcula el consumo</h2>
+        <p>
+          Se usa el mismo modelo de Pandolf, pero metro a metro sobre la ruta suavizada y <b>sin factores de riesgo</b>: es el oxígeno
+          físico. Durante la misión, la telemetría descuenta del tanque los litros reales de cada instante: caminando, parado,
+          perforando (300 W) o desvanecido.
+        </p>
+        <div class="eq">
+          O₂<sub>ruta</sub> = Σ M(G<sub>i</sub>, η<sub>i</sub>) · Δd<sub>i</sub> / (60·v<sub>i</sub>) · κ<br />
+          O₂(t + Δt) = O₂(t) − P(t) · κ · Δt &nbsp;&nbsp; P = Pandolf caminando · 121 W parado · 300 W perforando<br />
+          Wh del rover = Σ 0,32·Δd·(1 + 0,06·G⁺ + 1,8·arena) &nbsp;&nbsp; tanque Q<sub>O₂</sub> = 380 L
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Energía total: Σ M·Δt</h3><span class="tag metodo">Método numérico</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Suma lo que se gasta en cada metro. Aproxima la integral de la potencia en el tiempo.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una suma de Riemann. Que tales sumas converjan a la integral sí es un resultado demostrado para funciones integrables.</dd>
+              <dt>Origen</dt><dd>La integral lleva el nombre de Bernhard Riemann (1854). Los Wh del rover usan la misma idea, con coeficientes nuestros.</dd>
+              <dt>En este rover</dt><dd>Da los litros, kcal y Wh de la tabla del mapa real y del panel del simulador.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Tanque de 380 L</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Fija cuánto oxígeno lleva el traje: unos 0,54 kg, que a una carga media de EVA (~300 W) dura alrededor de 7 horas.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es un orden de magnitud razonable para un sistema de soporte vital portátil, no el dato de un traje concreto.</dd>
+              <dt>Origen</dt><dd>Nuestro, a partir de la densidad del O₂ (1,43 g/L) y de κ.</dd>
+              <dt>En este rover</dt><dd>Es el presupuesto Q<sub>O₂</sub> del tour científico y de la regla de no retorno.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Pendiente G (%) <output id="mGo"></output><input id="mG" type="range" min="-45" max="45" step="1" value="10" /></label>
+            <label>Distancia (m) <output id="mSo"></output><input id="mS" type="range" min="10" max="500" step="10" value="100" /></label>
+            <label>Arena <output id="mAo"></output><input id="mA" type="range" min="0" max="1" step="0.05" value="0.2" /></label>
+          </div>
+          <div class="eq calc" id="metaCalc"></div>
+        </div>
+      </section>
+
+      <section id="hora">
+        <p class="kicker">Paso 11 · <code>src/lib/marsTime.ts</code></p>
+        <h2>La hora marciana cambia el mapa</h2>
+        <p>
+          La misión arranca en la fecha real de hoy y a la hora solar local elegida. Con eso se calcula la estación (L<sub>s</sub>),
+          la declinación del Sol y su posición en el cielo del sitio. El Sol decide cinco cosas: la luz y las sombras de la escena,
+          qué celdas quedan en sombra (más frías y sin energía solar), si conviene caminar hacia un Sol bajo que encandila, la
+          temperatura del suelo y cuánta energía recarga el panel del rover. Además, cada sitio científico tiene su ventana horaria y
+          hay que volver antes del atardecer.
+        </p>
+        <div class="eq">
+          Mars24: L<sub>s</sub>, δ<sub>s</sub> = asin(0,42565·sen L<sub>s</sub>) + 0,25°·sen L<sub>s</sub>, EOT, LTST = LMST + EOT<br />
+          H = (LTST − 12) · 15° &nbsp;&nbsp; sen(elev) = sen φ · sen δ + cos φ · cos δ · cos H<br />
+          I = S<sub>0</sub>/r² · μ · (e<sup>−τ/μ</sup> + 0,35·(1 − e<sup>−τ/μ</sup>)) &nbsp;&nbsp; μ = sen(elev), τ = 0,6<br />
+          T<sub>suelo</sub> = −85 °C + 92 · sen(elev a LTST − 1,5 h)<sup>0,75</sup> &nbsp;&nbsp; sombra: celda que el rayo hacia el Sol choca con el relieve
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Reloj Mars24</h3><span class="tag algoritmo">Algoritmo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Convierte una fecha terrestre en la estación de Marte, la hora solar de cada longitud y la declinación del Sol.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es un ajuste de alta precisión de la órbita de Marte, con términos de perturbación de los planetas.</dd>
+              <dt>Origen</dt><dd>Allison y McEwen (2000), la base del programa Mars24 de la NASA GISS.</dd>
+              <dt>En este rover</dt><dd>Fija la estación con la fecha real y calcula la hora local del sitio. El reloj de la barra superior es la hora solar verdadera (LTST).</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Elevación del Sol e irradiancia</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Da la altura del Sol sobre el horizonte y cuánta luz llega al suelo atravesando el polvo (ley de Beer–Lambert, más una parte difusa).</dd>
+              <dt>¿Es un teorema?</dt><dd>La geometría es exacta (trigonometría esférica). La atenuación por polvo es un modelo simple con τ = 0,6 fijo.</dd>
+              <dt>Origen</dt><dd>Astronomía de posición clásica; la atenuación, ley de Beer–Lambert. La parte difusa (0,35) es nuestra.</dd>
+              <dt>En este rover</dt><dd>Mueve la luz de la escena, calcula las sombras de cada celda y la potencia del panel del rover (3,2 m², 28 %).</dd>
+            </dl>
+          </article>
+          <article class="ficha ancha">
+            <header><h3>Temperatura del suelo</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Estima la temperatura del suelo a lo largo del día, con 1,5 h de retraso térmico. En sombra, hasta 18 °C menos.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Está ajustada a valores típicos de un sitio ecuatorial (cerca de −85 °C antes del amanecer y de 0 °C a primera hora de la tarde), no resuelve el balance de energía.</dd>
+              <dt>Origen</dt><dd>Nuestra, con órdenes de magnitud como los que mide la estación REMS de Curiosity.</dd>
+              <dt>En este rover</dt><dd>Alimenta el riesgo de congelamiento de los motores, la temperatura del traje y el gasto de calefactores del rover.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>Hora solar local (LTST) <output id="sunHo"></output><input id="sunH" type="range" min="5" max="19" step="0.25" value="10" /></label>
+            <div class="eq calc" id="sunCalc"></div>
+          </div>
+          <canvas id="sunPlot" height="240" aria-label="Elevación del Sol y temperatura del suelo a lo largo del día"></canvas>
+        </div>
+      </section>
+
+      <section id="retorno">
+        <p class="kicker">Paso 12 · Dijkstra inverso en <code>simEngine.ts</code></p>
+        <h2>El punto de no retorno</h2>
+        <p>
+          Un solo Dijkstra desde el hábitat, recorriendo las aristas al revés, da para cada celda <b>R(p)</b>: los litros de O₂
+          que hace falta para volver caminando desde ahí. Con eso, una regla simple decide en todo momento si seguir o abortar.
+        </p>
+        <div class="eq">
+          R(p) = mín<sub>camino p → hábitat</sub> Σ w &nbsp;&nbsp; (Dijkstra sobre el grafo con las aristas invertidas)<br />
+          seguir mientras O₂(t) ≥ (1 + ρ) · R(p(t)), con ρ = 0,15 &nbsp;&nbsp; y &nbsp;&nbsp; LTST + T<sub>vuelta</sub>(p) ≤ atardecer − 30 min
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Campo de retorno R(p)</h3><span class="tag teorema">Algoritmo con teorema</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Calcula de una vez el costo mínimo de volver desde cada una de las 9.216 celdas, sin una búsqueda por cada posición.</dd>
+              <dt>¿Es un teorema?</dt><dd><b>Sí.</b> Dijkstra encuentra los caminos mínimos desde una fuente cuando las aristas no son negativas. Invertir las aristas convierte «desde el hábitat» en «hacia el hábitat».</dd>
+              <dt>Origen</dt><dd>Edsger Dijkstra (1959). Usarlo invertido como campo de retorno viene del documento de cálculos del equipo.</dd>
+              <dt>En este rover</dt><dd>Se recalcula con el mapa. El panel «Point of no return» muestra O₂ frente a (1 + ρ)·R(p).</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Regla de aborto</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Si el oxígeno ya no cubre la vuelta más un 15 % de reserva, o si volver terminaría después del atardecer menos 30 minutos, cancela la ciencia y sigue la ruta de menor O₂ al hábitat.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. El 15 % es un margen de diseño.</dd>
+              <dt>Origen</dt><dd>Documento del equipo; la idea de un margen de regreso es habitual en la planificación de EVAs.</dd>
+              <dt>En este rover</dt><dd>Se revisa cada segundo de misión. El tour la respeta de antemano, así que sólo se dispara si algo sale mal.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget two">
+          <div class="controls">
+            <label>O₂ en el tanque (L) <output id="abQo"></output><input id="abQ" type="range" min="0" max="120" step="1" value="40" /></label>
+            <label>R(p): O₂ para volver (L) <output id="abRo"></output><input id="abR" type="range" min="0" max="80" step="0.5" value="30" /></label>
+          </div>
+          <div class="eq calc" id="abCalc"></div>
+        </div>
+      </section>
+
+      <section id="tour">
+        <p class="kicker">Paso 13 · <code>src/lib/tour.ts</code></p>
+        <h2>El tour científico: qué sitios y en qué orden</h2>
+        <p>
+          Hay 7 sitios, cada uno con valor científico S<sub>i</sub>, mineral, masa de muestra, tiempo de perforación y ventana horaria.
+          No caben todos: el tanque, la bolsa de 4 kg y la luz del día obligan a elegir. Es un problema de orientación con capacidad y
+          ventanas de tiempo (CTOPTW) para un equipo. Primero se arma la matriz asimétrica D(i, j) con un Dijkstra por sitio; después
+          una búsqueda exacta por ramificación y poda prueba los órdenes y descarta los que ya no pueden ganar.
+        </p>
+        <div class="eq">
+          máx Z = Σ S<sub>i</sub> · ψ(m<sub>i</sub>, n) − λ·riesgo − μ·O₂ &nbsp;&nbsp; ψ(m, n) = e<sup>−α(n−1)</sup>, α = 0,5<br />
+          O₂: O₂<sub>restante</sub> − D(i, j) − espera·121 W·κ − τ<sub>j</sub>·300 W·κ ≥ (1 + ρ) · R(j)<br />
+          masa: Σ q<sub>i</sub> ≤ 4 kg &nbsp;&nbsp; ventana: e<sub>j</sub> ≤ llegada ≤ l<sub>j</sub> (si llega antes, espera) &nbsp;&nbsp; luz: salida<sub>j</sub> + T<sub>vuelta</sub>(j) ≤ atardecer − 30 min<br />
+          poda: Z + Σ S<sub>restantes</sub> ≤ mejor Z ⇒ no seguir esa rama
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Problema de orientación con ventanas (CTOPTW)</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Plantea el problema: elegir un subconjunto de sitios y su orden para maximizar la ciencia sin pasarse de recursos. Mezcla una mochila (qué cabe) con un viajante con horarios (en qué orden).</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es la formulación. Se sabe que es NP-difícil, así que para muchos sitios se usan heurísticas.</dd>
+              <dt>Origen</dt><dd>La familia de problemas de orientación está revisada en Vansteenwegen, Souffriau y Van Oudheusden (2011). La versión de este rover viene del documento de cálculos del equipo.</dd>
+              <dt>En este rover</dt><dd>Un equipo (astronauta + rover). La restricción de radio UHF entre ambos se cumple siempre porque el rover va a 15 m.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Ramificación y poda</h3><span class="tag algoritmo">Algoritmo exacto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Recorre en profundidad los órdenes posibles y corta una rama apenas viola el O₂, la masa, la ventana o la luz, o cuando ni sumando todos los sitios restantes podría superar al mejor tour encontrado.</dd>
+              <dt>¿Es un teorema?</dt><dd>Garantiza el óptimo porque sólo poda ramas que demostradamente no pueden ganar: la cota usa el valor completo de cada sitio restante, que nunca subestima.</dd>
+              <dt>Origen</dt><dd>Ailsa Land y Alison Doig (1960).</dd>
+              <dt>En este rover</dt><dd>Con 7 sitios explora unos 1.500 nodos en menos de 0,1 s. Se vuelve a correr tras cada peligro, escaneo o tormenta.</dd>
+            </dl>
+          </article>
+          <article class="ficha ancha">
+            <header><h3>Diversidad: ψ(m, n)</h3><span class="tag modelo">Modelo</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Cada muestra repetida del mismo tipo de mineral vale menos: la segunda vale e<sup>−0,5</sup> ≈ 61 %, la tercera 37 %. Así el tour prefiere unidades geológicas distintas.</dd>
+              <dt>¿Es un teorema?</dt><dd>La función es una elección de diseño. Que sea submodular (rendimientos decrecientes) es la propiedad estudiada por Nemhauser, Wolsey y Fisher (1978).</dd>
+              <dt>Origen</dt><dd>Documento del equipo; α = 0,5.</dd>
+              <dt>En este rover</dt><dd>Las vetas de yeso (Y) y el boxwork (B) son ambos sulfatos: tomar los dos rinde menos que diversificar.</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="widget">
+          <div class="toolbar">
+            <span class="tlabel">Tour óptimo en el mapa real (hora de inicio 08:00, tanque lleno)</span>
+            <button id="tourRun" class="primary">Recalcular</button>
+            <span id="tourStatus" class="muted"></span>
+          </div>
+          <div class="tablewrap"><table id="tourTable"></table></div>
+          <p class="note" id="tourNote"></p>
+          <div class="tablewrap"><table id="tourMatrix"></table></div>
+        </div>
+      </section>
+
+      <section id="refugio">
+        <p class="kicker">Paso 14 · <code>src/lib/sites.ts</code></p>
+        <h2>Refugio ante una tormenta solar</h2>
+        <p>
+          Durante un evento de partículas solares la dosis tiene un pico al principio y después decae, y depende de cuánto cielo ve el
+          astronauta: el relieve tapa parte del flujo. El simulador busca refugios naturales (fondo del cañón, pared de un cráter, pie
+          de la loma) donde el rover se estaciona del lado abierto como escudo, y los compara con el hábitat integrando la dosis del
+          camino al aire libre y la de la espera. Cerca del hábitat gana el hábitat; lejos, un cráter o el cañón.
+        </p>
+        <div class="eq">
+          tasa(t) = mín(1, t/60 s) · (7,5 · e<sup>−t/12 min</sup> + 0,6) mSv/h &nbsp;&nbsp; durante 40 min<br />
+          SVF(p) = (1/16) · Σ<sub>16 acimuts</sub> cos²(ángulo del horizonte), agachado a 0,6 m &nbsp;&nbsp; factor = SVF · 0,45 (rover de escudo) · hábitat: 0,08<br />
+          dosis(refugio) = ∫ tasa(t) · [1 mientras camina · factor después] dt &nbsp;&nbsp; se elige el mínimo
+        </div>
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Factor de visión del cielo (SVF)</h3><span class="tag definicion">Definición</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Mide qué fracción del cielo queda visible desde un punto, mirando el horizonte en 16 direcciones sobre el relieve.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Es una medida geométrica; la suma con cos² es la forma usual para un flujo isótropo.</dd>
+              <dt>Origen</dt><dd>Usado en climatología urbana y en visualización de relieve; por ejemplo, Zakšek, Oštir y Kokalj (2011).</dd>
+              <dt>En este rover</dt><dd>Se muestra en la telemetría («sky %») y escala la radiación durante la tormenta.</dd>
+            </dl>
+          </article>
+          <article class="ficha">
+            <header><h3>Elección del refugio</h3><span class="tag propia">Decisión del proyecto</span></header>
+            <dl>
+              <dt>Qué hace</dt><dd>Con un Dijkstra desde el astronauta obtiene el tiempo a cada candidato, integra la dosis con el perfil de la tormenta y elige el mínimo. En un refugio natural el rover se estaciona a su lado como escudo. Al pasar la tormenta, vuelve a correr el tour con lo que queda de O₂ y de luz.</dd>
+              <dt>¿Es un teorema?</dt><dd>No. Que la dosis escale con el SVF es una simplificación: no modela el espectro del flujo ni el blindaje del suelo.</dd>
+              <dt>Origen</dt><dd>Nuestro. La forma «pico y decaimiento» imita los perfiles típicos de un evento solar; el pico de 7,5 mSv/h, τ = 12 min, el escudo 0,45 y la duración de 40 min son valores de demostración.</dd>
+              <dt>En este rover</dt><dd>Desde el sitio de la escarcha elige la pared del cráter de al lado; del otro lado de la loma, el cañón; cerca de la base, el hábitat.</dd>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <section id="limites">
+        <p class="kicker">Paso 15 · honestidad técnica</p>
+        <h2>Lo que este modelo no hace</h2>
+        <ul class="limits">
+          <li><b>Pandolf no está validado en Marte.</b> La adaptación a 0,38 g con «carga efectiva» es una aproximación del equipo. Antes de afirmarla, hay que contrastarla con estudios de locomoción en gravedad reducida.</li>
+          <li><b>No hay D* Lite.</b> Cada replanificación busca desde cero, sin reutilizar la búsqueda anterior. Con 9.216 nodos tarda pocos milisegundos.</li>
+          <li><b>El camino suavizado no se revalida.</b> Chaikin puede rozar una celda cara en una esquina; por eso la pendiente máxima medida sobre la curva puede pasar del 45 % en tramos cortos.</li>
+          <li><b>La física del rover está simplificada.</b> El deslizamiento de las ruedas se muestra pero no frena al rover; no hay suspensión ni tracción reales.</li>
+          <li><b>Los factores de riesgo y umbrales son nuestros.</b> ×7, ×4, 30°, 45 %, ρ = 0,15, α = 0,5 y los valores de los sitios son elecciones de diseño.</li>
+          <li><b>El relieve es mitad real.</b> En Gale, la imagen HiRISE y la pendiente regional son reales y a escala; la loma, el cañón y los cráteres son del escenario. En Jezero y Meridiani el relieve se comprime (1,6° en 240 m).</li>
+          <li><b>Sin incertidumbre de posición.</b> El documento del equipo propone un aborto por percentil con una nube de partículas (R<sub>95</sub>); no está implementado.</li>
+        </ul>
+      </section>
+
+      <section id="fuentes">
+        <p class="kicker">Paso 16 · resumen</p>
+        <h2>Todas las fórmulas de un vistazo</h2>
+        <p>Los resultados demostrados están en A*, Dijkstra, la ramificación y poda y Chaikin. La estabilidad del control de distancia se demuestra para este caso. Pandolf es un modelo empírico; los factores de riesgo, umbrales y valores de los sitios son diseño propio.</p>
+        <div class="tablewrap resumen">
+          <table>
+            <thead><tr><th>Fórmula</th><th>Para qué sirve</th><th>Tipo</th><th>Autor u origen</th></tr></thead>
+            <tbody>
+              <tr><td><a href="#terreno">Diferencia central</a></td><td>Estimar la subida</td><td><span class="tag metodo">Método</span></td><td>Diferencias finitas; Taylor, 1715</td></tr>
+              <tr><td><a href="#terreno">Ángulo de pendiente</a></td><td>Medir lo empinado</td><td><span class="tag definicion">Definición</span></td><td>Trigonometría clásica</td></tr>
+              <tr><td><a href="#costo">Pandolf adaptado</a></td><td>Litros de O₂ de un paso</td><td><span class="tag modelo">Modelo</span></td><td>Pandolf et al., 1977; adaptación del equipo</td></tr>
+              <tr><td><a href="#costo">Factores de riesgo y límites</a></td><td>Evitar lo peligroso</td><td><span class="tag propia">Propia</span></td><td>ARES-TWIN</td></tr>
+              <tr><td><a href="#grafo">Grafo dirigido de 8 vecinas</a></td><td>Representar el mapa</td><td><span class="tag definicion">Definición</span></td><td>Grafos: Euler, 1736</td></tr>
+              <tr><td><a href="#grafo">Peso de arista w(a → b)</a></td><td>O₂ de un paso con su pendiente</td><td><span class="tag modelo">Modelo</span></td><td>Pandolf aplicado a 2,5 m</td></tr>
+              <tr><td><a href="#algoritmos">A*</a></td><td>Ruta de costo mínimo</td><td><span class="tag teorema">Teorema</span></td><td>Hart, Nilsson y Raphael, 1968</td></tr>
+              <tr><td><a href="#algoritmos">Distancia octil</a></td><td>Estimar lo que falta</td><td><span class="tag definicion">Definición</span></td><td>Práctica estándar</td></tr>
+              <tr><td><a href="#algoritmos">Voraz</a></td><td>Decidir rápido y local</td><td><span class="tag algoritmo">Algoritmo</span></td><td>Base: Doran y Michie, 1966; score propio</td></tr>
+              <tr><td><a href="#suavizado">Chaikin</a></td><td>Redondear la ruta</td><td><span class="tag teorema">Teorema</span></td><td>Chaikin, 1974; Riesenfeld, 1975</td></tr>
+              <tr><td><a href="#avance">Control de distancia</a></td><td>Mantener 15 m</td><td><span class="tag modelo">Control</span></td><td>Maxwell, 1868; Routh–Hurwitz; ganancias propias</td></tr>
+              <tr><td><a href="#avance">Filtro y paso de Euler</a></td><td>Avanzar en el tiempo</td><td><span class="tag metodo">Método</span></td><td>Euler, 1768</td></tr>
+              <tr><td><a href="#avance">Inclinación con slerp</a></td><td>Apoyar el chasis</td><td><span class="tag metodo">Método</span></td><td>Hamilton, 1843; Shoemake, 1985</td></tr>
+              <tr><td><a href="#giro">Uniciclo</a></td><td>Mover en rescate</td><td><span class="tag modelo">Modelo</span></td><td>Estándar en robótica</td></tr>
+              <tr><td><a href="#giro">Punto adelantado</a></td><td>Seguir el camino</td><td><span class="tag propia">Propia</span></td><td>Inspirado en Coulter, 1992</td></tr>
+              <tr><td><a href="#giro">Velocidad con cos²</a></td><td>Girar antes de acelerar</td><td><span class="tag propia">Propia</span></td><td>ARES-TWIN</td></tr>
+              <tr><td><a href="#replan">Empalme de rutas</a></td><td>Reaccionar a un peligro</td><td><span class="tag propia">Propia</span></td><td>ARES-TWIN</td></tr>
+              <tr><td><a href="#consumo">Suma de energía</a></td><td>Totalizar litros, kcal y Wh</td><td><span class="tag metodo">Método</span></td><td>Riemann, 1854</td></tr>
+              <tr><td><a href="#hora">Reloj Mars24</a></td><td>Estación y hora solar</td><td><span class="tag algoritmo">Algoritmo</span></td><td>Allison y McEwen, 2000</td></tr>
+              <tr><td><a href="#hora">Elevación e irradiancia</a></td><td>Luz, sombras y panel solar</td><td><span class="tag modelo">Modelo</span></td><td>Trigonometría esférica; Beer–Lambert</td></tr>
+              <tr><td><a href="#hora">Temperatura del suelo</a></td><td>Frío y calefactores</td><td><span class="tag propia">Propia</span></td><td>ARES-TWIN</td></tr>
+              <tr><td><a href="#retorno">Campo de retorno R(p)</a></td><td>O₂ para volver desde cada celda</td><td><span class="tag teorema">Teorema</span></td><td>Dijkstra, 1959, sobre el grafo invertido</td></tr>
+              <tr><td><a href="#retorno">Regla de aborto</a></td><td>Seguir o volver</td><td><span class="tag propia">Propia</span></td><td>Documento del equipo; ρ = 0,15</td></tr>
+              <tr><td><a href="#tour">CTOPTW</a></td><td>Elegir sitios y orden</td><td><span class="tag definicion">Definición</span></td><td>Orienteering: Vansteenwegen et al., 2011</td></tr>
+              <tr><td><a href="#tour">Ramificación y poda</a></td><td>Resolverlo exacto</td><td><span class="tag teorema">Teorema</span></td><td>Land y Doig, 1960</td></tr>
+              <tr><td><a href="#tour">Diversidad ψ</a></td><td>Premiar minerales distintos</td><td><span class="tag modelo">Modelo</span></td><td>Submodularidad: Nemhauser et al., 1978</td></tr>
+              <tr><td><a href="#refugio">Factor de visión del cielo</a></td><td>Elegir refugio</td><td><span class="tag definicion">Definición</span></td><td>Zakšek et al., 2011</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="refs-title">Referencias</h2>
+        <ol class="refs">
+          <li>Hart, P., Nilsson, N. y Raphael, B. (1968). A Formal Basis for the Heuristic Determination of Minimum Cost Paths. <i>IEEE Trans. Systems Science and Cybernetics</i>, 4(2). <a href="https://doi.org/10.1109/TSSC.1968.300136">Enlace</a></li>
+          <li>Dijkstra, E. (1959). A note on two problems in connexion with graphs. <i>Numerische Mathematik</i>, 1. <a href="https://doi.org/10.1007/BF01386390">Enlace</a></li>
+          <li>Doran, J. y Michie, D. (1966). Experiments with the Graph Traverser Program. <i>Proc. Royal Society A</i>, 294. <a href="https://doi.org/10.1098/rspa.1966.0205">Enlace</a></li>
+          <li>Chaikin, G. (1974). An algorithm for high-speed curve generation. <i>Computer Graphics and Image Processing</i>, 3. <a href="https://doi.org/10.1016/0146-664X(74)90028-8">Enlace</a></li>
+          <li>Riesenfeld, R. (1975). On Chaikin's algorithm. <i>Computer Graphics and Image Processing</i>, 4(3). <a href="https://doi.org/10.1016/0146-664X(75)90017-9">Enlace</a></li>
+          <li>Zevenbergen, L. y Thorne, C. (1987). Quantitative analysis of land surface topography. <i>Earth Surface Processes and Landforms</i>, 12. <a href="https://doi.org/10.1002/esp.3290120107">Enlace</a></li>
+          <li>Moravec, H. y Elfes, A. (1985). High resolution maps from wide angle sonar. <i>IEEE ICRA</i>.</li>
+          <li>Goldberg, S., Maimone, M. y Matthies, L. (2002). Stereo vision and rover navigation software for planetary exploration. <i>IEEE Aerospace Conference</i>.</li>
+          <li>Stentz, A. (1994). Optimal and Efficient Path Planning for Partially-Known Environments. <i>IEEE ICRA</i>. <a href="https://www.ri.cmu.edu/publications/optimal-and-efficient-path-planning-for-partially-known-environments/">Enlace</a></li>
+          <li>Koenig, S. y Likhachev, M. (2002). D* Lite. <i>AAAI</i>. <a href="https://mlanthology.org/aaai/2002/koenig2002aaai-d/">Enlace</a></li>
+          <li>Carsten, J., Rankin, A., Ferguson, D. y Stentz, A. (2007). Global Path Planning on Board the Mars Exploration Rovers. <i>IEEE Aerospace Conference</i>. <a href="https://www-robotics.jpl.nasa.gov/media/documents/IEEEAC-Carsten-1125.pdf">Enlace</a></li>
+          <li>Coulter, R. C. (1992). Implementation of the Pure Pursuit Path Tracking Algorithm. CMU-RI-TR-92-01. <a href="https://www.ri.cmu.edu/publications/implementation-of-the-pure-pursuit-path-tracking-algorithm/">Enlace</a></li>
+          <li>Maxwell, J. C. (1868). On Governors. <i>Proc. Royal Society of London</i>, 16.</li>
+          <li>Minorsky, N. (1922). Directional stability of automatically steered bodies. <i>Journal of the American Society of Naval Engineers</i>, 34(2).</li>
+          <li>Shoemake, K. (1985). Animating rotation with quaternion curves. <i>SIGGRAPH</i>. <a href="https://doi.org/10.1145/325165.325242">Enlace</a></li>
+          <li>Pandolf, K., Givoni, B. y Goldman, R. (1977). Predicting energy expenditure with loads while standing or walking very slowly. <i>Journal of Applied Physiology</i>, 43(4). <a href="https://doi.org/10.1152/jappl.1977.43.4.577">Enlace</a></li>
+          <li>Perlin, K. (1985). An image synthesizer. <i>SIGGRAPH</i>.</li>
+          <li>Allison, M. y McEwen, M. (2000). A post-Pathfinder evaluation of areocentric solar coordinates with improved timing recipes for Mars seasonal/diurnal climate studies. <i>Planetary and Space Science</i>, 48. <a href="https://doi.org/10.1016/S0032-0633(99)00092-6">Enlace</a></li>
+          <li>Land, A. y Doig, A. (1960). An Automatic Method of Solving Discrete Programming Problems. <i>Econometrica</i>, 28(3). <a href="https://www.econometricsociety.org/publications/econometrica/1960/07/01/automatic-method-solving-discrete-programming-problems">Enlace</a></li>
+          <li>Vansteenwegen, P., Souffriau, W. y Van Oudheusden, D. (2011). The orienteering problem: A survey. <i>European Journal of Operational Research</i>, 209(1). <a href="https://doi.org/10.1016/j.ejor.2010.03.045">Enlace</a></li>
+          <li>Nemhauser, G., Wolsey, L. y Fisher, M. (1978). An analysis of approximations for maximizing submodular set functions — I. <i>Mathematical Programming</i>, 14(1).</li>
+          <li>Zakšek, K., Oštir, K. y Kokalj, Ž. (2011). Sky-View Factor as a Relief Visualization Technique. <i>Remote Sensing</i>, 3(2). <a href="https://doi.org/10.3390/rs3020398">Enlace</a></li>
+        </ol>
+      </section>
+    </main>
+
+    <script>"use strict";(()=>{var pn=Object.defineProperty;var xn=(t,n,e)=>n in t?pn(t,n,{enumerable:!0,configurable:!0,writable:!0,value:e}):t[n]=e;var ee=(t,n,e)=>xn(t,typeof n!="symbol"?n+"":n,e);var dt=new Uint8Array(512);{let t=new Uint8Array(256);for(let o=0;o<256;o++)t[o]=o;let n=20260142,e=()=>(n=n*1664525+1013904223>>>0,n/4294967296);for(let o=255;o>0;o--){let s=Math.floor(e()*(o+1)),r=t[o];t[o]=t[s],t[s]=r}for(let o=0;o<512;o++)dt[o]=t[o&255]}function It(t,n,e){switch(t&7){case 0:return n+e;case 1:return-n+e;case 2:return n-e;case 3:return-n-e;case 4:return n;case 5:return-n;case 6:return e;default:return-e}}var Ce=t=>t*t*t*(t*(t*6-15)+10),ne=(t,n,e)=>t+(n-t)*e;function Fe(t,n){let e=Math.floor(t),o=Math.floor(n),s=e&255,r=o&255,i=t-e,c=n-o,a=Ce(i),l=Ce(c),u=dt[dt[s]+r],d=dt[dt[s]+r+1],h=dt[dt[s+1]+r],m=dt[dt[s+1]+r+1];return ne(ne(It(u,i,c),It(h,i-1,c),a),ne(It(d,i,c-1),It(m,i-1,c-1),a),l)}function xt(t,n,e=4,o=2,s=.5){let r=1,i=1,c=0,a=0;for(let l=0;l<e;l++)c+=Fe(t*i,n*i)*r,a+=r,r*=s,i*=o;return c/a}function Ie(t,n,e=3){let o=.5,s=1,r=0,i=0;for(let c=0;c<e;c++){let a=1-Math.abs(Fe(t*s,n*s));r+=a*a*o,i+=o,o*=.5,s*=2.1}return r/i}function _e(t){let n=t>>>0;return()=>{n=n+1831565813>>>0;let e=n;return e=Math.imul(e^e>>>15,e|1),e^=e+Math.imul(e^e>>>7,e|61),((e^e>>>14)>>>0)/4294967296}}var gt=240,N=gt/2,V=241,Nt=gt/(V-1),U={x:-88,z:-84},Q={x:86,z:84},Mt={x:Math.SQRT1_2,z:-Math.SQRT1_2},Ht={x:Math.SQRT1_2,z:Math.SQRT1_2},Gt=10,re={x:Mt.x*Gt,z:Mt.z*Gt},gn=[{x:-46,z:-40,r:13,d:5},{x:44,z:46,r:11,d:4.5},{x:-62,z:38,r:16,d:6},{x:74,z:-10,r:16,d:4.5},{x:-10,z:70,r:9,d:3},{x:82,z:18,r:8,d:3},{x:-96,z:-18,r:7,d:2.5},{x:20,z:-82,r:10,d:4},{x:-20,z:-60,r:6,d:2}],_t={x:52,z:16,r:28},Tt=(t,n,e)=>{let o=Math.min(1,Math.max(0,(e-t)/(n-t)));return o*o*(3-2*o)},Mn=12,yn=29;function ae(t,n){let e=t*Mt.x+n*Mt.z,o=t*Ht.x+n*Ht.z;return Math.exp(-(((e-Gt)/6.5)**4))*Math.exp(-((o/12)**4))}var Dt=null,wn=null,Sn=11,Et={tiltEast:0,tiltNorth:0,hiRes:!1};var De=(t,n)=>Et.tiltEast*t-Et.tiltNorth*n;function $n(t,n,e,o,s){let r=Math.min(t.n-1.001,Math.max(0,(n+N)/gt*(t.n-1))),i=Math.min(t.n-1.001,Math.max(0,(e+N)/gt*(t.n-1))),c=Math.floor(r),a=Math.floor(i),l=r-c,u=i-a,d=t.data,h=d[(a*t.n+c)*o+s],m=d[(a*t.n+c+1)*o+s],b=d[((a+1)*t.n+c)*o+s],f=d[((a+1)*t.n+c+1)*o+s];return(h*(1-l)+m*l)*(1-u)+(b*(1-l)+f*l)*u}var He=0;function kn(t,n,e){let o=xt(t*.0075,n*.0075,4)*e+xt(t*.035+11.3,n*.035-4.1,3)*.9+xt(t*.17,n*.17,2)*.12,s=t*Mt.x+n*Mt.z,r=t*Ht.x+n*Ht.z,i=1-Tt(160,175,Math.abs(s));if(i>0){let h=.9+.2*Ie(t*.03+3.1,n*.03-7.7,2),m=1-.97*Math.exp(-(((s-Gt)/6.5)**4));o+=Mn*Math.exp(-((r/yn)**2))*i*h*m}let c=Math.max(0,xt(t*.02+90,n*.02-30,3))*.45;for(let h of gn){let m=t-h.x,b=n-h.z,f=m*m+b*b,x=h.r*1.9;if(f>x*x)continue;let g=Math.sqrt(f),M=g/h.r,k=Math.atan2(b,m)-Math.atan2(-h.z,-h.x);k=Math.atan2(Math.sin(k),Math.cos(k));let p=Math.exp(-((k/.5)**2));if(M<1){let y=1-M*M,$=1-M;o-=h.d*(y+($-y)*p),c=Math.max(c,(1-M)*.7)}o+=h.d*.35*(1-.8*p)*Math.exp(-(((g-h.r)/(.45*h.r))**2))}let a=t-_t.x,l=n-_t.z,u=Math.sqrt(a*a+l*l),d=1-Tt(_t.r*.45,_t.r,u);if(d>0){let h=(t*.8+n*.6)*.42+xt(t*.03,n*.03,2)*3,m=Math.sin(h)*.5+.5;o+=m*m*1.3*d,c=Math.max(c,d*(.55+.45*m))}return He=Math.min(1,c),o}var oe=new Float32Array(V*V),An=new Float32Array(V*V),Ge=new Float32Array(V*V),Ne={version:0,source:"procedural"},ct=[];function Tn(){let t=_e(4242);ct.length=0;let n=0;for(;ct.length<280&&n++<5e3;){let e=(t()*2-1)*(N-6),o=(t()*2-1)*(N-6);Math.hypot(e-U.x,o-U.z)<15||Math.hypot(e-Q.x,o-Q.z)<12||ae(e,o)>.05||ct.push({x:e,z:o,s:.22+Math.pow(t(),3)*1.8,sy:.55+t()*.5,rot:t()*Math.PI*2})}}function je(t,n){for(let e=ct.length-1;e>=0;e--)t.some(o=>Math.hypot(ct[e].x-o.x,ct[e].z-o.z)<n)&&ct.splice(e,1)}function Lt(t=null,n=null,e="procedural",o={}){Dt=t,wn=n,Et.hiRes=!!o.hiRes;let s=o.tilt?.east??0,r=o.tilt?.north??0,i=Math.hypot(s,r),c=i>.12?.12/i:1;Et.tiltEast=s*c,Et.tiltNorth=r*c;let a=Dt?2.2:o.hiRes?1.6:6,l=(h,m)=>kn(h,m,a)+(Dt?$n(Dt,h,m,1,0)*Sn:0)+De(h,m),u=l(U.x,U.z),d=l(Q.x,Q.z);for(let h=0;h<V;h++){let m=-N+h*Nt;for(let b=0;b<V;b++){let f=-N+b*Nt,x=l(f,m),g=h*V+b;Ge[g]=He;let M=Math.hypot(f-U.x,m-U.z);M<13&&(x+=(u-x)*(1-Tt(8,13,M)));let k=Math.hypot(f-Q.x,m-Q.z);k<10&&(x+=(d-x)*(1-Tt(5,10,k)));let p=Tt(N-14,N,Math.max(Math.abs(f),Math.abs(m))),y=De(f,m)-2;oe[g]=x+(y-x)*p}}ct.length===0&&Tn(),An.set(oe),Ne.version++,Ne.source=e}function Oe(t,n,e){let o=Math.min(V-1.0001,Math.max(0,(n+N)/Nt)),s=Math.min(V-1.0001,Math.max(0,(e+N)/Nt)),r=Math.floor(o),i=Math.floor(s),c=o-r,a=s-i,l=i*V+r,u=t[l],d=t[l+1],h=t[l+V],m=t[l+V+1];return(u*(1-c)+d*c)*(1-a)+(h*(1-c)+m*c)*a}var Z=(t,n)=>Oe(oe,t,n);var jt=(t,n)=>Oe(Ge,t,n);function Ot(t,n,e=1.25){let o=(Z(t+e,n)-Z(t-e,n))/(2*e),s=(Z(t,n+e)-Z(t,n-e))/(2*e);return Math.atan(Math.sqrt(o*o+s*s))*180/Math.PI}Lt();var se=7.400000000000006;function ie(t,n){return Math.max(.05,1.2*Math.exp(-.042*Math.abs(t))*(1-.28*n))}function Xt(t,n,e){let s=se,r=Math.max(0,.35*e*t);return 1.5*80+2*(80+s)*(s/80)**2+n*(80+s)*(1.5*e*e+r)}var Xe=Xt(0,1,0);function lt(t,n,e,o={litres:0,seconds:0,watts:0,speed:0}){let s=ie(n,e),r=Xt(n,e,s),i=t/(60*s);return o.litres=r*i*.00298,o.seconds=t/s,o.watts=r,o.speed=s,o}var Zt=t=>t*.8598;var A=96,O=gt/A,le=30,ue=45,En=7,Ln=4,vn=1.25,zn=1.08,B=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,Math.SQRT2],[1,-1,Math.SQRT2],[-1,1,Math.SQRT2],[-1,-1,Math.SQRT2]],Y=A*A,I={cost:new Float32Array(Y),cls:new Uint8Array(Y),slope:new Float32Array(Y),sand:new Float32Array(Y),height:new Float32Array(Y),hazard:new Uint8Array(Y),shade:new Uint8Array(Y),factor:new Float32Array(Y),edgeL:new Float32Array(Y*8),edgeT:new Float32Array(Y*8),wMinPerM:.01,version:0},yt=(t,n)=>({x:-N+(t+.5)*O,z:-N+(n+.5)*O});function X(t){let n=Math.min(A-1,Math.max(0,Math.floor((t.x+N)/O)));return Math.min(A-1,Math.max(0,Math.floor((t.z+N)/O)))*A+n}var me=t=>Number.isFinite(I.cost[t]);function Rn(t){let{shade:n,height:e}=I;if(n.fill(0),!t||t.elevation<=0){t&&n.fill(1);return}let o=Math.hypot(t.dir.x,t.dir.z)||1,s=t.dir.x/o,r=t.dir.z/o,i=Math.tan(t.elevation*Math.PI/180);for(let c=0;c<A;c++)for(let a=0;a<A;a++){let l=c*A+a,u=yt(a,c),d=e[l]+.3;for(let h=2;h<160;h+=h<20?1.5:3){let m=u.x+s*h,b=u.z+r*h;if(Math.abs(m)>N||Math.abs(b)>N)break;if(Z(m,b)>d+h*i){n[l]=1;break}}}}var Wt={litres:0,seconds:0,watts:0,speed:0},Pn=1.2;function Ze(t,n,e=null,o){let{cost:s,cls:r,slope:i,sand:c,hazard:a,height:l,factor:u,edgeL:d,edgeT:h}=I,m=new Uint8Array(Y),b=new Float32Array(Y);for(let p of ct)p.s<.75||Cn(p.x,p.z,p.s*1.2,y=>{p.s>=1.3?m[y]=1:b[y]=Math.max(b[y],.35)});for(let p=0;p<A;p++)for(let y=0;y<A;y++){let $=p*A+y,v=yt(y,p);l[$]=Z(v.x,v.z),i[$]=Ot(v.x,v.z,O/2),c[$]=jt(v.x,v.z)}Rn(e);let f=!!e&&e.elevation>0,x=0;for(let p=0;p<Y;p++){let y=p%A,$=p/A|0,v=yt(y,$);a[p]=0;let z=1,_=Math.max(Math.abs(v.x),Math.abs(v.z))>N-12||i[p]>le||m[p]===1;x=!n&&ae(v.x,v.z)>.3?1:0,x&&(z*=En);for(let H of t){let at=Math.hypot(v.x-H.x,v.z-H.z);H.kind==="cold"?at<H.r?(z*=Ln,a[p]=1):at<H.r*1.35&&(z*=1.4):H.kind==="rocks"&&(at<H.r?(_=!0,a[p]=2):at<H.r+3&&(z*=1.6))}f&&I.shade[p]&&(z*=zn),o&&!x&&!o(v.x,v.z)&&(z*=Pn),u[p]=z;let F=1+.9*c[p]+b[p],D=lt(1,0,F,Wt).litres,j=1+Math.max(0,i[p]-8)*.12;s[p]=_?1/0:D*z*j,r[p]=_?2:x?3:z>1.3||i[p]>16||c[p]>.45?1:0,ce[p]=F}let g=!!e&&e.elevation>0&&e.elevation<15,M=e?e.azimuth*Math.PI/180:0,k=1/0;for(let p=0;p<Y;p++){let y=p%A,$=p/A|0;for(let v=0;v<8;v++){let z=p*8+v,[P,_,F]=B[v],D=y+P,j=$+_;if(D<0||j<0||D>=A||j>=A){d[z]=1/0,h[z]=1/0;continue}let H=j*A+D,at=!Number.isFinite(s[p])||!Number.isFinite(s[H])||F>1&&(!Number.isFinite(s[$*A+D])||!Number.isFinite(s[j*A+y])),L=F*O,C=100*(l[H]-l[p])/L;if(at||Math.abs(C)>ue){d[z]=1/0,h[z]=1/0;continue}let K=(ce[p]+ce[H])/2;lt(L,C,K,Wt);let et=(u[p]+u[H])/2;if(g){let nt=Math.atan2(P,-_),st=Math.abs(nt-M)%(2*Math.PI);st>Math.PI&&(st=2*Math.PI-st),st<25*Math.PI/180&&(et*=vn)}d[z]=Wt.litres*et,h[z]=Wt.seconds,k=Math.min(k,d[z]/L)}}I.wMinPerM=Number.isFinite(k)?k:.01,I.version++}var ce=new Float32Array(Y);function Cn(t,n,e,o){let s=Math.max(0,Math.floor((t-e+N)/O)),r=Math.min(A-1,Math.floor((t+e+N)/O)),i=Math.max(0,Math.floor((n-e+N)/O)),c=Math.min(A-1,Math.floor((n+e+N)/O));for(let a=i;a<=c;a++)for(let l=s;l<=r;l++){let u=yt(l,a);Math.hypot(u.x-t,u.z-n)<=e+O*.5&&o(a*A+l)}}var Fn=1800,vt={litres:0,seconds:0,watts:0,speed:0};function de(t,n){let e=0,o=0,s=0,r=0,i=0,c=0,a=0,l=0,u=0,d=0,h=0,m=[0,0,0,0],b=!0,f=t.length?t[0].x:0,x=t.length?t[0].z:0;for(let k=0;k<t.length-1;k++){let p=t[k],y=t[k+1],$=Math.hypot(y.x-p.x,y.z-p.z);if($<1e-4)continue;let v=(p.x+y.x)/2,z=(p.z+y.z)/2,P=Z(y.x,y.z)-Z(p.x,p.z),_=100*P/$,F=Ot(v,z),D=jt(v,z),j=I.cls[X({x:v,z})];lt($,_,1+.9*D,vt),o+=vt.litres,s+=vt.watts*vt.seconds,r+=vt.seconds,i+=$*.32*(1+Math.max(_,0)*.06+D*1.8);let H=Math.hypot(y.x-f,y.z-x);if(H>=5){let at=100*(Z(y.x,y.z)-Z(f,x))/H;l=Math.max(l,Math.abs(at)),Math.abs(at)>ue+3&&(b=!1),f=y.x,x=y.z}(F>le+1||j===2)&&(b=!1),e+=$,P>0&&(u+=P),F>15&&(c+=$),a=Math.max(a,F),d+=D*$,h=Math.max(h,D),m[j]+=$}let g=Math.max(e,.001),M=s/4184;return{algo:n.algo,lengthM:e,computeMs:n.computeMs??0,expanded:n.expanded??0,litres:o,kcalTotal:M,kcalPerHr:r>0?Zt(s/r):0,o2SavedPct:0,batteryWh:i,batteryReservePct:Math.max(0,n.batteryPct-i/Fn*100),slopeHazardPct:Math.min(100,c/g*160+Math.max(0,a-18)*2),sandRiskPct:Math.min(99,d/g*70+h*25),maxSlope:a,maxGrade:l,climbM:u,etaMin:r/60,classFrac:[m[0]/g,m[1]/g,m[2]/g,m[3]/g],feasible:b,fallback:n.fallback??!1}}var On={},In="https://trek.nasa.gov/tiles/Mars/EQ";var Bt={dem:{id:"Mars_MGS_MOLA_DEM_mosaic_global_463m_8",ext:"png",maxZoom:5,label:"MGS MOLA DEM 463 m"},albedo:{id:"Mars_Viking_MDIM21_ClrMosaic_global_232m",ext:"jpg",maxZoom:7,label:"Viking MDIM 2.1 colour 232 m"},hirise:{id:"curiosity_hirise_mosaic",ext:"png",maxZoom:16,label:"MRO HiRISE Curiosity mosaic 0.64 m"},galeDem:{id:"Gale_DEM_SMG_1m",ext:"png",maxZoom:14,label:"MRO HiRISE Gale DEM (8-bit)"}},We={mPerDN:18.613,offset:-4600},fe=[{id:"gale",name:"Gale Crater · Mount Sharp (true scale)",mission:"Curiosity (MSL)",lat:-4.82525828,lon:137.3889348,span:0,mode:"hires",sol:5069},{id:"jezero",name:"Jezero Crater · western delta (analog)",mission:"Perseverance (M2020)",lat:18.44,lon:77.45,span:1.6,mode:"analog"},{id:"meridiani",name:"Meridiani Planum · Endeavour rim (analog)",mission:"Opportunity (MER-B)",lat:-2.3,lon:-5.3,span:1.6,mode:"analog"},{id:"procedural",name:"Procedural analog site",mission:"Offline",lat:0,lon:0,span:0,mode:"procedural"}],_n=(t,n,e,o)=>`${In}/${t.id}/1.0.0/default/default028mm/${n}/${e}/${o}.${t.ext}`;function Ue(t,n=15e3){return new Promise((e,o)=>{let s=new Image;s.crossOrigin="anonymous";let r=setTimeout(()=>o(new Error(`timeout ${t}`)),n);s.onload=()=>{clearTimeout(r),e(s)},s.onerror=()=>{clearTimeout(r),o(new Error(`failed ${t}`))},s.src=t})}async function he(t,n,e,o,s,r,i,c){let a=180/2**n,l=Math.floor((s+180)/a),u=Math.floor((r+180)/a),d=Math.floor((90-o)/a),h=Math.floor((90-e)/a),m=document.createElement("canvas");m.width=(u-l+1)*256,m.height=(h-d+1)*256;let b=m.getContext("2d"),f=[];for(let $=d;$<=h;$++)for(let v=l;v<=u;v++)f.push(Ue(_n(t,n,$,v)).then(z=>b.drawImage(z,(v-l)*256,($-d)*256,256,256)));await Promise.all(f);let x=((s+180)/a-l)*256,g=((90-o)/a-d)*256,M=(r-s)/a*256,k=(o-e)/a*256,p=document.createElement("canvas");p.width=i,p.height=c;let y=p.getContext("2d");return y.imageSmoothingEnabled=!0,y.imageSmoothingQuality="high",y.drawImage(m,x,g,M,k,0,0,i,c),y.getImageData(0,0,i,c)}function Be(t,n,e){let o=new Float32Array(t.length),s=new Float32Array(t.length);for(let r=0;r<n;r++)for(let i=0;i<n;i++){let c=0;for(let a=-e;a<=e;a++)c+=t[r*n+Math.min(n-1,Math.max(0,i+a))];o[r*n+i]=c/(2*e+1)}for(let r=0;r<n;r++)for(let i=0;i<n;i++){let c=0;for(let a=-e;a<=e;a++)c+=o[Math.min(n-1,Math.max(0,r+a))*n+i];s[r*n+i]=c/(2*e+1)}return s}async function Dn(t){let n={lat:t.lat,lon:t.lon,sol:t.sol??null,elev:null,live:!1};if(!t.feed)return n;try{let e=new AbortController,o=setTimeout(()=>e.abort(),8e3),s=await fetch(`${t.feed}?t=${Math.floor(Date.now()/36e5)}`,{signal:e.signal,cache:"no-store"});clearTimeout(o);let i=(await s.json())?.features?.[0]?.properties;return!i||typeof i.lat!="number"||typeof i.lon!="number"||i.lat<-4.92||i.lat>-4.25||i.lon<137.13||i.lon>137.72?n:{lat:i.lat,lon:i.lon,sol:i.sol??null,elev:i.elev_geoid??null,live:!0}}catch{return n}}function Nn(t,n,e){let o=0,s=0,r=0,i=0,c=0,a=0,l=0,u=0,d=0;for(let y=0;y<t.height;y++)for(let $=0;$<t.width;$++){let v=(y*t.width+$)*4;if(t.data[v+3]<200)continue;let z=We.offset+We.mPerDN*t.data[v],P=(($+.5)/t.width-.5)*n,_=(.5-(y+.5)/t.height)*e;o++,s+=P,r+=_,i+=z,c+=P*P,a+=_*_,l+=P*_,u+=P*z,d+=_*z}if(o<50)return null;let h=s/o,m=r/o,b=i/o,f=c/o-h*h,x=a/o-m*m,g=l/o-h*m,M=u/o-h*b,k=d/o-m*b,p=f*x-g*g;return Math.abs(p)<1e-9?null:{east:(M*x-k*g)/p,north:(k*f-M*g)/p,mean:b}}async function Hn(){try{let t=On.env.BASE_URL,n=await fetch(`${t}gale/site.json`);if(!n.ok)return null;let e=await n.json(),o=await Ue(`${t}gale/site-hirise.jpg`,2e4),s=o.naturalWidth,r=document.createElement("canvas");r.width=s,r.height=s;let i=r.getContext("2d");i.drawImage(o,0,0);let c=i.getImageData(0,0,s,s),a=new Float32Array(s*s*3);for(let u=0;u<s*s;u++)a[u*3]=a[u*3+1]=a[u*3+2]=c.data[u*4]/255;let l=Math.hypot(e.tilt.east,e.tilt.north);return{dem:null,albedo:{data:a,n:s},hiRes:!0,tilt:e.tilt,demRange:0,albedoPreview:r.toDataURL("image/jpeg",.85),site:{lat:e.lat,lon:e.lon,sol:e.sol,elevation:e.elevation,slopeDeg:Math.atan(l)*180/Math.PI,uphillAzimuth:(Math.atan2(e.tilt.east,e.tilt.north)*180/Math.PI+360)%360,live:!1}}}catch{return null}}async function Gn(t){let n=await Hn();if(n)return n;let e=await Dn(t),o=Math.cos(e.lat*Math.PI/180),s=120,r=s/59157,i=s/(59157*o),c=512,a=await he(Bt.hirise,16,e.lat-r,e.lat+r,e.lon-i,e.lon+i,c,c),l=new Float32Array(c*c),u=255,d=0;for(let p=0;p<c*c;p++){let y=a.data[p*4];l[p]=y,a.data[p*4+3]>0&&(u=Math.min(u,y),d=Math.max(d,y))}let h=Math.max(1,d-u),m=new Float32Array(c*c*3),b=document.createElement("canvas");b.width=c,b.height=c;let f=b.getContext("2d"),x=f.createImageData(c,c);for(let p=0;p<c*c;p++){let y=Math.min(1,Math.max(0,(l[p]-u)/h));m[p*3]=m[p*3+1]=m[p*3+2]=y;let $=.18+.82*y;x.data[p*4]=Math.min(255,$*.97*255),x.data[p*4+1]=Math.min(255,$*.66*255),x.data[p*4+2]=Math.min(255,$*.46*255),x.data[p*4+3]=255}f.putImageData(x,0,0);let g={east:0,north:0},M=e.elev;try{let y=await he(Bt.galeDem,14,e.lat-.010142502155281709,e.lat+.010142502155281709,e.lon-600/(59157*o),e.lon+600/(59157*o),96,96),$=Nn(y,2*600,2*600);$&&(g={east:$.east,north:$.north},M??(M=$.mean))}catch{}let k=Math.hypot(g.east,g.north);return{dem:null,albedo:{data:m,n:c},hiRes:!0,tilt:g,demRange:0,albedoPreview:b.toDataURL("image/jpeg",.85),site:{lat:e.lat,lon:e.lon,sol:e.sol,elevation:M,slopeDeg:Math.atan(k)*180/Math.PI,uphillAzimuth:(Math.atan2(g.east,g.north)*180/Math.PI+360)%360,live:e.live}}}async function Ke(t,n,e){return he(t,t.maxZoom,n.lat-n.span/2,n.lat+n.span/2,n.lon-n.span/2,n.lon+n.span/2,e,e)}async function jn(t){let e=await Ke(Bt.dem,t,128),o=new Float32Array(128*128);for(let l=0;l<o.length;l++)o[l]=e.data[l*4];o=Be(Be(o,128,3),128,2);let s=1/0,r=-1/0;for(let l of o)l<s&&(s=l),l>r&&(r=l);let i=Math.max(1,r-s);for(let l=0;l<o.length;l++)o[l]=(o[l]-s)/i-.5;let c=null,a=null;try{let u=await Ke(Bt.albedo,t,192),d=new Float32Array(192*192*3);for(let m=0;m<192*192;m++)d[m*3]=u.data[m*4]/255,d[m*3+1]=u.data[m*4+1]/255,d[m*3+2]=u.data[m*4+2]/255;c={data:d,n:192};let h=document.createElement("canvas");h.width=192,h.height=192,h.getContext("2d").putImageData(u,0,0),a=h.toDataURL("image/jpeg",.85)}catch{c=null}return{dem:{data:o,n:128},albedo:c,hiRes:!1,tilt:{east:0,north:0},demRange:r-s,albedoPreview:a,site:{lat:t.lat,lon:t.lon,sol:null,elevation:null,slopeDeg:0,uphillAzimuth:0,live:!1}}}async function qe(t){return t.mode==="hires"?Gn(t):jn(t)}var ut=A*A,Xn=[1,0,3,2,7,6,5,4],wt=class{constructor(){ee(this,"ids",[]);ee(this,"keys",[])}get size(){return this.ids.length}push(n,e){let o=this.ids,s=this.keys,r=o.length;for(o.push(n),s.push(e);r>0;){let i=r-1>>1;if(s[i]<=e)break;o[r]=o[i],s[r]=s[i],r=i}o[r]=n,s[r]=e}pop(){let n=this.ids,e=this.keys,o=n[0],s=n.pop(),r=e.pop(),i=n.length;if(i>0){let c=0;for(;;){let a=2*c+1,l=a+1,u=c,d=r;if(a<i&&e[a]<d&&(u=a,d=e[a]),l<i&&e[l]<d&&(u=l),u===c)break;n[c]=n[u],e[c]=e[u],c=u}n[c]=s,e[c]=r}return o}};function Kt(t,n){let e=Math.abs(t%A-n%A),o=Math.abs((t/A|0)-(n/A|0));return(Math.max(e,o)+(Math.SQRT2-1)*Math.min(e,o))*O}function ot(t){if(me(t))return t;let n=new Uint8Array(ut),e=[t];n[t]=1;for(let o=0;o<e.length;o++){let s=e[o],r=s%A,i=s/A|0;for(let[c,a]of B){let l=r+c,u=i+a;if(l<0||u<0||l>=A||u>=A)continue;let d=u*A+l;if(!n[d]){if(me(d))return d;n[d]=1,e.push(d)}}}return t}function Ve(t){let n=0,e=0;for(let o=0;o<t.length-1;o++){let s=t[o],r=t[o+1]%A-s%A,i=(t[o+1]/A|0)-(s/A|0);for(let c=0;c<8;c++)B[c][0]===r&&B[c][1]===i&&(n+=I.edgeL[s*8+c],e+=I.edgeT[s*8+c])}return{litres:n,seconds:e}}function Qe(t,n){let e=performance.now(),{edgeL:o,wMinPerM:s}=I,r=ot(X(t)),i=ot(X(n)),c=new Float32Array(ut).fill(1/0),a=new Int32Array(ut).fill(-1),l=new Uint8Array(ut),u=new wt;c[r]=0,u.push(r,Kt(r,i)*s);let d=0,h=!1;for(;u.size;){let f=u.pop();if(l[f])continue;if(l[f]=1,d++,f===i){h=!0;break}let x=f%A,g=f/A|0;for(let M=0;M<8;M++){let k=o[f*8+M];if(!Number.isFinite(k))continue;let p=(g+B[M][1])*A+x+B[M][0];if(l[p])continue;let y=c[f]+k;y<c[p]&&(c[p]=y,a[p]=f,u.push(p,y+Kt(p,i)*s))}}let m=performance.now()-e;if(!h)return{algo:"astar",ok:!1,points:St(t,n),computeMs:m,expanded:d,litres:1/0,seconds:1/0};let b=[];for(let f=i;f!==-1;f=a[f])b.push(f);return b.reverse(),{algo:"astar",ok:!0,points:Ut(b,t,n),computeMs:m,expanded:d,...Ve(b)}}function Ye(t,n){let e=performance.now(),{edgeL:o,wMinPerM:s}=I,r=ot(X(t)),i=ot(X(n)),c=new Uint8Array(ut),a=[r];c[r]=1;let l=0,u=Math.ceil(Kt(r,i)/O*3)+150;for(;a.length&&l++<u;){let m=a[a.length-1];if(m===i)break;let b=m%A,f=m/A|0,x=-1,g=1/0;for(let M=0;M<8;M++){let k=o[m*8+M];if(!Number.isFinite(k))continue;let p=(f+B[M][1])*A+b+B[M][0];if(c[p])continue;let y=Kt(p,i)*s+k;y<g&&(g=y,x=p)}x<0?a.pop():(c[x]=1,a.push(x))}let d=performance.now()-e;return a.length>0&&a[a.length-1]===i?{algo:"greedy",ok:!0,points:Ut(a,t,n),computeMs:d,expanded:l,...Ve(a)}:{algo:"greedy",ok:!1,points:St(t,n),computeMs:d,expanded:l,litres:1/0,seconds:1/0}}function be(t,n){let{edgeL:e,edgeT:o}=I,s=ot(X(t)),r=new Float32Array(ut).fill(1/0),i=new Float32Array(ut).fill(1/0),c=new Int32Array(ut).fill(-1),a=new Uint8Array(ut),l=new wt;for(r[s]=0,i[s]=0,l.push(s,0);l.size;){let u=l.pop();if(a[u])continue;a[u]=1;let d=u%A,h=u/A|0;for(let m=0;m<8;m++){let b=d+B[m][0],f=h+B[m][1];if(b<0||f<0||b>=A||f>=A)continue;let x=f*A+b;if(a[x])continue;let g=n?u*8+m:x*8+Xn[m],M=e[g];if(!Number.isFinite(M))continue;let k=r[u]+M;k<r[x]&&(r[x]=k,i[x]=i[u]+o[g],c[x]=u,l.push(x,k))}}return{cost:r,time:i,parent:c,source:s}}function Je(t,n,e){let o=ot(X(e));if(!Number.isFinite(t.cost[o]))return St(n,e);let s=[];for(let r=o;r!==-1;r=t.parent[r])s.push(r);return s.reverse(),Ut(s,n,e)}function tn(t,n,e){let o=ot(X(n));if(!Number.isFinite(t.cost[o]))return St(n,e);let s=[o],r=0;for(;o!==t.source&&r++<ut&&(o=t.parent[o],!(o<0));)s.push(o);return Ut(s,n,e)}function St(t,n,e=1){let o=Math.hypot(n.x-t.x,n.z-t.z),s=Math.max(1,Math.ceil(o/e)),r=[];for(let i=0;i<=s;i++)r.push({x:t.x+(n.x-t.x)*i/s,z:t.z+(n.z-t.z)*i/s});return r}function pe(t,n){let e=t;for(let o=0;o<n;o++){if(e.length<3)return e;let s=[e[0]];for(let r=0;r<e.length-1;r++){let i=e[r],c=e[r+1];s.push({x:i.x*.75+c.x*.25,z:i.z*.75+c.z*.25}),s.push({x:i.x*.25+c.x*.75,z:i.z*.25+c.z*.75})}s.push(e[e.length-1]),e=s}return e}function xe(t,n=1){if(t.length<2)return t.slice();let e=[t[0]],o=0;for(let i=0;i<t.length-1;i++){let c=t[i],a=t[i+1],l=Math.hypot(a.x-c.x,a.z-c.z),u=n-o;for(;u<=l;)e.push({x:c.x+(a.x-c.x)*u/l,z:c.z+(a.z-c.z)*u/l}),u+=n;o=l-(u-n)}let s=t[t.length-1],r=e[e.length-1];return Math.hypot(s.x-r.x,s.z-r.z)>.05&&e.push(s),e}function Ut(t,n,e){let o=t.map(s=>yt(s%A,s/A|0));return o[0]={...n},o.length>1?o[o.length-1]={...e}:o.push({...e}),xe(pe(o,3),1)}var tt=Math.PI/180,zt=(t,n)=>(t%n+n)%n;function en(t){let e=24405875e-1+t/864e5+69.184/86400,o=e-2451545,s=19.3871+.52402073*o,r=270.3871+.524038496*o,i=[.0071,.0057,.0039,.0037,.0021,.002,.0018],c=[2.2353,2.7543,1.1177,15.7866,2.1354,2.4694,32.8493],a=[49.409,168.173,191.837,21.736,15.704,95.528,49.095],l=0;for(let k=0;k<7;k++)l+=i[k]*Math.cos((.985626*o/c[k]+a[k])*tt);let u=s*tt,d=(10.691+3e-7*o)*Math.sin(u)+.623*Math.sin(2*u)+.05*Math.sin(3*u)+.005*Math.sin(4*u)+5e-4*Math.sin(5*u)+l,h=zt(r+d,360),m=h*tt,b=2.861*Math.sin(2*m)-.071*Math.sin(4*m)+.002*Math.sin(6*m)-d,f=Math.asin(.42565*Math.sin(m))/tt+.25*Math.sin(m),x=zt(24*((e-24515495e-1)/1.0274912517+44796-9626e-7),24),g=(e-24055220028779e-7)/1.0274912517,M=1.5236*(1.00436-.09309*Math.cos(u)-.004336*Math.cos(2*u)-31e-5*Math.cos(3*u)-3e-5*Math.cos(4*u));return{msd:g,ls:h,decl:f,eot:b,mst:x,rAU:M}}function Rt(t,n,e,o,s=.6){let r=(e-12)*15*tt,i=t*tt,c=n*tt,a=-Math.cos(c)*Math.sin(r),l=Math.sin(c)*Math.cos(i)-Math.cos(c)*Math.sin(i)*Math.cos(r),u=Math.sin(c)*Math.sin(i)+Math.cos(c)*Math.cos(i)*Math.cos(r),d=Math.asin(Math.max(-1,Math.min(1,u)))/tt,h=zt(Math.atan2(a,l)/tt,360),m=1361/(o*o),b=Math.max(0,u),f=b>.01?m*b*(Math.exp(-s/b)+.35*(1-Math.exp(-s/b))):0;return{ltst:e,elevation:d,azimuth:h,dir:{x:a,y:u,z:-l},irradiance:f}}function ge(t,n){let e=t*tt,o=n*tt,s=-Math.tan(e)*Math.tan(o);return s<=-1?24:s>=1?12:12+Math.acos(s)/tt/15}var $t=t=>{let n=Math.floor(zt(t,24)),e=Math.floor((zt(t,24)-n)*60);return`${String(n).padStart(2,"0")}:${String(e).padStart(2,"0")}`};function Me(t,n,e,o){let s=Rt(n,e,t-1.5,o),r=Math.max(0,Math.sin(s.elevation*tt)),i=1/(o*o)/(1/(1.52*1.52));return-85+92*Math.pow(r,.75)*i}var ye=4,we=.5,qt=[{id:1,code:"B",name:"Boxwork outcrop",mineral:"Sulfates",value:10,massKg:1.2,drillMin:90,window:[10,16.5],...Q,note:"Mineral veins of the Mount Sharp boxwork; needs high Sun for imaging."},{id:2,code:"C",name:"Canyon strata",mineral:"Lake sediments",value:8,massKg:1,drillMin:75,window:[9,17],x:re.x-4.2,z:re.z-4.2,needsScan:!0,note:"Exposed layers on the canyon floor."},{id:3,code:"F",name:"Morning frost",mineral:"Water ice",value:7,massKg:.3,drillMin:30,window:[7,9.5],x:80,z:-10,note:"Frost in the crater shadow; it sublimates once the Sun is high."},{id:4,code:"K",name:"Clay bench",mineral:"Phyllosilicates",value:6,massKg:1,drillMin:60,window:[8,17],x:-50,z:14,note:"Clay-bearing bench beside the western crater."},{id:5,code:"Y",name:"Gypsum veins",mineral:"Sulfates",value:5,massKg:.8,drillMin:50,window:[8,17],x:26,z:-72,note:"Same mineral class as the boxwork: worth less once B is sampled."},{id:6,code:"D",name:"Active dunes",mineral:"Basaltic sand",value:4,massKg:.6,drillMin:30,window:[8,17],x:46,z:10,note:"Loose sand: slow, high-friction walking."},{id:7,code:"H",name:"Hematite nodules",mineral:"Oxides",value:4,massKg:.5,drillMin:45,window:[8,17],x:-30,z:-26,note:"Concretions next to the small crater."}];je(qt,7);var Se=(t,n=we)=>Math.exp(-n*(t-1));var Co=12*60;var Wn=.5,Bn=.01;function Kn(t,n){let e=ot(X(n)),o=0,s=0;for(;e!==-1&&e!==t.source&&s++<A*A;){let r=I.cls[e];r===1&&(o+=2.5),r===3&&(o+=7.5),e=t.parent[e]}return o/100}function on(t,n){let e=performance.now(),o=n.lambda??1,s=[n.start,...t],r=s.length,i=s.map(L=>be(L,!0)),c=be(n.home,!1),a=[],l=[],u=[];for(let L=0;L<r;L++){a.push([]),l.push([]),u.push([]);for(let C=0;C<r;C++){let K=ot(X(s[C]));a[L].push(L===C?0:i[L].cost[K]),l[L].push(L===C?0:i[L].time[K]/60),u[L].push(L===C||!Number.isFinite(i[L].cost[K])?0:Kn(i[L],s[C]))}}let d=s.map(L=>c.cost[ot(X(L))]),h=s.map(L=>c.time[ot(X(L))]/60),m=n.sunsetLtst-Wn,b=Xe*.00298,f=300*.00298,x=[],g=[];for(let L=1;L<r;L++){let C=t[L-1],K=n.ltst+l[0][L]/60,et=Math.max(K,C.window[0]),nt=n.o2Litres-a[0][L]-(et-K)*60*b-C.drillMin*f;Number.isFinite(a[0][L])?et>C.window[1]?x.push({site:C,reason:"window closed"}):n.massKg+C.massKg>ye+1e-6?x.push({site:C,reason:"bag full"}):nt<(1+.15)*d[L]?x.push({site:C,reason:"O₂ reserve"}):et+C.drillMin/60+h[L]/60>m?x.push({site:C,reason:"daylight"}):g.push(L):x.push({site:C,reason:"no walkable path"})}let M={z:-1/0,order:[]},k=0,p={...n.mineralCounts},y=[],$=(L,C,K,et,nt)=>{k++,K>=(1+.15)*d[L]&&C+h[L]/60<=m&&nt>M.z&&(M={z:nt,order:y.slice()});let st=nt;for(let q of g)y.includes(q)||(st+=t[q-1].value);if(!(st<=M.z))for(let q of g){if(y.includes(q))continue;let it=t[q-1],Yt=C+l[L][q]/60;if(Yt>it.window[1])continue;let Re=Math.max(Yt,it.window[0]),Pe=Re+it.drillMin/60,Jt=K-a[L][q]-(Re-Yt)*60*b-it.drillMin*f;if(Jt<(1+.15)*d[q]||et+it.massKg>ye+1e-6||Pe+h[q]/60>m)continue;let te=(p[it.mineral]??0)+1,bn=it.value*Se(te,we)-o*u[L][q]-Bn*(K-Jt);p[it.mineral]=te,y.push(q),$(q,Pe,Jt,et+it.massKg,nt+bn),y.pop(),p[it.mineral]=te-1}};$(0,n.ltst,n.o2Litres,n.massKg,0);let v=[],z=[],P=0,_=n.ltst,F=n.o2Litres,D=0,j=0,H={...n.mineralCounts};for(let L of M.order){let C=t[L-1],K=_+l[P][L]/60,et=Math.max(K,C.window[0]),nt=(et-K)*60,st=et+C.drillMin/60;D+=a[P][L],j+=C.drillMin*f+nt*b,F-=a[P][L]+nt*b+C.drillMin*f;let q=(H[C.mineral]??0)+1;H[C.mineral]=q,v.push({site:C,arrive:K,wait:nt,leave:st,o2After:F,gain:C.value*Se(q)}),z.push(Je(i[P],s[P],s[L])),_=st,P=L}z.push(tn(c,s[P],n.home)),D+=d[P];let at=["Start",...t.map(L=>L.code)];return{order:M.order.map(L=>t[L-1]),stops:v,z:Math.max(0,M.z),o2Home:F-d[P],homeLtst:_+h[P]/60,litres:D,workLitres:j,nodesExplored:k,computeMs:performance.now()-e,legs:z,matrix:{labels:[...at,"Home"],litres:a.map((L,C)=>[...L,d[C]]),minutes:l.map((L,C)=>[...L,h[C]])},skipped:x}}var kt=(t,n,e)=>{let o=Math.abs(n%t.w-e%t.w),s=Math.abs(Math.floor(n/t.w)-Math.floor(e/t.w));return(Math.max(o,s)+(Math.SQRT2-1)*Math.min(o,s))*t.cell*(t.hScale??1)},Un=(t,n,e,o,s)=>!Number.isFinite(t.cost[e*t.w+o])||!Number.isFinite(t.cost[s*t.w+n]);function $e(t,n,e){let[o,s,r]=B[e],i=n%t.w,c=Math.floor(n/t.w),a=i+o,l=c+s,u=l*t.w+a;if(t.edge){let d=t.edge(n,e);return Number.isFinite(d)?{w:d}:{w:1/0,status:"bloqueado"}}return!Number.isFinite(t.cost[u])||!Number.isFinite(t.cost[n])?{w:1/0,status:"bloqueado"}:r>1&&Un(t,i,c,a,l)?{w:1/0,status:"esquina"}:{w:r*t.cell*(t.cost[n]+t.cost[u])*.5}}function ke(t,n,e,o=!0){let s=t.w*t.h,r=new Float32Array(s).fill(1/0),i=new Int32Array(s).fill(-1),c=new Uint8Array(s),a=new Int32Array(s).fill(-1),l=new wt,u=[];r[n]=0,l.push(n,kt(t,n,e));let d=0,h=!1;for(;l.size;){let b=l.pop();if(c[b])continue;c[b]=1,a[b]=d,d++;let f=kt(t,b,e),x={cur:b,g:r[b],h:f,f:r[b]+f,neighbors:[],openSize:l.size};if(o&&u.push(x),b===e){h=!0;break}let g=b%t.w,M=Math.floor(b/t.w);for(let k=0;k<8;k++){let[p,y,$]=B[k],v=g+p,z=M+y;if(v<0||z<0||v>=t.w||z>=t.h)continue;let P=z*t.w+v,_=t.cost[P];if(c[P]){o&&x.neighbors.push({id:P,ell:$,cn:_,status:"cerrado"});continue}let F=$e(t,b,k);if(F.status){o&&x.neighbors.push({id:P,ell:$,cn:_,status:F.status});continue}let D=r[b]+F.w,j=kt(t,P,e),H=D<r[P];H&&(r[P]=D,i[P]=b,l.push(P,D+j)),o&&x.neighbors.push({id:P,ell:$,cn:_,edge:F.w,g:D,h:j,f:D+j,status:H?"mejora":"no mejora"})}}let m=[];if(h){for(let b=e;b!==-1;b=i[b])m.push(b);m.reverse()}return{ok:h,steps:u,path:m,expanded:d,order:a}}function Ae(t,n,e,o=!0){let s=t.w*t.h,r=new Uint8Array(s),i=new Int32Array(s).fill(-1),c=[n],a=[];r[n]=1,i[n]=0;let l=0,u=Math.ceil(kt(t,n,e)/(t.cell*(t.hScale??1))*3)+150;for(;c.length&&l++<u;){let h=c[c.length-1],m={cur:h,g:0,h:kt(t,h,e),f:0,neighbors:[],openSize:c.length};if(o&&a.push(m),h===e){m.action="meta";break}let b=h%t.w,f=Math.floor(h/t.w),x=-1,g=1/0;for(let M=0;M<8;M++){let[k,p,y]=B[M],$=b+k,v=f+p;if($<0||v<0||$>=t.w||v>=t.h)continue;let z=v*t.w+$,P=t.cost[z];if(r[z]){o&&m.neighbors.push({id:z,ell:y,cn:P,status:"visitado"});continue}let _=$e(t,h,M);if(_.status){o&&m.neighbors.push({id:z,ell:y,cn:P,status:_.status});continue}let F=kt(t,z,e),D=_.w,j=F+D;j<g&&(g=j,x=z),o&&m.neighbors.push({id:z,ell:y,cn:P,h:F,penalty:D,score:j,status:"descartado"})}if(x<0)c.pop(),m.action="retrocede";else{r[x]=1,i[x]=l,c.push(x),m.action="avanza",m.best=x;let M=m.neighbors.find(k=>k.id===x);M&&(M.status="elegido")}}let d=c.length>0&&c[c.length-1]===e;return{ok:d,steps:a,path:d?c.slice():[],expanded:l,order:i}}function Te(t,n){let e=0,o=0;for(let s=1;s<n.length;s++){let r=n[s-1],i=n[s],c=i%t.w-r%t.w,a=Math.floor(i/t.w)-Math.floor(r/t.w),l=B.findIndex(([h,m])=>h===c&&m===a),u=B[l][2],d=$e(t,r,l);e+=Number.isFinite(d.w)?d.w:u*t.cell*5,o+=u*t.cell}return{cost:e,len:o}}var w=t=>document.getElementById(t),G=t=>Number(w(t).value),S=(t,n=2)=>Number.isFinite(t)?t.toFixed(n):"∞",rt=(t,n,e)=>Math.min(e,Math.max(n,t)),R={cyan:"#00f0ff",amber:"#ff9900",red:"#ff003c",green:"#00ff78",yellow:"#ffc800",violet:"#aa5aff",text:"#dbe4ee",muted:"#94a3b6",line:"#243041"},mn=window.matchMedia("(prefers-reduced-motion: reduce)").matches,ft=[];function Ft(t){let n=Math.min(2,window.devicePixelRatio||1),e=t.clientWidth||300,o=t.clientHeight||Number(t.getAttribute("height"))||200;(t.width!==Math.round(e*n)||t.height!==Math.round(o*n))&&(t.style.height=`${o}px`,t.width=Math.round(e*n),t.height=Math.round(o*n));let s=t.getContext("2d");return s.setTransform(n,0,0,n,0,0),s.clearRect(0,0,e,o),{ctx:s,w:e,h:o}}function Qt(t,n,e,o,s,r){let i=l=>n.x+l/r.xMax*n.w,c=l=>n.y+n.h-(rt(l,o,s)-o)/(s-o)*n.h;t.strokeStyle=R.line,t.lineWidth=1,t.strokeRect(n.x,n.y,n.w,n.h),t.font='11px "JetBrains Mono", monospace',t.fillStyle=R.muted,t.textAlign="right",t.fillText(String(s),n.x-4,n.y+9),t.fillText(String(o),n.x-4,n.y+n.h);for(let l of r.bands??[])t.setLineDash([4,4]),t.strokeStyle="#55617a",t.beginPath(),t.moveTo(n.x,c(l)),t.lineTo(n.x+n.w,c(l)),t.stroke(),t.setLineDash([]),t.textAlign="right",t.fillText(String(l).replace(".",","),n.x+n.w-3,c(l)-3);for(let l of e){t.strokeStyle=l.color,t.lineWidth=1.8,t.beginPath();let u=Math.max(1,Math.floor(l.data.length/n.w));for(let d=0;d<l.data.length;d+=u){let h=n.x+d/Math.max(1,l.data.length-1)*((l.data.length-1)/(r.xMax*60))*n.w,m=c(l.data[d]);d===0?t.moveTo(h,m):t.lineTo(h,m)}t.stroke()}let a=n.x+6;t.textAlign="left",r.title&&(t.fillStyle=R.text,t.fillText(r.title,a,n.y+14),a+=t.measureText(r.title).width+12);for(let l of e)t.fillStyle=l.color,t.fillText(l.label,a,n.y+14),a+=t.measureText(l.label).width+12;r.marker!==void 0&&(t.strokeStyle="#fff",t.lineWidth=1,t.beginPath(),t.moveTo(i(r.marker),n.y),t.lineTo(i(r.marker),n.y+n.h),t.stroke())}function qn(){let t=["inW","inE","inN","inS"],n=["hW","hE","hN","hS"],e=()=>{let[o,s,r,i]=t.map(G);t.forEach((x,g)=>w(n[g]).textContent=`${G(x).toFixed(1)} m`);let c=1.25,a=(s-o)/(2*c),l=(i-r)/(2*c),u=Math.hypot(a,l),d=Math.atan(u)*180/Math.PI,h=d>30?"infranqueable: sin apoyo":d>24?"sólo en zigzag (el paso recto supera 45 %)":d>16?"precaución":"cómoda";w("slopeCalc").innerHTML=`g<sub>x</sub> = (${s.toFixed(1)} − ${o.toFixed(1)}) / 2,5 = ${S(a,3)}<br>g<sub>z</sub> = (${i.toFixed(1)} − ${r.toFixed(1)}) / 2,5 = ${S(l,3)}<br>s = atan(√(${S(a,3)}² + ${S(l,3)}²)) = <span class="res">${S(d,1)}°</span> → ${h}`;let m=220,b=rt(u*m*.45,0,100),f=d>30?R.red:d>16?R.yellow:R.green;w("rampa").innerHTML=`<polygon points="50,115 ${50+m},115 ${50+m},${115-b}" fill="${f}22" stroke="${f}" stroke-width="2"/><text x="${50+m/2}" y="129" fill="${R.muted}" font-size="11" text-anchor="middle">distancia</text><text x="${55+m}" y="${115-b/2}" fill="${R.muted}" font-size="11">|∇h|</text><text x="86" y="110" fill="${f}" font-size="15" font-weight="700">${S(d,1)}°</text>`};t.forEach(o=>w(o).addEventListener("input",e)),e()}var Ee=(t,n)=>lt(100,t,n).litres;function Vn(){let t=w("costPlot"),n=()=>{let e=G("cS"),o=G("cA"),s=w("cU").checked,r=w("cC").checked,i=w("cR").checked;w("cSo").textContent=`${e>0?"+":""}${e.toFixed(0)} %`,w("cAo").textContent=o.toFixed(2);let c=1+.9*o,a=ie(e,c),l=Xt(e,c,a),u=Ee(e,c),d=(s?7:1)*(r?4:1),h=i||Math.abs(e)>45;w("costCalc").innerHTML=`L<sub>eff</sub> = (80 + 150)·0,38 − 80 = ${S(se,1)} kg · η = ${S(c)}<br>v = 1,2·e<sup>−0,042·${Math.abs(e).toFixed(0)}</sup>·(1 − 0,28·${S(c)}) = <span class="res">${S(a,3)} m/s</span><br>M = <span class="res">${S(l,0)} W</span> (${S(Zt(l),0)} kcal/h)<br>O₂ cada 100 m = M · 100/(60·v) · 0,00298 = <span class="res">${S(u,2)} L</span>`+(h?`<br>paso <span class="res" style="color:${R.red}">prohibido</span>${i?" (rocas)":" (|G| > 45 %)"}`:d>1?`<br>para decidir: ×${d} → ${S(u*d,2)} L`:"")+`<br>al revés (−G): ${S(Ee(-e,c),2)} L`;let{ctx:m,w:b,h:f}=Ft(t),x={l:38,r:12,t:12,b:28},g=b-x.l-x.r,M=f-x.t-x.b,k=12,p=$=>x.l+($+60)/120*g,y=$=>x.t+M-rt($,0,k)/k*M;m.fillStyle=`${R.red}22`,m.fillRect(p(-60),x.t,p(-45)-p(-60),M),m.fillRect(p(45),x.t,p(60)-p(45),M),m.strokeStyle=R.line,m.strokeRect(x.l,x.t,g,M),m.font='11px "JetBrains Mono", monospace',m.fillStyle=R.muted,m.textAlign="center";for(let $ of[-45,-20,0,20,45])m.fillText(`${$}%`,p($),f-10);m.textAlign="right";for(let $ of[0,4,8,12])m.fillText(String($),x.l-5,y($)+4);m.strokeStyle=R.cyan,m.lineWidth=2,m.beginPath();for(let $=-45;$<=45;$+=.5){let v=y(Ee($,c));$===-45?m.moveTo(p($),v):m.lineTo(p($),v)}m.stroke(),m.fillStyle="#fff",m.beginPath(),m.arc(p(rt(e,-45,45)),y(u),5,0,Math.PI*2),m.fill(),m.fillStyle=R.muted,m.textAlign="left",m.fillText("L de O₂ / 100 m",x.l+6,x.t+14)};["cS","cA","cU","cC","cR"].forEach(e=>w(e).addEventListener("input",n)),ft.push(n),n()}function Qn(){let t=()=>{let n=G("inCa"),e=G("inCb"),o=w("inDiag").checked,s=o?Math.SQRT2:1;w("ca").textContent=`${n.toFixed(2)} m`,w("cb").textContent=`${e.toFixed(2)} m`;let r=s*O,i=100*(e-n)/r,c=lt(r,i,1).litres,a=lt(r,-i,1).litres,l=Math.abs(i)>45;w("edgeCalc").innerHTML=`Δd = ${o?"√2 · ":""}2,5 = ${S(r)} m · G = 100·(${e.toFixed(2)} − ${n.toFixed(2)})/${S(r)} = ${S(i,1)} %<br>w(a → b) = <span class="res">${l?"∞ (|G| > 45 %)":`${(c*1e3).toFixed(1)} mL`}</span><br>w(b → a) = <span class="res">${l?"∞":`${(a*1e3).toFixed(1)} mL`}</span>`+(l?"":` · subir cuesta ${S(Math.max(c,a)/Math.min(c,a),1)} veces bajar`);let u=52,d=72,h=12,m="";for(let b=0;b<3;b++)for(let f=0;f<3;f++){let x=f===1&&b===1,g=o?f===2&&b===0:f===2&&b===1,M=x?"#0a5560":g?"#6a4310":"#172030";if(m+=`<rect x="${d+f*u}" y="${h+b*u}" width="${u-2}" height="${u-2}" rx="3" fill="${M}" stroke="#2b3a4e"/>`,x&&(m+=`<text x="${d+f*u+25}" y="${h+b*u+30}" text-anchor="middle" fill="#fff" font-size="15">a</text>`),g&&(m+=`<text x="${d+f*u+25}" y="${h+b*u+30}" text-anchor="middle" fill="#fff" font-size="15">b</text>`),!x){let k=d+f*u+25,p=h+b*u+25;m+=`<line x1="${d+u+25}" y1="${h+u+25}" x2="${k}" y2="${p}" stroke="${g?R.amber:"#55617a"}" stroke-width="${g?3:1}"/>`}}w("edgeSvg").innerHTML=m};["inCa","inCb","inDiag"].forEach(n=>w(n).addEventListener("input",t)),t()}var W=16,mt=10,E={cost:new Float32Array(W*mt).fill(1),s:0,g:0,a:null,b:null,k:0,brush:"inf",playing:0},ze={w:W,h:mt,cell:O,cost:E.cost},ht=(t,n)=>n*W+t,bt=t=>`(${t%W},${Math.floor(t/W)})`;function rn(t){E.cost.fill(1);let n=(e,o,s=1/0)=>{E.cost[ht(e,o)]=s};if(t==="wall"){for(let e=0;e<mt-1;e++)n(7,e);for(let e=10;e<13;e++)for(let o=2;o<6;o++)n(e,o,4.2);E.s=ht(1,3),E.g=ht(14,3)}else if(t==="u"){for(let e=1;e<9;e++)n(10,e);for(let e=5;e<11;e++)n(e,1),n(e,8);E.s=ht(2,4),E.g=ht(14,4)}else{for(let e=1;e<9;e++)n(8,e,e===4||e===5?t==="canyon"?39:1:1/0);E.s=ht(1,5),E.g=ht(14,5)}dn()}function dn(){E.a=ke(ze,E.s,E.g),E.b=Ae(ze,E.s,E.g),E.k=0;let t=w("pSlider");t.max=String(pt()),t.value="0",Ct()}var pt=()=>Math.max(E.a.steps.length,E.b.steps.length)-1;function Yn(t){return Number.isFinite(t)?t>=30?"#5a3a91":t>=7?"#a8541e":t>=2.3?"#7a6220":"#1c2636":"#05070c"}function an(t,n,e){let s=t.getBoundingClientRect().width||500,r=s/W;t.style.height=`${r*mt}px`;let i=Math.min(2,window.devicePixelRatio||1);t.width=Math.round(s*i),t.height=Math.round(r*mt*i);let c=t.getContext("2d");c.setTransform(i,0,0,i,0,0);let a=Math.min(E.k,n.steps.length-1),l=n.steps[a],u=new Float32Array(W*mt).fill(NaN),d=new Int32Array(W*mt).fill(-1),h=[E.s];for(let f=0;f<=a;f++){let x=n.steps[f];if(e==="a")for(let g of x.neighbors)g.status==="mejora"&&(u[g.id]=g.f,d[g.id]=x.cur);else f<a&&(x.action==="avanza"?h.push(x.best):x.action==="retrocede"&&h.pop())}for(let f=0;f<mt;f++)for(let x=0;x<W;x++){let g=ht(x,f);c.fillStyle=Yn(E.cost[g]),c.fillRect(x*r,f*r,r-1,r-1),n.order[g]>=0&&n.order[g]<=a?(c.fillStyle=e==="a"?"rgba(0,240,255,0.26)":"rgba(255,153,0,0.26)",c.fillRect(x*r,f*r,r-1,r-1)):e==="a"&&!Number.isNaN(u[g])&&(c.strokeStyle="rgba(0,240,255,0.8)",c.lineWidth=1.5,c.strokeRect(x*r+1.5,f*r+1.5,r-4,r-4)),r>=26&&e==="a"&&!Number.isNaN(u[g])&&(c.fillStyle="#dff",c.font=`${Math.min(11,r*.32)}px "JetBrains Mono", monospace`,c.textAlign="center",c.fillText(u[g].toFixed(0),x*r+r/2,f*r+r/2+4))}for(let f of l.neighbors){let x=f.id%W,g=Math.floor(f.id/W);(f.status==="elegido"||f.status==="mejora")&&(c.strokeStyle=f.status==="elegido"?"#fff":R.green,c.lineWidth=2,c.strokeRect(x*r+2,g*r+2,r-5,r-5))}let m=[];if(e==="a")if(a===n.steps.length-1&&n.ok)m.push(...n.path);else for(let f=l.cur;f!==-1;f=d[f])m.unshift(f);else m.push(...h);c.strokeStyle=e==="a"?R.cyan:R.amber,c.lineWidth=3,c.lineJoin="round",c.beginPath(),m.forEach((f,x)=>{let g=f%W*r+r/2,M=Math.floor(f/W)*r+r/2;x===0?c.moveTo(g,M):c.lineTo(g,M)}),c.stroke();let b=(f,x,g)=>{let M=f%W*r,k=Math.floor(f/W)*r;c.fillStyle=x,c.fillRect(M+2,k+2,r-5,r-5),c.fillStyle="#04121a",c.font=`700 ${Math.min(14,r*.42)}px Inter, sans-serif`,c.textAlign="center",c.fillText(g,M+r/2,k+r/2+5)};b(E.s,R.green,"A"),b(E.g,R.amber,"B"),c.strokeStyle="#fff",c.lineWidth=2.5,c.strokeRect(l.cur%W*r+1,Math.floor(l.cur/W)*r+1,r-3,r-3)}function sn(t,n,e){if(!n.length){t.innerHTML="";return}let o=e==="a"?"<tr><th>vecino</th><th>ℓ</th><th>c</th><th>w</th><th>g</th><th>h</th><th>f</th><th>resultado</th></tr>":"<tr><th>vecino</th><th>ℓ</th><th>c</th><th>h</th><th>2,2·2,5·ℓ·c</th><th>score</th><th>resultado</th></tr>",s=n.map(r=>{let i=r.status==="mejora"||r.status==="elegido"?"win":r.g===void 0&&r.score===void 0?"dim":"",c=S(r.cn,1),a=r.ell>1?"√2":"1";return e==="a"?`<tr class="${i}"><td>${bt(r.id)}</td><td>${a}</td><td>${c}</td><td>${r.edge!==void 0?S(r.edge,1):"—"}</td><td>${r.g!==void 0?S(r.g,1):"—"}</td><td>${r.h!==void 0?S(r.h,1):"—"}</td><td>${r.f!==void 0?S(r.f,1):"—"}</td><td>${r.status}</td></tr>`:`<tr class="${i}"><td>${bt(r.id)}</td><td>${a}</td><td>${c}</td><td>${r.h!==void 0?S(r.h,1):"—"}</td><td>${r.penalty!==void 0?S(r.penalty,1):"—"}</td><td>${r.score!==void 0?S(r.score,1):"—"}</td><td>${r.status}</td></tr>`}).join("");t.innerHTML=`<thead>${o}</thead><tbody>${s}</tbody>`}function Ct(){let t=E.a,n=E.b;w("pStep").textContent=`${E.k} / ${pt()}`,w("pSlider").value=String(E.k),an(w("gridA"),t,"a"),an(w("gridG"),n,"g");let e=a=>{if(!a.ok)return`Sin camino · ${a.expanded} nodos`;let{cost:l,len:u}=Te(ze,a.path);return`costo ${l.toFixed(1)} · ${u.toFixed(1)} m · ${a.expanded} nodos`};w("sumA").textContent=e(t),w("sumG").textContent=e(n);let o=Math.min(E.k,t.steps.length-1),s=t.steps[o];w("descA").innerHTML=s.cur===E.g?`Se extrae la meta ${bt(s.cur)} con f = ${S(s.f,1)}. Ningún camino abierto puede ser más barato: terminó.`:`Se extrae el nodo abierto con menor f: <b>${bt(s.cur)}</b>, con g = ${S(s.g,1)} + h = ${S(s.h,1)} = f ${S(s.f,1)}. Quedan ${s.openSize} en la cola.`,sn(w("tabA"),s.neighbors,"a");let r=Math.min(E.k,n.steps.length-1),i=n.steps[r],c=i.neighbors.find(a=>a.status==="elegido");w("descG").innerHTML=i.action==="meta"?`Llegó a la meta ${bt(i.cur)} y se detiene, sin comprobar si había un camino mejor.`:i.action==="retrocede"?`En <b>${bt(i.cur)}</b> no quedan vecinos disponibles: retrocede una celda.`:`En <b>${bt(i.cur)}</b> elige el menor score: ${c?`${bt(c.id)} con ${S(c.score,1)}`:"—"}. Nunca vuelve a evaluar lo ya elegido.`,sn(w("tabG"),i.neighbors,"g")}function Jn(){let t=(o,s)=>{let r=s.getBoundingClientRect(),i=Math.floor((o.clientX-r.left)/r.width*W),c=Math.floor((o.clientY-r.top)/r.height*mt);if(i<0||c<0||i>=W||c>=mt)return;let a=ht(i,c);if(E.brush==="start"||E.brush==="goal"){if(a===(E.brush==="start"?E.g:E.s))return;E.cost[a]=1,E.brush==="start"?E.s=a:E.g=a}else{if(a===E.s||a===E.g)return;let l=E.brush==="inf"?1/0:Number(E.brush);if(E.cost[a]===l)return;E.cost[a]=l}e(),dn(),E.k=pt(),Ct()};for(let o of["gridA","gridG"]){let s=w(o);s.addEventListener("pointerdown",r=>{s.setPointerCapture(r.pointerId),t(r,s)}),s.addEventListener("pointermove",r=>{r.buttons&&t(r,s)})}document.querySelectorAll("[data-preset]").forEach(o=>o.addEventListener("click",()=>{document.querySelectorAll("[data-preset]").forEach(s=>s.classList.remove("on")),o.classList.add("on"),e(),rn(o.dataset.preset)})),document.querySelectorAll("[data-brush]").forEach(o=>o.addEventListener("click",()=>{document.querySelectorAll("[data-brush]").forEach(s=>s.classList.remove("on")),o.classList.add("on"),E.brush=o.dataset.brush}));let n=o=>{E.k=rt(o,0,pt()),Ct()},e=()=>{window.clearInterval(E.playing),E.playing=0,w("pPlay").textContent="▶ Reproducir"};w("pFirst").addEventListener("click",()=>(e(),n(0))),w("pPrev").addEventListener("click",()=>(e(),n(E.k-1))),w("pNext").addEventListener("click",()=>(e(),n(E.k+1))),w("pLast").addEventListener("click",()=>(e(),n(pt()))),w("pSlider").addEventListener("input",()=>(e(),n(G("pSlider")))),w("pPlay").addEventListener("click",()=>{if(E.playing)return e();E.k>=pt()&&(E.k=0),w("pPlay").textContent="⏸ Pausar",E.playing=window.setInterval(()=>{if(E.k>=pt())return e();n(E.k+1)},160)}),rn("wall"),E.k=pt(),Ct(),ft.push(Ct)}var T={lat:-4.8253,hazards:[],scanned:!1,tool:"info",base:document.createElement("canvas"),a:null,g:null,traceA:null,traceG:null,anim:0,animKind:"a",animK:-1},hn=()=>({w:A,h:A,cell:O,cost:I.cost,edge:(t,n)=>I.edgeL[t*8+n],hScale:I.wMinPerM}),J=en(Date.now()),to=()=>Rt(T.lat,J.decl,10,J.rAU);function At(){Ze(T.hazards,T.scanned,to());let t=T.base;t.width=A,t.height=A;let n=t.getContext("2d"),e=n.createImageData(A,A),o=[[0,190,95],[255,200,0],[255,0,60],[170,90,255]];for(let u=0;u<A;u++)for(let d=0;d<A;d++){let h=u*A+d,m=-120+(d+.5)*O,b=-120+(u+.5)*O,f=rt(.55-(Z(m+1.25,b)-Z(m-1.25,b))*.14-(Z(m,b+1.25)-Z(m,b-1.25))*.08,.15,1),x=o[I.cls[h]],g=I.cls[h]===0?.22:.72;e.data[h*4]=70*f*(1-g)+x[0]*g*(.5+f*.5),e.data[h*4+1]=72*f*(1-g)+x[1]*g*(.5+f*.5),e.data[h*4+2]=80*f*(1-g)+x[2]*g*(.5+f*.5),e.data[h*4+3]=255}n.putImageData(e,0,0),T.a=Qe(U,Q),T.g=Ye(U,Q);let s=hn(),r=X(U),i=X(Q);T.traceA=ke(s,r,i,!1),T.traceG=Ae(s,r,i,!1),T.animK=-1,eo(),Vt(),document.getElementById("tourTable")&&fn();let c=T.traceA.expanded===T.a.expanded&&T.traceG.expanded===T.g.expanded,a=w("verify");a.className=c?"verify":"verify bad",a.textContent=c?`✓ El trazador de la sección 4 coincide con el planificador real: A* ${T.a.expanded} nodos, voraz ${T.g.expanded} nodos.`:`✗ El trazador difiere: A* ${T.traceA.expanded}/${T.a.expanded}, voraz ${T.traceG.expanded}/${T.g.expanded}.`;let l=T.a.points.filter(u=>I.cls[X(u)]===3).length;w("canyonNote").textContent=T.scanned?"Con el cañón mapeado sus aristas cuestan solo el O₂ de Pandolf y A* lo usa como atajo. El dron acaba de ahorrar la subida a la cresta.":`Sin mapear, cada arista del cañón cuesta ×7: A* prefiere subir la cresta en zigzag${l?", aunque en este mapa todavía cruza parte del cañón":""}. Marcá "Dron ya escaneó el cañón" y mirá cambiar la ruta.`}function Le(t,n,e,o,s,r=[]){t.strokeStyle=o,t.lineWidth=s,t.setLineDash(r),t.lineJoin="round",t.beginPath(),n.forEach((i,c)=>{let a=(i.x+120)*e,l=(i.z+120)*e;c===0?t.moveTo(a,l):t.lineTo(a,l)}),t.stroke(),t.setLineDash([])}function Vt(){let t=w("realMap"),n=t.clientWidth||500;t.style.height=`${n}px`;let e=Math.min(2,window.devicePixelRatio||1);t.width=Math.round(n*e),t.height=Math.round(n*e);let o=t.getContext("2d");o.setTransform(e,0,0,e,0,0),o.imageSmoothingEnabled=!1,o.drawImage(T.base,0,0,n,n);let s=n/240,r=n/A,i=T.animK>=0;if(i){let l=T.animKind==="a"?T.traceA:T.traceG;o.fillStyle=T.animKind==="a"?"rgba(0,240,255,0.42)":"rgba(255,153,0,0.5)";for(let u=0;u<l.order.length;u++)l.order[u]>=0&&l.order[u]<=T.animK&&o.fillRect(u%A*r,Math.floor(u/A)*r,r,r)}for(let l of T.hazards)o.strokeStyle=l.kind==="cold"?"#7cd4ff":"#ff8aa3",o.lineWidth=2,o.beginPath(),o.arc((l.x+120)*s,(l.z+120)*s,l.r*s,0,Math.PI*2),o.stroke();let c=!i||T.animK>=(T.animKind==="a"?T.traceA:T.traceG).expanded-1;Le(o,[U,Q],s,"rgba(255,255,255,0.75)",1.5,[6,6]),(c||T.animKind==="a")&&T.g&&Le(o,T.g.points,s,c?R.amber:"transparent",2.5),(c||T.animKind==="g")&&T.a&&Le(o,T.a.points,s,c?R.cyan:"transparent",3);let a=(l,u,d)=>{o.fillStyle=u,o.beginPath(),o.arc((l.x+120)*s,(l.z+120)*s,8,0,Math.PI*2),o.fill(),o.fillStyle="#04121a",o.font="700 11px Inter, sans-serif",o.textAlign="center",o.fillText(d,(l.x+120)*s,(l.z+120)*s+4)};a(U,R.green,"A"),a(Q,R.amber,"B")}function eo(){let n=de(St(U,Q),{algo:"straight",batteryPct:87}),e=a=>de(a.points,{algo:a.algo,batteryPct:87,computeMs:a.computeMs,expanded:a.expanded}),o=e(T.a),s=e(T.g),r=a=>a&&a.ok?Te(hn(),a.path).cost:NaN,i=[["Longitud (m)",a=>S(a.lengthM,0),S(o.lengthM,0),S(s.lengthM,0)],["Costo Σw del grafo, L de O₂ con riesgo (lo que optimiza A*)",()=>"",S(r(T.traceA),2),S(r(T.traceG),2)],["Nodos expandidos",a=>String(a.expanded),String(o.expanded),String(s.expanded)],["Tiempo de cálculo (ms)",a=>S(a.computeMs),S(o.computeMs),S(s.computeMs)],["O₂ al caminar, Pandolf (L)",a=>S(a.litres,2),S(o.litres,2),S(s.litres,2)],["Desnivel subido (m)",a=>S(a.climbM,1),S(o.climbM,1),S(s.climbM,1)],["Pendiente de arista máx. (%)",a=>S(a.maxGrade,0),S(o.maxGrade,0),S(s.maxGrade,0)],["Batería del rover al llegar",a=>`${S(a.batteryReservePct,1)} %`,`${S(o.batteryReservePct,1)} %`,`${S(s.batteryReservePct,1)} %`],["¿Transitable?",a=>a.feasible?"sí":"no",o.feasible?"sí":"no",s.feasible?"sí":"no"]],c=a=>a===1||a===2||a===3?"—":i[a][1](n);w("realTable").innerHTML=`<thead><tr><th>Métrica</th><th style="color:${R.cyan}">A*</th><th style="color:${R.amber}">Voraz${T.g.ok?"":" (atascado: devuelve la recta)"}</th><th>Recta</th></tr></thead><tbody>`+i.map((a,l)=>`<tr><td style="white-space:normal">${a[0]}</td><td>${a[2]}</td><td>${a[3]}</td><td>${c(l)}</td></tr>`).join("")+"</tbody>"}function no(){let t=w("region");t.innerHTML=fe.map(a=>`<option value="${a.id}">${a.name}</option>`).join("");let n=w("regionStatus"),e=0,o=async a=>{let l=++e,u=fe.find(d=>d.id===a);if(a==="procedural"){Lt(null,null,"procedural"),n.textContent="Terreno procedural",At();return}n.textContent="Descargando de NASA Mars Trek…";try{let d=await qe(u);if(l!==e)return;Lt(d.dem,d.albedo,u.name,{hiRes:d.hiRes,tilt:d.tilt}),T.lat=d.site.lat,n.textContent=d.hiRes?`HiRISE a escala real junto a Curiosity · pendiente regional ${d.site.slopeDeg.toFixed(1)}°`:"Datos de NASA Mars Trek (modo análogo)"}catch{if(l!==e)return;Lt(null,null,"procedural"),n.textContent="Sin conexión con Mars Trek: terreno procedural"}At()};t.addEventListener("change",()=>o(t.value));let s=a=>{cancelAnimationFrame(T.anim),T.animKind=a;let l=(a==="a"?T.traceA:T.traceG).expanded;if(mn){T.animK=l,Vt();return}let u=performance.now(),d=h=>{let m=Math.min(1,(h-u)/2600);T.animK=Math.floor(m*l),Vt(),m<1&&(T.anim=requestAnimationFrame(d))};T.anim=requestAnimationFrame(d)};w("animA").addEventListener("click",()=>s("a")),w("animG").addEventListener("click",()=>s("g")),w("scanned").addEventListener("change",()=>{T.scanned=w("scanned").checked,At()}),w("clearHz").addEventListener("click",()=>{T.hazards=[],At()}),document.querySelectorAll("[data-tool]").forEach(a=>a.addEventListener("click",()=>{document.querySelectorAll("[data-tool]").forEach(l=>l.classList.remove("on")),a.classList.add("on"),T.tool=a.dataset.tool}));let r=w("realMap"),i=a=>{let l=r.getBoundingClientRect();return{x:(a.clientX-l.left)/l.width*240-120,z:(a.clientY-l.top)/l.height*240-120}},c=a=>{let l=i(a),u=X(l),d=u%A,h=Math.floor(u/A),m=I.slope[u],b=I.sand[u],f=I.factor[u],x=["seguro","precaución","infranqueable","sin mapear"],g=I.edgeL[u*8+3],M=I.edgeL[u*8+2],k=I.edgeL[u*8+0],p=I.edgeL[u*8+1],y=$=>Number.isFinite($)?`${($*1e3).toFixed(0)} mL`:"∞";w("cellInfo").innerHTML=`celda (${d}, ${h}) · x=${l.x.toFixed(0)} m, z=${l.z.toFixed(0)} m · altura ${I.height[u].toFixed(1)} m<br>pendiente máx. ${m.toFixed(1)}° · arena ${b.toFixed(2)} → η = ${(1+.9*b).toFixed(2)} · riesgo ×${f.toFixed(2)}${I.shade[u]?" · en sombra":""}<br>aristas hacia N ${y(g)} · S ${y(M)} · E ${y(k)} · O ${y(p)}<br>clase: <span class="res">${x[I.cls[u]]}</span>`};r.addEventListener("pointermove",c),r.addEventListener("click",a=>{if(c(a),T.tool==="info")return;let l=i(a),u=T.tool==="cold"?{id:"cold",kind:"cold",x:l.x,z:l.z,r:12}:{id:"rocks",kind:"rocks",x:l.x,z:l.z,r:7.5};T.hazards=T.hazards.filter(d=>d.kind!==u.kind).concat(u),At()}),At(),ft.push(Vt),o("gale")}function oo(){let t=w("chCanvas"),n=[[0,0],[2.5,0],[5,2.5],[7.5,2.5],[10,5],[10,7.5],[12.5,7.5],[15,10],[17.5,10],[20,10]].map(([s,r])=>({x:s,z:r})),e=s=>s.slice(1).reduce((r,i,c)=>r+Math.hypot(i.x-s[c].x,i.z-s[c].z),0),o=()=>{let s=G("chN"),r=w("chR").checked;w("chO").textContent=String(s);let i=pe(n,s),c=xe(i,1),{ctx:a,w:l,h:u}=Ft(t),d=Math.min((l-40)/20,(u-40)/10),h=g=>20+g.x*d,m=g=>u-20-g.z*d;a.strokeStyle="#1b2533",a.lineWidth=1;for(let g=0;g<=20;g+=2.5)a.beginPath(),a.moveTo(20+g*d,u-20),a.lineTo(20+g*d,u-20-10*d),a.stroke();for(let g=0;g<=10;g+=2.5)a.beginPath(),a.moveTo(20,u-20-g*d),a.lineTo(20+20*d,u-20-g*d),a.stroke();let b=(g,M,k,p=[])=>{a.strokeStyle=M,a.lineWidth=k,a.setLineDash(p),a.beginPath(),g.forEach((y,$)=>$?a.lineTo(h(y),m(y)):a.moveTo(h(y),m(y))),a.stroke(),a.setLineDash([])};b(n,"#7c8ba0",1.5,[5,4]),b(i,R.cyan,2.5),a.fillStyle=r?R.amber:R.cyan;for(let g of r?c:i)a.beginPath(),a.arc(h(g),m(g),r?3:2.5,0,Math.PI*2),a.fill();let f=e(n),x=e(i);w("chCalc").innerHTML=`puntos: ${n.length} → ${i.length} (se duplica en cada pasada)<br>longitud: ${f.toFixed(2)} m → ${x.toFixed(2)} m (<span class="res">${((x-f)/f*100).toFixed(1)} %</span>)<br>tras remuestrear: ${c.length} puntos a 1 m`};["chN","chR"].forEach(s=>w(s).addEventListener("input",o)),ft.push(o),o()}function ro(t,n){let e=.016666666666666666,o=90,s=0,r=0,i=0,c=0,a={vr:[],va:[],gap:[],target:[],sr:[],dt:e,T:o};for(let l=0;l<o/e;l++){let u=l*e,d=s-r,h=rt(c+.8*(15-d),0,1.7*(1-Math.min(t,25)/60));if(i+=(h-i)*Math.min(1,e*2.5),s+=i*e,u>=2.5){let m=(1-Math.min(t,25)/45)*(1-n*.25),b=Math.max(0,s-5);r>=b-.01&&(m=0),c+=(m-c)*Math.min(1,e*3),r=Math.min(b,r+Math.max(0,c)*e)}a.vr.push(i),a.va.push(c),a.gap.push(s-r),a.target.push(h),a.sr.push(s)}return a}function ao(){let t=w("gapPlot"),n=()=>{let e=G("gS"),o=G("gA"),s=G("gT");w("gSo").textContent=`${e}°`,w("gAo").textContent=o.toFixed(2),w("gTo").textContent=`${s.toFixed(1)} s`;let r=ro(e,o),i=Math.min(r.vr.length-2,Math.floor(s/r.dt)),c=Math.min(1,2.5*r.dt),a=i>0?r.vr[i-1]:0;w("gapCalc").innerHTML=`gap = <span class="res">${r.gap[i].toFixed(2)} m</span> → v<sub>obj</sub> = ${r.target[i].toFixed(3)} m/s<br>v = ${a.toFixed(3)} + (${r.target[i].toFixed(3)} − ${a.toFixed(3)})·${c.toFixed(4)} = ${r.vr[i].toFixed(3)} m/s<br>s = ${r.sr[i].toFixed(2)} m (Δt = 1/60 s)<br>astronauta: ${r.va[i].toFixed(3)} m/s`;let{ctx:l,w:u,h:d}=Ft(t),h=(d-34)/2;Qt(l,{x:30,y:8,w:u-40,h},[{data:r.gap,color:R.amber,label:"gap (m)"}],0,20,{xMax:r.T,marker:s,bands:[15]}),Qt(l,{x:30,y:h+22,w:u-40,h},[{data:r.vr,color:R.cyan,label:"v rover"},{data:r.va,color:"#fff",label:"v astronauta"}],0,2,{xMax:r.T,marker:s});let m=r.gap.slice(-1800),b=Math.min(...m),f=Math.max(...m);w("gapNote").textContent=`Resultado con estos valores: en los últimos 30 s el gap oscila entre ${b.toFixed(2)} y ${f.toFixed(2)} m. El rover copia la velocidad del astronauta y corrige el error restante, así que el error tiende a cero sin oscilar. En subidas fuertes su tope puede quedar por debajo de esa velocidad: ahí el astronauta se acerca hasta que el terreno mejora.`};["gS","gA","gT"].forEach(e=>w(e).addEventListener("input",n)),ft.push(n),n()}var so=(t,n)=>{let e=n-t;for(;e>Math.PI;)e-=Math.PI*2;for(;e<-Math.PI;)e+=Math.PI*2;return e};function cn(t,n){let e=.016666666666666666,o=24,s=t*Math.PI/180,r=Math.sin(s),i=-Math.cos(s),c=b=>({x:r*rt(b,0,o),z:i*rt(b,0,o)}),a=0,l=0,u=0,d=0,h=0,m={xs:[],zs:[],ths:[],err:[],v:[],ux:r,uz:i,L:o,dt:e,arrive:0,turnEnd:0};for(let b=0;b<40/e;b++){let f=0;for(;h<o&&f++<200;){let $=c(h);if(Math.hypot($.x-a,$.z-l)>=3)break;h+=.5}let x=c(Math.min(o,h+2.5)),g=c(o),M=Math.hypot(g.x-a,g.z-l),k=so(u,Math.atan2(x.x-a,-(x.z-l)));u+=rt(k*3,-2.2,2.2)*e;let p=Math.max(.06,Math.pow(Math.cos(Math.min(Math.abs(k),Math.PI/2)),2)),y=n*p*Math.min(1,M/4+.25);if(d+=(y-d)*Math.min(1,e*3),a+=Math.sin(u)*d*e,l-=Math.cos(u)*d*e,m.xs.push(a),m.zs.push(l),m.ths.push(u),m.err.push(Math.abs(k)*180/Math.PI),m.v.push(d),!m.turnEnd&&Math.abs(k)<10*Math.PI/180&&(m.turnEnd=b*e),M<1.2){m.arrive=b*e;break}}return m}function io(){let t=w("turnCanvas"),n=0,e=1,o=()=>{let s=G("tE"),r=G("tV");w("tEo").textContent=`${s}°`,w("tVo").textContent=`${r.toFixed(1)} m/s`;let i=cn(s,r),c=i.xs.length,a=Math.min(c-1,Math.floor(e*(c-1))),{ctx:l,w:u,h:d}=Ft(t),h=Math.min(d-104,u*.6),m=[...i.xs,0,i.ux*i.L],b=[...i.zs,0,i.uz*i.L],f=Math.min(...m)-4,x=Math.max(...m)+4,g=Math.min(...b)-4,M=Math.max(...b)+4,k=Math.min((u-10)/(x-f),h/(M-g)),p=(u-(x-f)*k)/2,y=F=>p+(F-f)*k,$=F=>(F-g)*k;l.strokeStyle="#55617a",l.setLineDash([5,5]),l.beginPath(),l.moveTo(y(0),$(0)),l.lineTo(y(i.ux*i.L),$(i.uz*i.L)),l.stroke(),l.setLineDash([]),l.strokeStyle=R.cyan,l.lineWidth=2.5,l.beginPath();for(let F=0;F<=a;F+=2)F?l.lineTo(y(i.xs[F]),$(i.zs[F])):l.moveTo(y(i.xs[F]),$(i.zs[F]));l.stroke(),l.save(),l.translate(y(i.xs[a]),$(i.zs[a])),l.rotate(i.ths[a]),l.fillStyle=R.amber,l.beginPath(),l.moveTo(0,-10),l.lineTo(7,8),l.lineTo(-7,8),l.closePath(),l.fill(),l.restore(),l.fillStyle="#fff",l.beginPath(),l.arc(y(i.ux*i.L),$(i.uz*i.L),5,0,Math.PI*2),l.fill();let v=c*i.dt,z=h+8,_=(d-z-4)/2-3;Qt(l,{x:30,y:z,w:u-40,h:_},[{data:i.err,color:R.red,label:"|e| (°)"}],0,180,{xMax:v,marker:a*i.dt}),Qt(l,{x:30,y:z+_+6,w:u-40,h:_},[{data:i.v,color:R.cyan,label:"v (m/s)"}],0,4,{xMax:v,marker:a*i.dt}),w("turnCalc").innerHTML=`t = ${(a*i.dt).toFixed(2)} s · |e| = ${i.err[a].toFixed(1)}° · v = ${i.v[a].toFixed(2)} m/s<br>alineado (|e| &lt; 10°) a los <span class="res">${i.turnEnd.toFixed(2)} s</span><br>llega en <span class="res">${i.arrive?i.arrive.toFixed(1):"> 40"} s</span> para un tramo de ${i.L} m`};w("tPlay").addEventListener("click",()=>{if(cancelAnimationFrame(n),mn)return e=1,o();let r=cn(G("tE"),G("tV")).xs.length/60*1e3,i=performance.now(),c=a=>{e=Math.min(1,(a-i)/r),o(),e<1&&(n=requestAnimationFrame(c))};n=requestAnimationFrame(c)}),["tE","tV"].forEach(s=>w(s).addEventListener("input",()=>{cancelAnimationFrame(n),e=1,o()})),ft.push(o),o()}function co(){let t=()=>{let n=G("mG"),e=G("mS"),o=G("mA");w("mGo").textContent=`${n>0?"+":""}${n.toFixed(0)} %`,w("mSo").textContent=`${e.toFixed(0)} m`,w("mAo").textContent=o.toFixed(2);let s=1+.9*o,r=lt(e,n,s),i=e*.32*(1+Math.max(n,0)*.06+o*1.8);w("metaCalc").innerHTML=`v = <span class="res">${S(r.speed,3)} m/s</span> · M = ${S(r.watts,0)} W<br>tiempo = ${S(e,0)} / ${S(r.speed,3)} = ${S(r.seconds/60,1)} min<br>O₂ = ${S(r.watts,0)} · ${S(r.seconds/60,1)} · 0,00298 = <span class="res">${S(r.litres,2)} L</span> (${S(r.litres/380*100,2)} % del tanque)<br>kcal = <span class="res">${S(r.watts*r.seconds/4184,1)}</span> · Wh del rover = <span class="res">${S(i,1)}</span>`};["mG","mS","mA"].forEach(n=>w(n).addEventListener("input",t)),t()}function lo(){let t=w("sunPlot"),n=-4.8253,e=()=>{let o=G("sunH");w("sunHo").textContent=$t(o);let s=Rt(n,J.decl,o,J.rAU),r=Me(o,n,J.decl,J.rAU),i=ge(n,J.decl),c=s.irradiance*3.2*.28;w("sunCalc").innerHTML=`Hoy: L<sub>s</sub> = ${S(J.ls,1)}° · δ = ${S(J.decl,2)}° · r = ${S(J.rAU,3)} UA<br>elevación = <span class="res">${S(s.elevation,1)}°</span> · acimut ${S(s.azimuth,0)}°<br>irradiancia = ${S(s.irradiance,0)} W/m² → panel del rover ${S(c,0)} W<br>suelo = <span class="res">${S(r,0)} °C</span> · atardecer ${$t(i)}`+(s.elevation>0&&s.elevation<15?"<br>Sol bajo: caminar hacia él cuesta ×1,25 (encandilamiento)":"");let{ctx:a,w:l,h:u}=Ft(t),d={l:38,r:38,t:12,b:28},h=l-d.l-d.r,m=u-d.t-d.b,b=M=>d.l+(M-5)/14*h,f=M=>d.t+m-(rt(M,-10,90)+10)/100*m,x=M=>d.t+m-(rt(M,-90,20)+90)/110*m;a.strokeStyle=R.line,a.strokeRect(d.l,d.t,h,m),a.font='11px "JetBrains Mono", monospace',a.fillStyle=R.muted,a.textAlign="center";for(let M of[6,9,12,15,18])a.fillText(`${M}:00`,b(M),u-10);a.textAlign="right";for(let M of[0,45,90])a.fillText(`${M}°`,d.l-5,f(M)+4);a.textAlign="left";for(let M of[-80,-40,0])a.fillText(`${M}`,l-d.r+4,x(M)+4);a.strokeStyle="#3a4a5e",a.beginPath(),a.moveTo(d.l,f(0)),a.lineTo(l-d.r,f(0)),a.stroke();let g=(M,k)=>{a.strokeStyle=k,a.lineWidth=2,a.beginPath();for(let p=5;p<=19;p+=.1){let y=M(p);p===5?a.moveTo(b(p),y):a.lineTo(b(p),y)}a.stroke()};g(M=>f(Rt(n,J.decl,M,J.rAU).elevation),R.amber),g(M=>x(Me(M,n,J.decl,J.rAU)),R.cyan),a.fillStyle="#fff",a.beginPath(),a.arc(b(o),f(s.elevation),5,0,Math.PI*2),a.fill(),a.fillStyle=R.amber,a.fillText("elevación del Sol",d.l+6,d.t+14),a.fillStyle=R.cyan,a.fillText("suelo °C",d.l+6,d.t+28)};w("sunH").addEventListener("input",e),ft.push(e),e()}function uo(){let t=()=>{let n=G("abQ"),e=G("abR");w("abQo").textContent=`${n.toFixed(0)} L`,w("abRo").textContent=`${e.toFixed(1)} L`;let o=(1+.15)*e,s=n>=o;w("abCalc").innerHTML=`(1 + ρ)·R(p) = 1,15 · ${S(e,1)} = ${S(o,1)} L<br>O₂ = ${S(n,0)} L ${s?"≥":"<"} ${S(o,1)} L → <span class="res" style="color:${s?R.green:R.red}">${s?"seguir con la misión":"ABORTAR: volver por la ruta de menor O₂"}</span><br>margen: ${S(n-o,1)} L ≈ ${S((n-o)/.36058,0)} min parado`};["abQ","abR"].forEach(n=>w(n).addEventListener("input",t)),t()}function fn(){let t=on(qt,{start:U,home:U,o2Litres:380,ltst:8,massKg:0,mineralCounts:{},sunsetLtst:ge(T.lat,J.decl)});w("tourStatus").textContent=`${t.nodesExplored} nodos de ramificación y poda en ${t.computeMs.toFixed(0)} ms`,w("tourTable").innerHTML="<thead><tr><th>#</th><th>Sitio</th><th>Mineral</th><th>Llega</th><th>Espera</th><th>Sale</th><th>Valor S·ψ</th><th>O₂ al salir</th></tr></thead><tbody>"+t.stops.map((o,s)=>`<tr><td>${s+1}</td><td>${o.site.code} · ${o.site.name}</td><td>${o.site.mineral}</td><td>${$t(o.arrive)}</td><td>${S(o.wait,0)} min</td><td>${$t(o.leave)}</td><td>${S(o.gain,2)}</td><td>${S(o.o2After,0)} L</td></tr>`).join("")+`<tr><td></td><td>Hábitat</td><td></td><td>${$t(t.homeLtst)}</td><td></td><td></td><td>Z = ${S(t.z,2)}</td><td>${S(t.o2Home,0)} L</td></tr></tbody>`;let n=qt.filter(o=>!t.order.includes(o));w("tourNote").textContent=`Fuera del tour: ${n.map(o=>`${o.code} (${o.name})`).join(", ")||"ninguno"}. La bolsa de 4 kg y el O₂ obligan a elegir; la escarcha (F) sólo se puede tomar temprano, antes de que el Sol la sublime. Abajo, la matriz D(i, j) en litros: no es simétrica.`;let e=t.matrix;w("tourMatrix").innerHTML=`<thead><tr><th>D (L)</th>${e.labels.slice(0,-1).map(o=>`<th>${o}</th>`).join("")}<th>R (casa)</th></tr></thead><tbody>`+e.litres.map((o,s)=>`<tr><td>${e.labels[s]}</td>${o.map(r=>`<td>${S(r,2)}</td>`).join("")}</tr>`).join("")+"</tbody>"}function mo(){w("tourRun").addEventListener("click",fn)}var ve=/(\d)\.(\d)/g,ho=t=>{let n=document.createTreeWalker(t,NodeFilter.SHOW_TEXT);for(let e=n.nextNode();e;e=n.nextNode())e.parentElement?.closest("code")||(e.nodeValue&&ve.test(e.nodeValue)&&(e.nodeValue=e.nodeValue.replace(ve,"$1,$2")),ve.lastIndex=0)};new MutationObserver(t=>t.forEach(n=>ho(n.target))).observe(document.querySelector("main"),{childList:!0,characterData:!0,subtree:!0});qn();Vn();Qn();Jn();no();oo();ao();io();co();lo();uo();mo();var ln=0;window.addEventListener("resize",()=>{window.clearTimeout(ln),ln=window.setTimeout(()=>ft.forEach(t=>t()),120)});document.fonts?.ready.then(()=>ft.forEach(t=>t()));if(location.protocol==="file:"){let t=document.querySelector(".back");t&&(t.href="http://localhost:5173/",t.textContent="← Ir al simulador (requiere npm run dev)")}})();
+</script>
+  </body>
+</html>

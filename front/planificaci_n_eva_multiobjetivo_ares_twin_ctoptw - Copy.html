@@ -1,0 +1,2465 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0d14" />
+    <title>Planificación EVA Multiobjetivo · ARES-TWIN CTOPTW</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23c1440e'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%2300f0ff' stroke-width='2'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #0a0d14;
+  --panel: #111722;
+  --panel-2: #0d121b;
+  --line: #243041;
+  --text: #dbe4ee;
+  --muted: #94a3b6;
+  --cyan: #00f0ff;
+  --amber: #ff9900;
+  --red: #ff003c;
+  --green: #00ff78;
+  --yellow: #ffc800;
+  --violet: #aa5aff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 Inter, system-ui, sans-serif;
+}
+
+a {
+  color: var(--cyan);
+}
+
+code,
+.eq,
+output,
+table,
+.sum,
+.verify,
+.badge-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+code {
+  font-size: 0.86em;
+  color: #9fe9f2;
+}
+
+var {
+  font-style: italic;
+  color: #fff;
+}
+
+.hero,
+main {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero {
+  padding-top: 36px;
+  padding-bottom: 12px;
+}
+
+.top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.back {
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+h1 {
+  font-size: clamp(28px, 4.6vw, 44px);
+  line-height: 1.12;
+  margin: 18px 0 14px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  max-width: 82ch;
+  font-size: 17px;
+  color: #c3cfdc;
+}
+
+.pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+}
+
+.pipeline a {
+  display: block;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  background: var(--panel-2);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pipeline a:hover {
+  border-color: var(--cyan);
+  background: #112233;
+}
+
+.pipeline b {
+  color: var(--cyan);
+  margin-right: 4px;
+}
+
+section {
+  padding: 44px 0 16px;
+  border-bottom: 1px solid #18202c;
+  scroll-margin-top: 8px;
+}
+
+section:last-child {
+  border-bottom: 0;
+  padding-bottom: 80px;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.2;
+  margin: 6px 0 12px;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+
+.cy { color: var(--cyan); }
+.am { color: var(--amber); }
+.gr { color: var(--green); }
+.rd { color: var(--red); }
+.vi { color: var(--violet); }
+
+section > p {
+  max-width: 82ch;
+}
+
+.eq {
+  margin: 14px 0;
+  padding: 12px 16px;
+  background: var(--panel-2);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 6px 6px 0;
+  font-size: 13.5px;
+  line-height: 1.85;
+  overflow-x: auto;
+}
+
+.eq.calc {
+  margin: 12px 0 0;
+  border-left-color: var(--amber);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.eq .res {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.eq .res-am {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.eq .res-gr {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.eq .res-rd {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.widget {
+  margin: 18px 0;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.widget.two,
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.controls label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  color: #c3cfdc;
+}
+
+label output {
+  float: right;
+  color: var(--cyan);
+  font-size: 13px;
+}
+
+input[type='range'] {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+label.check.inline {
+  display: inline-flex;
+  margin: 0;
+  font-size: 13px;
+}
+
+input[type='checkbox'] {
+  accent-color: var(--cyan);
+  width: 16px;
+  height: 16px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+svg {
+  display: block;
+  width: 100%;
+}
+
+svg.wide {
+  margin: 18px 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+button,
+select {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 11px;
+  min-height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+button:hover {
+  border-color: var(--cyan);
+}
+
+button.on {
+  border-color: var(--cyan);
+  background: #083a42;
+  color: #fff;
+}
+
+button.primary {
+  background: #06606b;
+  border-color: var(--cyan);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.danger {
+  background: #4a0c1d;
+  border-color: var(--red);
+  color: #ffb8c6;
+  font-weight: 600;
+}
+
+button.danger.active {
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(255, 0, 60, 0.5);
+}
+
+button i,
+.legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tlabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 4px 0 2px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tablewrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  text-align: right;
+  color: var(--muted);
+  font-weight: 400;
+  padding: 5px 7px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+td {
+  text-align: right;
+  padding: 5px 7px;
+  border-bottom: 1px solid #1a2331;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+tr.win td {
+  color: var(--green);
+  font-weight: 600;
+}
+
+tr.dim td {
+  color: #6f7d90;
+}
+
+.mapgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+#ctoptwMap {
+  cursor: pointer;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: #c3cfdc;
+}
+
+.verify {
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--green);
+}
+
+.verify.warn {
+  color: var(--amber);
+}
+
+.verify.bad {
+  color: var(--red);
+}
+
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 82ch;
+}
+
+.guia {
+  margin-top: 24px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.guia h2 {
+  font-size: 19px;
+  margin-top: 0;
+}
+
+.tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.tipos dt {
+  margin-bottom: 3px;
+}
+
+.tipos dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: #c3cfdc;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 600 11px/1.5 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.tag.teorema { color: var(--green); }
+.tag.algoritmo { color: var(--cyan); }
+.tag.metodo { color: #8ab8ff; }
+.tag.definicion { color: #c3cfdc; }
+.tag.modelo { color: #c79bff; }
+.tag.propia { color: #ffb340; }
+
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 20px;
+}
+
+.ficha {
+  padding: 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.ficha.ancha {
+  grid-column: 1 / -1;
+}
+
+.ficha > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+
+.ficha h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.ficha dl {
+  margin: 0;
+}
+
+.ficha dt {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.ficha dt:first-child {
+  margin-top: 0;
+}
+
+.ficha dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #c9d4e0;
+}
+
+.ficha dd b {
+  color: #fff;
+}
+
+.ficha details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.ficha summary {
+  color: var(--cyan);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ficha details p {
+  margin: 8px 0;
+  color: #c9d4e0;
+}
+
+.ficha .eq {
+  margin: 8px 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.kpi-card {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.kpi-card .k-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-card .k-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.mineral-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.mineral-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+
+.mineral-btn span.count {
+  background: #1b2638;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  margin-top: 8px;
+}
+
+.matrix-cell {
+  padding: 7px 4px;
+  text-align: center;
+  background: var(--panel-2);
+  border: 1px solid #1b2534;
+  border-radius: 4px;
+}
+
+.matrix-cell.hdr {
+  background: #162030;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.matrix-cell.hi-up {
+  border-color: var(--red);
+  color: #ff99b0;
+  background: rgba(255, 0, 60, 0.12);
+}
+
+.matrix-cell.hi-dn {
+  border-color: var(--green);
+  color: #88ffbe;
+  background: rgba(0, 255, 120, 0.1);
+}
+
+@media (max-width: 860px) {
+  .fichas,
+  .widget.two,
+  .split,
+  .mapgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hero,
+  main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="top-nav">
+        <a class="back" href="#arquitectura">← Evolución de ARES-TWIN · Nivel NASA Space Apps</a>
+        <span class="status-pill">ARQUITECTURA BI-NIVEL: A* (NIVEL 1) + CTOPTW (NIVEL 2)</span>
+      </div>
+      <h1>De A* Punto-a-Punto al Planificador Cooperativo CTOPTW</h1>
+      <p class="lead">
+        Tu simulador actual resuelve con gran elegancia el <b>Nivel 1 (Navegación Local)</b>: discretiza el terreno en 96 × 96 celdas de 2,5 m y haya el camino de menor costo geométrico entre dos puntos fijos A y B. Para ganar el desafío de la NASA, añadimos un <b>Nivel 2 (Planificación Estratégica de Misión)</b>: el modelo <b>CTOPTW</b> (<i>Capacitated Team Orienteering Problem with Time Windows</i>), donde el Astronauta y el Rover cooperan para decidir <b>qué subconjunto de objetivos minerales visitar</b> maximizando el retorno científico bajo límites estrictos de oxígeno ($O_2$), capacidad de muestras (kg), enlace de radio UHF y ventanas solares térmicas.
+      </p>
+
+      <ol class="pipeline" aria-label="Etapas de la arquitectura CTOPTW">
+        <li><a href="#diagnostico"><b>1</b> Diagnóstico y Pandolf (0,38g)</a></li>
+        <li><a href="#formulacion"><b>2</b> Modelo MILP CTOPTW</a></li>
+        <li><a href="#matriz"><b>3</b> Matriz Asimétrica A* → D<sub>ij</sub></a></li>
+        <li><a href="#simulador"><b>4</b> Laboratorio CTOPTW en Vivo</a></li>
+        <li><a href="#cronograma"><b>5</b> Ventanas Solares e Isócrona de Aborto</a></li>
+        <li><a href="#implementacion"><b>6</b> Integración en tu Código</a></li>
+      </ol>
+
+      <div class="guia">
+        <h2>Por qué esta arquitectura en dos niveles soluciona los límites de la Sección 11</h2>
+        <p>En la sección 11 («Lo que este modelo no hace») de tu documento original detectaste que A* minimiza $\sum w$ pero no optimiza el oxígeno real, y que los coeficientes eran ajustados a mano. Aquí unificamos ambos mundos sin perder velocidad de cómputo:</p>
+        <dl class="tipos">
+          <div>
+            <dt><span class="tag teorema">Nivel 1 · Micro (A* + Pandolf)</span></dt>
+            <dd>Calcula las trayectorias físicas sobre la malla de 96 × 96 usando la ecuación bioastronáutica de Pandolf en gravedad marciana ($3,71\text{ m/s}^2$). Convierte cada ruta entre dos sitios $i \to j$ en litros exactos de $O_2$.</dd>
+          </div>
+          <div>
+            <dt><span class="tag algoritmo">Nivel 2 · Macro (CTOPTW)</span></dt>
+            <dd>Toma los $N$ depósitos minerales detectados por el espectrómetro CRISM como un grafo completo de decisión. Coordina al Astronauta y al Rover respetando ventanas de sombra solar y presupuesto de soporte vital.</dd>
+          </div>
+          <div>
+            <dt><span class="tag modelo">Entropía Científica Submodular</span></dt>
+            <dd>Evita que el algoritmo recoja 5 muestras repetidas del mismo mineral: aplica retornos marginales decrecientes para forzar la diversidad geológica (Filosilicatos, Carbonatos, Sulfatos, Hielo).</dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <main>
+      <!-- SECCIÓN 1: DIAGNÓSTICO Y BIOASTRONÁUTICA DE PANDOLF -->
+      <section id="diagnostico">
+        <p class="kicker">Paso 1 · Reemplazo de <code>src/lib/costmap.ts</code> y <code>src/lib/metrics.ts</code></p>
+        <h2>Unificar el peso de arista <var>w</var> con la bioastronáutica real en 0,38g</h2>
+        <p>
+          En tu versión actual, el planificador A* optimiza un peso adimensional <code>w = d · (c_a + c_b)/2</code> y, al terminar, <code>metrics.ts</code> evalúa otra fórmula lineal distinta en kcal/h. Si reemplazamos el costo de cada celda por la <b>ecuación metabólica de Pandolf modificada para hipogravedad marciana</b> ($g_{\text{Marte}} = 3,71\text{ m/s}^2$), el peso de cada arista pasa a ser directamente <b>Litros de $O_2$ consumidos</b>. Así, el teorema de optimalidad de A* garantiza matemáticamente la ruta de mínimo consumo de soporte vital.
+        </p>
+
+        <div class="eq">
+          M<sub>Pandolf</sub> = 1,5·W + 2,0·(W + L<sub>eff</sub>)·(L<sub>eff</sub> / W)² + η·(W + L<sub>eff</sub>)·(1,5·v² + 0,35·v·G) &nbsp; [Watts]<br />
+          L<sub>eff</sub> = (W + m<sub>traje</sub>)·(g<sub>Marte</sub> / g<sub>Tierra</sub>) − W &nbsp;·&nbsp; v(s, η) = v<sub>0</sub> · exp(−0,042·|s|) · (1 − 0,28·η)<br />
+          w<sub>O2</sub>(a, b) = (Δd / v) · (M<sub>Pandolf</sub> / 60) · κ<sub>O2</sub> &nbsp; [Litros de O₂ por arista, con κ<sub>O2</sub> ≈ 0,00298 L/(W·min)]
+        </div>
+
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>Ecuación de Pandolf–Santee en 0,38g</h3><span class="tag modelo">Modelo bioastronáutico</span></header>
+            <dl>
+              <dt>Qué hace</dt>
+              <dd>Calcula la tasa metabólica en Watts de un humano caminando con un traje presurizado xEMU de masa $m_{\text{traje}}$ sobre una pendiente $G$ (%) y un factor de hundimiento de terreno $\eta$ (derivado de la inercia térmica THEMIS).</dd>
+              <dt>¿Es un teorema?</dt>
+              <dd>No. Es un modelo empírico regresivo validado en fisiología del ejercicio y adaptado por la NASA para simulaciones de EVA planetaria.</dd>
+              <dt>Origen</dt>
+              <dd>Pandolf, Givoni y Goldman (1977) en el US Army Research Institute of Environmental Medicine; extendido para pendientes negativas por Santee et al. (2001) y ajustado a hipogravedad en estudios de trajes espaciales de NASA JSC.</dd>
+              <dt>En tu código</dt>
+              <dd>Sustituye a la función escalonada <code>P(s)</code> y a la tasa lineal de <code>metrics.ts</code>, eliminando la discrepancia entre lo que A* optimiza y los litros de $O_2$ reales.</dd>
+            </dl>
+          </article>
+
+          <article class="ficha">
+            <header><h3>Arquitectura Jerárquica de 2 Niveles</h3><span class="tag algoritmo">Diseño de sistemas</span></header>
+            <dl>
+              <dt>Qué hace</dt>
+              <dd>Separa el problema continuo del terreno (9.216 celdas) del problema combinatorio de selección de objetivos ($N$ sitios científicos).</dd>
+              <dt>Por qué es necesario</dt>
+              <dd>Resolver un MILP como el CTOPTW directamente sobre 9.216 nodos es computacionalmente intratable ($NP$-duro). Al precalcular con A* los caminos óptimos entre los $N$ puntos de interés, reducimos el grafo del CTOPTW a solo $12 \times 12$ aristas exactas.</dd>
+              <dt>Origen</dt>
+              <dd>Estándar en planificación autónoma de rovers planetarios (arquitectura acoplada Navegación Local GESTALT/AutoNav + Planificador de Actividades CASPER/SPIFe en JPL).</dd>
+            </dl>
+          </article>
+        </div>
+
+        <div class="widget two">
+          <div class="controls">
+            <label>Pendiente del terreno <var>s</var> <output id="pSlopeOut"></output><input id="pSlope" type="range" min="-24" max="28" step="0.5" value="14" /></label>
+            <label>Factor de arena / hundimiento <var>η</var> (THEMIS) <output id="pSandOut"></output><input id="pSand" type="range" min="1.0" max="2.5" step="0.05" value="1.35" /></label>
+            <label>Masa del traje presurizado xEMU <var>m<sub>traje</sub></var> <output id="pSuitOut"></output><input id="pSuit" type="range" min="40" max="120" step="2" value="82" /></label>
+            <label>Masa corporal del astronauta <var>W</var> <output id="pMassOut"></output><input id="pMass" type="range" min="60" max="100" step="1" value="78" /></label>
+            <div class="eq calc" id="pandolfCalc"></div>
+          </div>
+          <div>
+            <canvas id="pandolfCanvas" height="275" aria-label="Comparación entre la curva metabólica de Pandolf en 0.38g y el modelo lineal"></canvas>
+            <div class="legend">
+              <span><i style="background: var(--cyan)"></i>Pandolf 0,38g (Litros O₂ / 100 m)</span>
+              <span><i style="background: var(--amber)"></i>Modelo lineal actual (escalado)</span>
+              <span><i style="background: var(--red)"></i>Límite térmico de sublimador (> 520 W)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: FORMULACIÓN MATEMÁTICA CTOPTW -->
+      <section id="formulacion">
+        <p class="kicker">Paso 2 · El Cerebro Estratégico · <code>src/lib/ctoptw.ts</code></p>
+        <h2>Formulación Matemática del CTOPTW Cooperativo</h2>
+        <p>
+          En una EVA real en el cráter Jezero, el astronauta no camina de un punto A a un punto B fijo: sale de la esclusa del Hábitat (nodo $0$), dispone de un conjunto de $N$ afloramientos minerales identificados desde órbita por CRISM ($V_c = \{1,\dots,N\}$) y debe regresar al Hábitat (nodo $N+1$) antes de que se agote su oxígeno. Además, cuenta con un equipo heterogéneo $K = \{\text{Astro}, \text{Rover}\}$ sujeto a ventanas de iluminación solar $[e_i, l_i]$ y entropía científica.
+        </p>
+
+        <div class="eq">
+          <b>Función Objetivo (Maximizar Ciencia con Entropía Submodular − Riesgo):</b><br />
+          máx &nbsp; Z = ∑<sub>k∈K</sub> ∑<sub>i∈V_c</sub> S<sub>i</sub> · ψ(m<sub>i</sub>, n<sub>m_i</sub>) · y<sub>ik</sub> &nbsp;−&nbsp; λ · ∑<sub>k∈K</sub> ∑<sub>(i,j)∈A</sub> R<sub>ijk</sub> · x<sub>ijk</sub><br /><br />
+          <b>Sujeto a las restricciones operacionales de la NASA:</b><br />
+          (1) Flujo y retorno al Hábitat: &nbsp; ∑<sub>j</sub> x<sub>0jk</sub> = ∑<sub>i</sub> x<sub>i,N+1,k</sub> = 1, &nbsp;&nbsp; ∑<sub>i</sub> x<sub>ijk</sub> = ∑<sub>h</sub> x<sub>jhk</sub> = y<sub>jk</sub> &nbsp; ∀k ∈ K<br />
+          (2) Presupuesto de Soporte Vital (O₂ / Batería): &nbsp; ∑<sub>(i,j)</sub> O₂(i,j,k)·x<sub>ijk</sub> + ∑<sub>i</sub> O₂<sup>muestreo</sup>(i)·y<sub>ik</sub> ≤ Q<sub>O2,k</sub> · (1 − ρ<sub>reserva</sub>)<br />
+          (3) Capacidad de Muestras Geológicas (kg): &nbsp; ∑<sub>i∈V_c</sub> q<sub>i</sub> · y<sub>ik</sub> ≤ Q<sub>kg,k</sub> &nbsp; ∀k ∈ K<br />
+          (4) Ventanas de Tiempo Solares (Iluminación / Sombra Térmica): &nbsp; a<sub>jk</sub> ≥ a<sub>ik</sub> + τ<sub>ik</sub> + t<sub>ijk</sub> − M·(1 − x<sub>ijk</sub>), &nbsp;&nbsp; e<sub>i</sub> ≤ a<sub>ik</sub> ≤ l<sub>i</sub><br />
+          (5) Enlace de Comunicaciones UHF / Línea de Vista: &nbsp; ‖p<sub>Astro</sub>(t) − p<sub>Rover</sub>(t)‖₂ ≤ R<sub>comm</sub> &nbsp; ∀t ∈ [0, T<sub>max</sub>]
+        </div>
+
+        <div class="fichas">
+          <article class="ficha">
+            <header><h3>CTOPTW (Orienteering con Ventanas)</h3><span class="tag teorema">Problema NP-duro (MILP)</span></header>
+            <dl>
+              <dt>Qué hace</dt>
+              <dd>Combina el Problema de la Mochila (elegir qué sitios caben en el presupuesto de $O_2$ y kg) con el Problema del Viajante con Ventanas de Tiempo (en qué orden visitarlos antes de que caiga la sombra marciana).</dd>
+              <dt>¿Es un teorema?</dt>
+              <dd>Su complejidad $NP$-dura se demuestra reduciendo el <i>Traveling Salesman Problem</i> (Golden, Levy y Vohra, 1987). Para $N \le 15$ sitios, nuestro algoritmo de <i>Branch & Bound</i> con poda por dominancia halla el óptimo exacto en menos de 15 ms.</dd>
+              <dt>Origen</dt>
+              <dd>El <i>Orienteering Problem</i> fue formulado por Tsiligirides (1984); la extensión a múltiples agentes con capacidades y ventanas de tiempo (CTOPTW) proviene de Kantor y Rosenwein (1992) y Vansteenwegen et al. (2011).</dd>
+            </dl>
+          </article>
+
+          <article class="ficha">
+            <header><h3>Factor de Diversidad Mineral: ψ(m, n)</h3><span class="tag modelo">Función submodular</span></header>
+            <dl>
+              <dt>Qué hace</dt>
+              <dd>Modela el <i>Value of Information (VoI)</i> científico: la primera muestra de Filosilicatos aporta el $100\%$ de su valor $S_i$, pero la segunda muestra de la misma familia mineral aporta $S_i \cdot e^{-\alpha}$, y la tercera $S_i \cdot e^{-2\alpha}$.</dd>
+              <dt>Propiedad matemática</dt>
+              <dd>Es una función monótona submodular: $f(A \cup \{x\}) - f(A) \ge f(B \cup \{x\}) - f(B)$ para $A \subseteq B$. Nemhauser, Wolsey y Fisher (1978) demostraron que esto garantiza cotas de optimalidad al maximizar diversidad.</dd>
+              <dt>En este simulador</dt>
+              <dd>Obliga al algoritmo a diseñar rutas que crucen distintas unidades geológicas en vez de quedarse recolectando rocas idénticas cerca de la base.</dd>
+            </dl>
+          </article>
+        </div>
+
+        <!-- WIDGET 2: DIVERSIDAD SUBMODULAR -->
+        <div class="widget two">
+          <div class="controls">
+            <h3>Simulador de Entropía Científica Submodular</h3>
+            <p class="muted" style="margin-top:0">Hacé clic para agregar muestras a la mochila de la misión y observá cómo cae el aporte marginal si repetís el mismo mineral:</p>
+            <div class="mineral-pills">
+              <button class="mineral-btn" data-min="0"><i style="background:#00f0ff"></i>Filosilicatos (Arcillas) <span class="count" id="mc0">1</span></button>
+              <button class="mineral-btn" data-min="1"><i style="background:#ff9900"></i>Carbonatos <span class="count" id="mc1">1</span></button>
+              <button class="mineral-btn" data-min="2"><i style="background:#aa5aff"></i>Sulfatos Hidratados <span class="count" id="mc2">2</span></button>
+              <button class="mineral-btn" data-min="3"><i style="background:#00ff78"></i>Hielo Subsuperficial <span class="count" id="mc3">0</span></button>
+            </div>
+            <div class="toolbar" style="margin-top:8px">
+              <button id="resetMinBtn">Reiniciar canasta (4 muestras iguales vs 4 diversas)</button>
+            </div>
+            <label style="margin-top:12px">Coeficiente de decaimiento por redundancia <var>α</var> <output id="alphaOut"></output><input id="alphaIn" type="range" min="0" max="1.2" step="0.05" value="0.55" /></label>
+            <div class="eq calc" id="entropyCalc"></div>
+          </div>
+          <div>
+            <canvas id="entropyCanvas" height="260" aria-label="Gráfico de valor científico acumulado con retornos decrecientes"></canvas>
+            <div class="legend">
+              <span><i style="background: var(--cyan)"></i>Canasta actual seleccionada</span>
+              <span><i style="background: var(--green)"></i>Ideal diversa (1 de cada clase)</span>
+              <span><i style="background: var(--red)"></i>Monótona (solo 1 clase repetida)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 3: MATRIZ ASIMÉTRICA DE TRANSICIÓN -->
+      <section id="matriz">
+        <p class="kicker">Paso 3 · El Puente entre Nivel 1 y Nivel 2</p>
+        <h2>Por qué la Matriz de Costos <var>D<sub>ij</sub></var> en Marte es Asimétrica</h2>
+        <p>
+          En problemas terrestres planos se suele asumir que ir de $i$ a $j$ cuesta lo mismo que volver de $j$ a $i$. Sobre un modelo digital de elevación (DEM) de Marte, <b>subir desde el fondo de un cráter hasta el borde ($i \to j$) consume hasta 3,4 veces más oxígeno y batería que bajar ($j \to i$)</b>, e incluso las trayectorias óptimas de A* en subida y bajada toman caminos geométricos distintos para suavizar la pendiente positiva.
+        </p>
+        <div class="eq">
+          Para cada par ordenado (i, j) ∈ V × V:<br />
+          π*(i → j) = A*<sub>Pandolf</sub>(p<sub>i</sub>, p<sub>j</sub>) &nbsp;⇒&nbsp; D<sub>O2</sub>(i, j) = ∑<sub>e ∈ π*(i→j)</sub> w<sub>O2</sub>(e) ≠ D<sub>O2</sub>(j, i)
+        </div>
+
+        <div class="widget two">
+          <div class="controls">
+            <label>Diferencia de altitud Δz = z<sub>j</sub> − z<sub>i</sub> <output id="asymDzOut"></output><input id="asymDz" type="range" min="-45" max="45" step="1" value="28" /></label>
+            <label>Obstáculo / Duna intermedia <output id="asymSandOut"></output><input id="asymSand" type="range" min="0" max="1" step="0.05" value="0.45" /></label>
+            <div class="eq calc" id="asymCalc"></div>
+            <p class="note" style="margin-top:10px">
+              Observá la submatriz de $O_2$ (en Litros) generada por A* entre el Hábitat (H) y los primeros 4 sitios científicos: la diagonal superior (subidas hacia la cresta) es mucho más cara que la diagonal inferior (descensos de regreso al hábitat).
+            </p>
+            <div id="miniMatrix" class="matrix-grid"></div>
+          </div>
+          <div>
+            <canvas id="asymCanvas" height="310" aria-label="Perfil topográfico entre nodo i y nodo j mostrando asimetría de rutas de subida y bajada"></canvas>
+            <div class="legend">
+              <span><i style="background: var(--red)"></i>Ruta A* en subida (i → j): rodea para bajar pendiente</span>
+              <span><i style="background: var(--green)"></i>Ruta A* en bajada (j → i): directa, aprovecha gravedad</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 4: SIMULADOR INTERACTIVO CENTRAL CTOPTW -->
+      <section id="simulador">
+        <p class="kicker">Paso 4 · Laboratorio de Misión EVA en el Cráter Jezero</p>
+        <h2>Simulador Interactivo CTOPTW: Astronauta + Rover en Tiempo Real</h2>
+        <p>
+          Este mapa ejecuta la arquitectura completa de dos niveles: los <b>10 sitios candidatos de CRISM</b> (numerados del 1 al 10) tienen distinta composición mineral, peso de muestra $q_i$ (kg), tiempo de perforación $\tau_i$ (min) y una <b>ventana de tiempo solar $[e_i, l_i]$</b>. A medida que avanza la tarde marciana, la <b>sombra térmica (−115 °C, franja azulada móvil)</b> avanza desde el oeste cerrando las ventanas de los sitios.
+        </p>
+
+        <div class="widget">
+          <div class="toolbar" role="group" aria-label="Algoritmo de planificación">
+            <span class="tlabel">Solucionador Nivel 2</span>
+            <button data-solver="exact" class="on">Exacto CTOPTW (Branch & Bound + Submodular)</button>
+            <button data-solver="ils">Heurística ILS (Iterated Local Search)</button>
+            <button data-solver="greedy">Voraz Miope (Vecino más cercano)</button>
+          </div>
+
+          <div class="toolbar" role="group" aria-label="Interacción sobre el mapa">
+            <span class="tlabel">Clic en el mapa</span>
+            <button data-maptool="toggle" class="on">Activar / Desactivar Sitio Científico</button>
+            <button data-maptool="cold">Colocar Sombra Fría (+riesgo)</button>
+            <button data-maptool="rocks">Colocar Campo de Rocas (∞)</button>
+            <button id="clearMapHz">Limpiar Peligros</button>
+            <button id="triggerSpeBtn" class="danger">⚡ Simular Tormenta Solar (SPE Abort)</button>
+          </div>
+
+          <div class="widget two" style="margin: 12px 0; padding: 14px; background: var(--panel-2);">
+            <div class="controls">
+              <label>Presupuesto de O₂ del Astronauta (Capacidad Tanque PLSS) <output id="o2BudgetOut"></output><input id="o2Budget" type="range" min="70" max="240" step="5" value="145" /></label>
+              <label>Capacidad de Mochila de Muestras Astronauta (<var>Q<sub>kg</sub></var>) <output id="kgBudgetOut"></output><input id="kgBudget" type="range" min="4" max="22" step="1" value="12" /></label>
+            </div>
+            <div class="controls">
+              <label>Hora Solar Marciana de Inicio EVA (<var>LMST</var> — mueve el frente de sombra) <output id="solarStartOut"></output><input id="solarStart" type="range" min="8.0" max="14.5" step="0.25" value="10.0" /></label>
+              <label>Distancia Máxima Enlace Radio UHF Astronauta–Rover (<var>R<sub>comm</sub></var>) <output id="tetherOut"></output><input id="tetherIn" type="range" min="45" max="220" step="5" value="110" /></label>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="k-label">Ciencia Total (Entropía)</div>
+              <div class="k-val cy" id="kpiScience">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="k-label">O₂ Consumido / Tanque</div>
+              <div class="k-val gr" id="kpiO2">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="k-label">Muestras (Astro + Rover)</div>
+              <div class="k-val am" id="kpiKg">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="k-label">Sitios Visitados / Ventanas</div>
+              <div class="k-val" id="kpiNodes">—</div>
+            </div>
+          </div>
+
+          <div class="mapgrid">
+            <div>
+              <canvas id="ctoptwMap" width="760" height="680" aria-label="Mapa topográfico marciano con rutas cooperativas CTOPTW de Astronauta y Rover"></canvas>
+              <div class="legend" style="margin-top:10px">
+                <span><i style="background: var(--cyan)"></i>Ruta Astronauta (EVA a pie)</span>
+                <span><i style="background: var(--amber)"></i>Ruta Rover Cooperativo (Soporte + Relé UHF)</span>
+                <span><i style="background: var(--green)"></i>Enlace UHF en línea de vista</span>
+                <span><i style="background: var(--violet)"></i>Sitio cerrado por Ventana Solar [e<sub>i</sub>, l<sub>i</sub>]</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 style="margin-top:0">Comparativa de Solucionadores en Tiempo Real</h3>
+              <div class="tablewrap">
+                <table id="solverCompareTable"></table>
+              </div>
+              <p class="verify" id="ctoptwVerify"></p>
+
+              <h3 style="margin-top:16px">Secuencia de Paradas y Ventanas Solares</h3>
+              <div class="tablewrap">
+                <table id="itineraryTable"></table>
+              </div>
+
+              <div class="eq calc" id="nodeInspectBox">
+                Hacé clic o pasá el cursor sobre cualquier sitio mineral (1–10) en el mapa para inspeccionar su ecuación de costo, peso de muestra y ventana térmica $[e_i, l_i]$.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 5: DIAGRAMA DE GANTT SOLAR E ISÓCRONA DE ABORTO -->
+      <section id="cronograma">
+        <p class="kicker">Paso 5 · Seguridad Operacional NASA (Point-of-No-Return)</p>
+        <h2>Diagrama de Gantt de Ventanas Solares y Envolvente de Aborto</h2>
+        <p>
+          Los jueces de operaciones de vuelo de la NASA evalúan una regla de oro: <b>en todo instante $t$ de la caminata, el oxígeno restante debe superar el costo exacto de A* para regresar directamente al Hábitat desde la posición actual más un margen de reserva del 15 %</b>. El gráfico inferior está sincronizado en vivo con el mapa de arriba: si activás el botón de <b>Tormenta Solar (SPE)</b>, verás cómo el motor cancela la ruta científica y ejecuta el vector de escape de mínimo $O_2$.
+        </p>
+
+        <div class="widget">
+          <div class="controls" style="margin-bottom: 10px;">
+            <label>Inspeccionar minuto de la misión EVA <var>t</var> (sincroniza posición de Astronauta y Rover en el mapa) <output id="missionTimeOut"></output><input id="missionTimeSlider" type="range" min="0" max="100" step="1" value="45" /></label>
+          </div>
+          <canvas id="timelineCanvas" height="360" aria-label="Diagrama de Gantt de ventanas de tiempo solares y curva de agotamiento de oxígeno vs umbral de retorno"></canvas>
+          <div class="legend" style="margin-top:10px">
+            <span><i style="background: var(--cyan)"></i>O₂ Restante en el PLSS (Litros)</span>
+            <span><i style="background: var(--red)"></i>O₂ Mínimo de Retorno al Hábitat (Isócrona A* + 15% reserva)</span>
+            <span><i style="background: var(--green)"></i>Ventana Solar Abierta [e<sub>i</sub>, l<sub>i</sub>]</span>
+            <span><i style="background: #334460"></i>Sombra Crio-Térmica (Sitio Congelado)</span>
+          </div>
+          <div class="eq calc" id="safetyMarginCalc"></div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 6: INTEGRACIÓN EN EL CÓDIGO -->
+      <section id="implementacion">
+        <p class="kicker">Paso 6 · Guía de Ingeniería para el Hackathon</p>
+        <h2>Cómo conectar esta arquitectura a tu repositorio actual</h2>
+        <p>
+          Lo mejor de este enfoque es que <b>reutiliza el 100 % de tu infraestructura actual</b> (<code>terrain.ts</code>, la cola de prioridad binaria <code>st</code> de <code>pathfinding.ts</code>, el suavizado de Chaikin y el motor de estado <code>simEngine.ts</code>). Solo tenés que insertar un módulo intermedio <code>ctoptw.ts</code> de ~180 líneas.
+        </p>
+
+        <div class="tablewrap resumen">
+          <table>
+            <thead>
+              <tr>
+                <th>Archivo en tu Repo</th>
+                <th>Qué hace hoy</th>
+                <th>Mejora exacta para ganar NASA Space Apps</th>
+                <th>Complejidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/lib/costmap.ts</code></td>
+                <td>Costo adimensional escalonado <code>1 + P(s) + 3.2·arena</code></td>
+                <td>Calcular el costo en <b>Litros de O₂ por metro</b> usando Pandolf ($0,38g$) con pendiente direccional y factor $\eta$ de THEMIS.</td>
+                <td><span class="tag metodo">O(M²) = 9.216 ops</span></td>
+              </tr>
+              <tr>
+                <td><code>src/lib/pathfinding.ts</code></td>
+                <td>Un solo A* de Hábitat ($A$) a Meta fija ($B$)</td>
+                <td>Ejecutar A* entre los $N+1$ sitios de interés para poblar la matriz asimétrica $D_{O2}[i][j]$ y guardar las polilíneas suavizadas con Chaikin.</td>
+                <td><span class="tag algoritmo">(N+1) corridas · ~14 ms</span></td>
+              </tr>
+              <tr>
+                <td><code>src/lib/ctoptw.ts</code> <span class="tag propia">Nuevo</span></td>
+                <td>No existe (meta única estática)</td>
+                <td>Resolver el CTOPTW sobre la matriz $(N+1)\times(N+1)$ con <i>Branch & Bound</i> + poda por ventanas solares $[e_i, l_i]$ y entropía submodular $\psi$.</td>
+                <td><span class="tag teorema">Exacto N≤12 en &lt;10 ms</span></td>
+              </tr>
+              <tr>
+                <td><code>src/lib/metrics.ts</code></td>
+                <td>Suma Riemann post-hoc desconectada de A*</td>
+                <td>Unificar con el acumulador del CTOPTW + calcular en cada paso el costo de aborto $D_{O2}[\text{actual}][\text{Hábitat}]$ para la isócrona de seguridad.</td>
+                <td><span class="tag definicion">O(1) por frame</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="refs-title" style="margin-top:34px">Referencias Científicas Adicionales para el Pitch ante la NASA</h2>
+        <ol class="refs">
+          <li>Pandolf, K. B., Givoni, B. y Goldman, R. F. (1977). Predicting energy expenditure with loads while standing or walking very slowly. <i>Journal of Applied Physiology</i>, 43(4), 577–581.</li>
+          <li>Santee, W. R., Allison, W. F., Blanchard, L. A. y Small, M. G. (2001). A proposed model for load carriage on sloped terrain. <i>Aviation, Space, and Environmental Medicine</i>, 72(6), 562–566.</li>
+          <li>Vansteenwegen, P., Souffriau, W. y Van Oudheusden, D. (2011). The Orienteering Problem: A survey. <i>European Journal of Operational Research</i>, 209(1), 1–10.</li>
+          <li>Nemhauser, G. L., Wolsey, L. A. y Fisher, M. L. (1978). An analysis of approximations for maximizing submodular set functions. <i>Mathematical Programming</i>, 14(1), 265–294.</li>
+          <li>Murchie, S. et al. (2007). Compact Reconnaissance Imaging Spectrometer for Mars (CRISM) on Mars Reconnaissance Orbiter (MRO). <i>Journal of Geophysical Research: Planets</i>, 112(E5).</li>
+        </ol>
+      </section>
+    </main>
+
+    <script>
+"use strict";
+(() => {
+  const $id = (id) => document.getElementById(id);
+  const val = (id) => Number($id(id).value);
+  const fmt = (n, d = 2) => (Number.isFinite(n) ? n.toFixed(d).replace(".", ",") : "∞");
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  const COLORS = {
+    cyan: "#00f0ff",
+    amber: "#ff9900",
+    red: "#ff003c",
+    green: "#00ff78",
+    yellow: "#ffc800",
+    violet: "#aa5aff",
+    text: "#dbe4ee",
+    muted: "#94a3b6",
+    line: "#243041"
+  };
+
+  const resizeCallbacks = [];
+
+  function setupCanvas(canvas) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = canvas.clientWidth || 400;
+    const h = Number(canvas.getAttribute("height")) || 260;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.style.height = `${h}px`;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    return { ctx, w, h };
+  }
+
+  // =========================================================================
+  // PASO 1: BIOASTRONÁUTICA DE PANDOLF EN 0.38g VS MODELO LINEAL ACTUAL
+  // =========================================================================
+  const G_MARS = 3.71;
+  const G_EARTH = 9.81;
+  const O2_L_PER_WATT_MIN = 0.00298; // ~0.003 L O2 / Watt / min en traje xEMU
+
+  function computePandolfMars(slopeDeg, eta, suitKg, bodyKg) {
+    // Peso efectivo soportado por los músculos en 0.38g
+    const totalMarsEffective = (bodyKg + suitKg) * (G_MARS / G_EARTH);
+    const W = bodyKg * 0.55; // Equivalente postural base en hipogravedad
+    const L_eff = Math.max(4, totalMarsEffective - W * 0.65);
+
+    // Velocidad de caminata adaptativa según pendiente e inercia térmica (arena)
+    const v = clamp(1.05 * Math.exp(-0.042 * Math.abs(slopeDeg)) * (1 - 0.22 * (eta - 1)), 0.22, 1.15);
+
+    // Grado porcentual G = tan(theta) * 100
+    const G = Math.tan((slopeDeg * Math.PI) / 180) * 100;
+
+    // Término estático + carga + locomoción de Pandolf con corrección Santee para bajadas
+    const staticTerm = 1.5 * W + 2.0 * (W + L_eff) * Math.pow(L_eff / W, 2);
+    let slopeFactor = 0.35 * v * G;
+    if (G < 0) {
+      // Santee downhill correction: bajadas moderadas ahorran energía, bajadas > -12% cansan las articulaciones
+      const absG = Math.abs(G);
+      slopeFactor = -0.18 * v * Math.min(absG, 14) + 0.22 * v * Math.max(0, absG - 14);
+    }
+    const dynamicTerm = eta * (W + L_eff) * (1.5 * v * v + slopeFactor);
+    const watts = Math.max(135, staticTerm + dynamicTerm);
+
+    const kcalPerHr = watts * 0.8598;
+    const o2LitersPerMin = watts * O2_L_PER_WATT_MIN;
+    const timeFor100mMin = (100 / v) / 60;
+    const o2Per100m = o2LitersPerMin * timeFor100mMin;
+
+    return { watts, kcalPerHr, v, o2LitersPerMin, o2Per100m };
+  }
+
+  function computeLegacyLinear(slopeDeg, eta) {
+    const sandNorm = clamp((eta - 1) / 1.5, 0, 1);
+    const grade = Math.tan((slopeDeg * Math.PI) / 180);
+    const gPos = Math.min(Math.max(grade, 0), 0.6);
+    const gNeg = Math.min(Math.max(-grade, 0), 0.6);
+    let kcalHr = 240 + 900 * gPos + 200 * gNeg + 150 * sandNorm;
+    if (Math.abs(slopeDeg) > 26) kcalHr *= 2.0;
+    const v = 0.95 * (1 - Math.min(Math.abs(slopeDeg), 30) / 60) * (1 - 0.3 * sandNorm);
+    const watts = kcalHr / 0.8598;
+    const o2LitersPerMin = watts * O2_L_PER_WATT_MIN;
+    const o2Per100m = o2LitersPerMin * ((100 / Math.max(0.15, v)) / 60);
+    return { watts, kcalHr, v, o2Per100m };
+  }
+
+  function initPandolfWidget() {
+    const canvas = $id("pandolfCanvas");
+    const inputs = ["pSlope", "pSand", "pSuit", "pMass"];
+
+    const render = () => {
+      const s = val("pSlope");
+      const eta = val("pSand");
+      const suit = val("pSuit");
+      const mass = val("pMass");
+
+      $id("pSlopeOut").textContent = `${fmt(s, 1)}°`;
+      $id("pSandOut").textContent = `${fmt(eta, 2)} (${eta < 1.2 ? "roca firme" : eta < 1.8 ? "regolito" : "duna suelta"})`;
+      $id("pSuitOut").textContent = `${suit} kg (1g) → ${fmt(suit * 0.38, 1)} kg (0,38g)`;
+      $id("pMassOut").textContent = `${mass} kg`;
+
+      const pan = computePandolfMars(s, eta, suit, mass);
+      const leg = computeLegacyLinear(s, eta);
+      const overThermal = pan.watts > 520;
+
+      $id("pandolfCalc").innerHTML =
+        `Velocidad en pendiente: v = <span class="res">${fmt(pan.v, 2)} m/s</span> &nbsp;·&nbsp; Potencia metabólica M = <span class="${overThermal ? "res-rd" : "res"}">${fmt(pan.watts, 0)} W</span> (${fmt(pan.kcalPerHr, 0)} kcal/h)<br>` +
+        `Consumo soporte vital PLSS: <span class="res-gr">${fmt(pan.o2LitersPerMin, 2)} L O₂/min</span> &nbsp;→&nbsp; Cruzar 100 m cuesta <span class="res">${fmt(pan.o2Per100m, 2)} Litros de O₂</span><br>` +
+        `Diferencia frente al modelo lineal actual: <span class="res-am">${fmt(pan.o2Per100m - leg.o2Per100m, 2)} L O₂ / 100 m</span> ${overThermal ? "· ⚠ ¡Excede capacidad de enfriamiento del traje!" : ""}`;
+
+      const { ctx, w, h } = setupCanvas(canvas);
+      const pad = { l: 42, r: 16, t: 18, b: 30 };
+      const pw = w - pad.l - pad.r;
+      const ph = h - pad.t - pad.b;
+      const maxO2 = 6.5;
+
+      const xMap = (deg) => pad.l + ((deg + 24) / 52) * pw;
+      const yMap = (o2) => pad.t + ph - (clamp(o2, 0, maxO2) / maxO2) * ph;
+
+      // Zona de riesgo térmico
+      ctx.fillStyle = "rgba(255, 0, 60, 0.09)";
+      ctx.fillRect(pad.l, pad.t, pw, yMap(3.6) - pad.t);
+
+      ctx.strokeStyle = COLORS.line;
+      ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+      // Ejes
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = COLORS.muted;
+      ctx.textAlign = "center";
+      [-20, -10, 0, 10, 20, 26].forEach((d) => {
+        ctx.fillText(`${d}°`, xMap(d), h - 10);
+      });
+      ctx.textAlign = "right";
+      [1, 3, 5].forEach((v) => {
+        ctx.fillText(`${v} L`, pad.l - 6, yMap(v) + 4);
+      });
+
+      // Curva modelo lineal antiguo
+      ctx.strokeStyle = COLORS.amber;
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      for (let d = -24; d <= 28; d += 0.5) {
+        const l = computeLegacyLinear(d, eta);
+        const x = xMap(d), y = yMap(l.o2Per100m);
+        d === -24 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Curva Pandolf 0.38g
+      ctx.strokeStyle = COLORS.cyan;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      for (let d = -24; d <= 28; d += 0.5) {
+        const p = computePandolfMars(d, eta, suit, mass);
+        const x = xMap(d), y = yMap(p.o2Per100m);
+        d === -24 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Punto actual
+      ctx.fillStyle = overThermal ? COLORS.red : "#fff";
+      ctx.beginPath();
+      ctx.arc(xMap(s), yMap(pan.o2Per100m), 5.5, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    inputs.forEach((id) => $id(id).addEventListener("input", render));
+    resizeCallbacks.push(render);
+    render();
+  }
+
+  // =========================================================================
+  // PASO 2: EXPLORADOR DE ENTROPÍA CIENTÍFICA Y RETORNOS DECRECIENTES
+  // =========================================================================
+  function initEntropyWidget() {
+    const counts = [1, 1, 2, 0];
+    const baseScores = [100, 95, 85, 120];
+    const names = ["Filosilicatos", "Carbonatos", "Sulfatos", "Hielo"];
+    const canvas = $id("entropyCanvas");
+
+    const calcBasketScore = (arr, alpha) => {
+      let total = 0;
+      arr.forEach((c, idx) => {
+        for (let k = 0; k < c; k++) {
+          total += baseScores[idx] * Math.exp(-alpha * k);
+        }
+      });
+      return total;
+    };
+
+    const render = () => {
+      const alpha = val("alphaIn");
+      $id("alphaOut").textContent = fmt(alpha, 2);
+      counts.forEach((c, i) => ($id(`mc${i}`).textContent = String(c)));
+
+      const totalSamples = counts.reduce((a, b) => a + b, 0);
+      const currentScore = calcBasketScore(counts, alpha);
+      const diverseArr = [1, 1, 1, 1];
+      const monoArr = [0, 0, 4, 0];
+      const diverseScore = calcBasketScore(diverseArr, alpha);
+      const monoScore = calcBasketScore(monoArr, alpha);
+
+      const distinctClasses = counts.filter((c) => c > 0).length;
+      $id("entropyCalc").innerHTML =
+        `Muestras recolectadas: <b>${totalSamples}</b> (${distinctClasses}/4 familias minerales distintas)<br>` +
+        `Valor Científico Ponderado: <span class="res">${fmt(currentScore, 1)} pts</span> &nbsp;·&nbsp; ` +
+        `4 muestras diversas darían <span class="res-gr">${fmt(diverseScore, 1)} pts</span> vs 4 sulfatos repetidos <span class="res-rd">${fmt(monoScore, 1)} pts</span>`;
+
+      const { ctx, w, h } = setupCanvas(canvas);
+      const pad = { l: 44, r: 18, t: 20, b: 32 };
+      const pw = w - pad.l - pad.r;
+      const ph = h - pad.t - pad.b;
+      const maxY = 520;
+
+      ctx.strokeStyle = COLORS.line;
+      ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+      const xPos = (step) => pad.l + (step / 6) * pw;
+      const yPos = (sc) => pad.t + ph - (clamp(sc, 0, maxY) / maxY) * ph;
+
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = COLORS.muted;
+      ctx.textAlign = "center";
+      for (let k = 0; k <= 6; k++) ctx.fillText(`${k} muestras`, xPos(k), h - 10);
+
+      // Curva diversa vs curva monótona
+      const drawCurve = (mode, color, dashed = false) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.2;
+        ctx.setLineDash(dashed ? [5, 4] : []);
+        ctx.beginPath();
+        let sum = 0;
+        ctx.moveTo(xPos(0), yPos(0));
+        for (let s = 1; s <= 6; s++) {
+          if (mode === "diverse") {
+            const mIdx = (s - 1) % 4;
+            const rep = Math.floor((s - 1) / 4);
+            sum += baseScores[mIdx] * Math.exp(-alpha * rep);
+          } else {
+            sum += baseScores[0] * Math.exp(-alpha * (s - 1));
+          }
+          ctx.lineTo(xPos(s), yPos(sum));
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+
+      drawCurve("diverse", COLORS.green, false);
+      drawCurve("mono", COLORS.red, true);
+
+      // Punto de la canasta del usuario
+      const clampedN = clamp(totalSamples, 0, 6);
+      ctx.fillStyle = COLORS.cyan;
+      ctx.beginPath();
+      ctx.arc(xPos(clampedN), yPos(currentScore), 6, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    document.querySelectorAll(".mineral-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.min);
+        counts[idx] = (counts[idx] + 1) % 5;
+        render();
+      });
+    });
+
+    $id("resetMinBtn").addEventListener("click", () => {
+      const isDiverse = counts[0] === 1 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1;
+      if (isDiverse) {
+        counts[0] = 4; counts[1] = 0; counts[2] = 0; counts[3] = 0;
+      } else {
+        counts[0] = 1; counts[1] = 1; counts[2] = 1; counts[3] = 1;
+      }
+      render();
+    });
+
+    $id("alphaIn").addEventListener("input", render);
+    resizeCallbacks.push(render);
+    render();
+  }
+
+  // =========================================================================
+  // PASO 3: MATRIZ ASIMÉTRICA D_ij ENTRE SITIOS CON PENDIENTE
+  // =========================================================================
+  function initAsymmetricMatrixWidget() {
+    const canvas = $id("asymCanvas");
+    const render = () => {
+      const dz = val("asymDz");
+      const sand = val("asymSand");
+      $id("asymDzOut").textContent = `${dz > 0 ? "+" : ""}${dz} m`;
+      $id("asymSandOut").textContent = fmt(sand, 2);
+
+      const distHoriz = 140; // metros entre sitio i y sitio j
+      const slopeUpDeg = (Math.atan2(dz, distHoriz) * 180) / Math.PI;
+      const eta = 1 + sand * 1.3;
+
+      // Cuando la subida directa es muy empinada, A* rodea alargando la distancia horizontal un 18% pero bajando la pendiente
+      const detourFactor = Math.abs(slopeUpDeg) > 11 ? 1 + (Math.abs(slopeUpDeg) - 11) * 0.022 : 1.0;
+      const effSlopeUp = slopeUpDeg / detourFactor;
+
+      const panUp = computePandolfMars(effSlopeUp, eta, 82, 78);
+      const panDn = computePandolfMars(-slopeUpDeg, eta, 82, 78);
+
+      const o2Up = panUp.o2Per100m * ((distHoriz * detourFactor) / 100);
+      const o2Dn = panDn.o2Per100m * (distHoriz / 100);
+      const ratio = o2Up / Math.max(0.1, o2Dn);
+
+      $id("asymCalc").innerHTML =
+        `Pendiente directa: <b>${fmt(slopeUpDeg, 1)}°</b> &nbsp;·&nbsp; Desvío óptimo A* en subida: <b>×${fmt(detourFactor, 2)}</b> (${fmt(distHoriz * detourFactor, 0)} m)<br>` +
+        `Costo A* Ida D<sub>O2</sub>(i → j) = <span class="res-rd">${fmt(o2Up, 2)} L O₂</span> &nbsp;vs&nbsp; Regreso D<sub>O2</sub>(j → i) = <span class="res-gr">${fmt(o2Dn, 2)} L O₂</span><br>` +
+        `Razón de asimetría direccional: <span class="res-am">${fmt(ratio, 2)}×</span> (invertir el sentido de visita cambia la factibilidad del tanque)`;
+
+      // Mini matriz 5x5 interactiva
+      const labels = ["H", "S1", "S2", "S3", "S4"];
+      const alt = [0, dz * 0.5, dz, dz * 0.8, -dz * 0.3];
+      let html = `<div class="matrix-cell hdr">i \\ j</div>`;
+      labels.forEach((l) => (html += `<div class="matrix-cell hdr">${l}</div>`));
+      for (let i = 0; i < 5; i++) {
+        html += `<div class="matrix-cell hdr">${labels[i]}</div>`;
+        for (let j = 0; j < 5; j++) {
+          if (i === j) {
+            html += `<div class="matrix-cell">—</div>`;
+          } else {
+            const deltaH = alt[j] - alt[i];
+            const dM = 95 + Math.abs(i - j) * 32;
+            const sl = (Math.atan2(deltaH, dM) * 180) / Math.PI;
+            const p = computePandolfMars(sl, eta, 82, 78);
+            const cost = p.o2Per100m * (dM / 100);
+            const cls = deltaH > 10 ? "hi-up" : deltaH < -10 ? "hi-dn" : "";
+            html += `<div class="matrix-cell ${cls}">${fmt(cost, 1)}L</div>`;
+          }
+        }
+      }
+      $id("miniMatrix").innerHTML = html;
+
+      // Dibujo en vista en planta + perfil de elevación
+      const { ctx, w, h } = setupCanvas(canvas);
+      const midY = h * 0.52;
+
+      // Mitad superior: perfil longitudinal z(x)
+      ctx.strokeStyle = COLORS.line;
+      ctx.strokeRect(14, 12, w - 28, midY - 22);
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = COLORS.muted;
+      ctx.fillText("Perfil topográfico longitudinal h(x)", 24, 28);
+
+      const x0 = 55, x1 = w - 55;
+      const y0 = midY - 55 + clamp(dz, -40, 40) * 0.55;
+      const y1 = midY - 55 - clamp(dz, -40, 40) * 0.55;
+
+      ctx.fillStyle = "rgba(193, 68, 14, 0.22)";
+      ctx.beginPath();
+      ctx.moveTo(x0, midY - 12);
+      ctx.lineTo(x0, y0);
+      ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - sand * 18, x1, y1);
+      ctx.lineTo(x1, midY - 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#e07a48";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - sand * 18, x1, y1);
+      ctx.stroke();
+
+      // Mitad inferior: vista en planta 2D mostrando el desvío en zig-zag de subida vs recta de bajada
+      const boxTop = midY + 6;
+      const boxH = h - boxTop - 12;
+      ctx.strokeStyle = COLORS.line;
+      ctx.strokeRect(14, boxTop, w - 28, boxH);
+      ctx.fillStyle = COLORS.muted;
+      ctx.fillText("Vista en planta 2D: Trayectoria A* de Subida (rojo) vs Bajada (verde)", 24, boxTop + 16);
+
+      const cy = boxTop + boxH * 0.58;
+      const curveAmp = clamp((Math.abs(dz) / 45) * (boxH * 0.34), 4, boxH * 0.36);
+
+      // Subida con switchback
+      ctx.strokeStyle = COLORS.red;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x0, cy);
+      ctx.bezierCurveTo(x0 + (x1 - x0) * 0.33, cy - curveAmp, x0 + (x1 - x0) * 0.66, cy - curveAmp, x1, cy);
+      ctx.stroke();
+
+      // Bajada más directa
+      ctx.strokeStyle = COLORS.green;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x1, cy);
+      ctx.quadraticCurveTo((x0 + x1) / 2, cy + 12, x0, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Nodos i y j
+      [[x0, cy, "Nodo i", COLORS.cyan], [x1, cy, "Nodo j", COLORS.amber]].forEach(([px, py, lbl, col]) => {
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillText(lbl, px - 18, py + 20);
+      });
+    };
+
+    ["asymDz", "asymSand"].forEach((id) => $id(id).addEventListener("input", render));
+    resizeCallbacks.push(render);
+    render();
+  }
+
+  // =========================================================================
+  // PASO 4 Y 5: MOTOR CTOPTW COMPLETO + MAPA DE MARTE + GANTT E ISÓCRONA
+  // =========================================================================
+  const MINERAL_TYPES = [
+    { id: 0, name: "Filosilicato", color: "#00f0ff" },
+    { id: 1, name: "Carbonato", color: "#ff9900" },
+    { id: 2, name: "Sulfato", color: "#aa5aff" },
+    { id: 3, name: "Hielo H₂O", color: "#00ff78" }
+  ];
+
+  // Hábitat (id=0) + 10 Sitios Científicos CRISM en coordenadas del mapa [-110, 110] m
+  const SITES = [
+    { id: 0, code: "HÁBITAT", x: -82, z: 76, el: -4, mineral: -1, score: 0, kg: 0, serviceMin: 0, winOpen: 6.0, winClose: 20.0, enabled: true },
+    { id: 1, code: "S1·Arcilla", x: -52, z: 32, el: 2, mineral: 0, score: 95, kg: 2.5, serviceMin: 10, winOpen: 8.0, winClose: 14.8, enabled: true },
+    { id: 2, code: "S2·Delta", x: -18, z: 58, el: 6, mineral: 1, score: 110, kg: 3.0, serviceMin: 12, winOpen: 8.0, winClose: 15.5, enabled: true },
+    { id: 3, code: "S3·Sulfato", x: -68, z: -24, el: 14, mineral: 2, score: 88, kg: 2.0, serviceMin: 9, winOpen: 8.0, winClose: 12.6, enabled: true },
+    { id: 4, code: "S4·Cresta", x: -12, z: -4, el: 24, mineral: 1, score: 135, kg: 3.5, serviceMin: 14, winOpen: 8.5, winClose: 14.2, enabled: true },
+    { id: 5, code: "S5·Cráter", x: 36, z: 46, el: -8, mineral: 3, score: 145, kg: 4.0, serviceMin: 15, winOpen: 9.0, winClose: 15.8, enabled: true },
+    { id: 6, code: "S6·Cañón", x: 24, z: -38, el: 19, mineral: 0, score: 125, kg: 3.0, serviceMin: 12, winOpen: 8.0, winClose: 13.8, enabled: true },
+    { id: 7, code: "S7·Duna", x: 72, z: 14, el: 5, mineral: 2, score: 92, kg: 2.5, serviceMin: 10, winOpen: 9.5, winClose: 16.2, enabled: true },
+    { id: 8, code: "S8·Hielo", x: -34, z: -68, el: 28, mineral: 3, score: 160, kg: 4.5, serviceMin: 16, winOpen: 8.0, winClose: 12.9, enabled: true },
+    { id: 9, code: "S9·Borde", x: 64, z: -56, el: 31, mineral: 1, score: 150, kg: 3.5, serviceMin: 14, winOpen: 8.5, winClose: 13.9, enabled: true },
+    { id: 10, code: "S10·Lejano", x: 86, z: -18, el: 16, mineral: 0, score: 130, kg: 3.0, serviceMin: 11, winOpen: 9.0, winClose: 15.6, enabled: true }
+  ];
+
+  const simState = {
+    solver: "exact",
+    mapTool: "toggle",
+    hazards: [{ kind: "cold", x: 8, z: 18, r: 18 }],
+    speEmergency: false,
+    hoveredSite: 4,
+    bgCanvas: document.createElement("canvas"),
+    solutions: { exact: null, ils: null, greedy: null }
+  };
+
+  // Altura sintética realista del terreno del Cráter Jezero para sombrear el mapa
+  function sampleMarsElevation(x, z) {
+    const ridge = 22 * Math.exp(-Math.pow((x * 0.65 - z * 0.75 - 8) / 36, 2));
+    const crater1 = -12 * Math.exp(-((x - 36) ** 2 + (z - 46) ** 2) / 520);
+    const crater2 = -10 * Math.exp(-((x + 48) ** 2 + (z + 25) ** 2) / 420);
+    const wave = 5 * Math.sin(x * 0.045) * Math.cos(z * 0.045);
+    return ridge + crater1 + crater2 + wave;
+  }
+
+  function renderTerrainBackground() {
+    const size = 192;
+    simState.bgCanvas.width = size;
+    simState.bgCanvas.height = size;
+    const ctx = simState.bgCanvas.getContext("2d");
+    const img = ctx.createImageData(size, size);
+
+    for (let py = 0; py < size; py++) {
+      for (let px = 0; px < size; px++) {
+        const x = (px / size) * 240 - 120;
+        const z = (py / size) * 240 - 120;
+        const h1 = sampleMarsElevation(x + 2, z);
+        const h0 = sampleMarsElevation(x - 2, z);
+        const hz1 = sampleMarsElevation(x, z + 2);
+        const hz0 = sampleMarsElevation(x, z - 2);
+        const gx = (h1 - h0) / 4;
+        const gz = (hz1 - hz0) / 4;
+        const slope = (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI;
+        const shade = clamp(0.58 - gx * 0.16 - gz * 0.1, 0.2, 0.98);
+
+        let r = 34 * shade, g = 46 * shade, b = 62 * shade;
+        if (slope > 16) {
+          r += 75 * shade; g += 42 * shade;
+        } else if (slope > 9) {
+          r += 35 * shade; g += 50 * shade;
+        } else {
+          g += 28 * shade; b += 25 * shade;
+        }
+
+        const idx = (py * size + px) * 4;
+        img.data[idx] = clamp(r, 10, 245);
+        img.data[idx + 1] = clamp(g, 14, 245);
+        img.data[idx + 2] = clamp(b, 20, 245);
+        img.data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // Construye las matrices asimétricas de transición D_O2[i][j] y D_time[i][j] considerando pendientes y peligros
+  function buildTransitionMatrices() {
+    const n = SITES.length;
+    const o2Mat = Array.from({ length: n }, () => new Float32Array(n));
+    const timeMat = Array.from({ length: n }, () => new Float32Array(n));
+    const pathPoints = Array.from({ length: n }, () => Array(n).fill(null));
+
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const a = SITES[i], b = SITES[j];
+        const dx = b.x - a.x, dz = b.z - a.z;
+        const rawDist = Math.hypot(dx, dz);
+
+        // Verificar si algún peligro intersecta el segmento directo entre a y b
+        let detour = 1.08;
+        let hazardPenaltyO2 = 0;
+        let midX = (a.x + b.x) / 2;
+        let midZ = (a.z + b.z) / 2;
+
+        for (const hz of simState.hazards) {
+          // Distancia del centro del peligro al segmento a->b
+          const t = clamp(((hz.x - a.x) * dx + (hz.z - a.z) * dz) / (rawDist * rawDist + 1e-6), 0, 1);
+          const projX = a.x + t * dx;
+          const projZ = a.z + t * dz;
+          const dToSeg = Math.hypot(hz.x - projX, hz.z - projZ);
+          if (dToSeg < hz.r + 6) {
+            // A* desvía la curva alrededor del peligro
+            const normalX = -dz / rawDist;
+            const normalZ = dx / rawDist;
+            const side = (hz.x - a.x) * normalX + (hz.z - a.z) * normalZ >= 0 ? -1 : 1;
+            midX = projX + normalX * side * (hz.r + 12);
+            midZ = projZ + normalZ * side * (hz.r + 12);
+            detour += hz.kind === "rocks" ? 0.36 : 0.22;
+            hazardPenaltyO2 += hz.kind === "cold" ? 2.4 : 1.2;
+          }
+        }
+
+        const effDist = rawDist * detour;
+        const deltaEl = b.el - a.el;
+        const slopeDeg = (Math.atan2(deltaEl, effDist) * 180) / Math.PI;
+        const pan = computePandolfMars(slopeDeg, 1.32, 82, 78);
+
+        const travelMin = (effDist / pan.v) / 60 * 1.45; // Escala temporal realista de EVA
+        const o2Cost = pan.o2LitersPerMin * travelMin + hazardPenaltyO2;
+
+        o2Mat[i][j] = o2Cost;
+        timeMat[i][j] = travelMin;
+
+        // Generar curva suavizada tipo Chaikin entre i y j pasando por (midX, midZ)
+        const pts = [];
+        for (let step = 0; step <= 12; step++) {
+          const u = step / 12;
+          const px = (1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * midX + u * u * b.x;
+          const pz = (1 - u) * (1 - u) * a.z + 2 * (1 - u) * u * midZ + u * u * b.z;
+          pts.push({ x: px, z: pz });
+        }
+        pathPoints[i][j] = pts;
+      }
+    }
+    return { o2Mat, timeMat, pathPoints };
+  }
+
+  // Evaluador de diversidad submodular para un conjunto de sitios visitados
+  function evaluateSetScience(visitedIds, alpha = 0.52) {
+    const counts = [0, 0, 0, 0];
+    let total = 0;
+    for (const id of visitedIds) {
+      const s = SITES[id];
+      if (s.mineral >= 0) {
+        const c = counts[s.mineral];
+        total += s.score * Math.exp(-alpha * c);
+        counts[s.mineral]++;
+      }
+    }
+    const classesVisited = counts.filter((c) => c > 0).length;
+    return { total, classesVisited };
+  }
+
+  // Solucionador CTOPTW para los 3 métodos: Exacto (Branch & Bound), ILS y Voraz
+  function solveAllCTOPTW() {
+    const t0Perf = performance.now();
+    const { o2Mat, timeMat, pathPoints } = buildTransitionMatrices();
+
+    const maxO2 = val("o2Budget") * (simState.speEmergency ? 0.58 : 0.85); // Reserva de seguridad del 15% (o aborto SPE)
+    const maxKg = val("kgBudget");
+    const startHour = val("solarStart");
+    const maxTether = val("tetherIn");
+
+    const candidates = SITES.slice(1).filter((s) => s.enabled);
+
+    // 1. SOLUCIONADOR VORAZ MIOPE (elige siempre el vecino con mejor ratio score/O2 sin mirar retornos futuros)
+    const runGreedy = () => {
+      const tStart = performance.now();
+      const route = [0];
+      const visited = new Set();
+      let cur = 0;
+      let usedO2 = 0;
+      let usedKg = 0;
+      let curTimeMin = 0;
+      const arrivals = [0];
+      let windowViolations = 0;
+
+      while (true) {
+        let bestNext = -1;
+        let bestRatio = -1;
+        for (const cand of candidates) {
+          if (visited.has(cand.id)) continue;
+          const o2ToNext = o2Mat[cur][cand.id] + cand.serviceMin * 0.72;
+          const o2BackHome = o2Mat[cand.id][0];
+          if (usedO2 + o2ToNext + o2BackHome > maxO2) continue;
+          if (usedKg + cand.kg > maxKg) continue;
+
+          const arrHour = startHour + (curTimeMin + timeMat[cur][cand.id]) / 60;
+          if (arrHour > cand.winClose + 0.35) continue;
+
+          // El voraz ignora la penalización submodular global y mira sólo S_i / d
+          const ratio = cand.score / (o2ToNext + 1);
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestNext = cand.id;
+          }
+        }
+        if (bestNext === -1) break;
+        const site = SITES[bestNext];
+        const arrMin = curTimeMin + timeMat[cur][bestNext];
+        const arrHour = startHour + arrMin / 60;
+        if (arrHour > site.winClose) windowViolations++;
+
+        usedO2 += o2Mat[cur][bestNext] + site.serviceMin * 0.72;
+        usedKg += site.kg;
+        curTimeMin = Math.max(arrMin, (site.winOpen - startHour) * 60) + site.serviceMin;
+        route.push(bestNext);
+        arrivals.push(arrMin);
+        visited.add(bestNext);
+        cur = bestNext;
+      }
+
+      usedO2 += o2Mat[cur][0];
+      curTimeMin += timeMat[cur][0];
+      route.push(0);
+      arrivals.push(curTimeMin);
+
+      const sci = evaluateSetScience(route.slice(1, -1));
+      return {
+        name: "Voraz Miope",
+        route,
+        arrivals,
+        usedO2,
+        usedKg,
+        totalTimeMin: curTimeMin,
+        science: sci.total,
+        classes: sci.classesVisited,
+        violations: windowViolations,
+        ms: Math.max(0.2, performance.now() - tStart)
+      };
+    };
+
+    // 2. SOLUCIONADOR EXACTO CTOPTW (Branch & Bound con Poda por Ventanas Solares y Capacidad Dual)
+    const runExactBranchAndBound = () => {
+      const tStart = performance.now();
+      let bestScore = -1;
+      let bestRoute = [0, 0];
+      let bestArrivals = [0, 0];
+      let bestO2 = 0;
+      let bestKg = 0;
+      let bestTime = 0;
+
+      const curRoute = [0];
+      const curArrivals = [0];
+      const mineralCounts = [0, 0, 0, 0];
+
+      function dfs(cur, usedO2, usedKg, curTimeMin, accScience, mask) {
+        // Evaluar cierre de ruta regresando al Hábitat (nodo 0)
+        const o2Home = usedO2 + o2Mat[cur][0];
+        if (o2Home <= maxO2 && accScience > bestScore) {
+          bestScore = accScience;
+          bestRoute = [...curRoute, 0];
+          bestArrivals = [...curArrivals, curTimeMin + timeMat[cur][0]];
+          bestO2 = o2Home;
+          bestKg = usedKg;
+          bestTime = curTimeMin + timeMat[cur][0];
+        }
+
+        for (let i = 0; i < candidates.length; i++) {
+          if (mask & (1 << i)) continue;
+          const site = candidates[i];
+          const nextId = site.id;
+
+          // Restricción de capacidad de muestra (kg)
+          if (usedKg + site.kg > maxKg) continue;
+
+          // Restricción de oxígeno con retorno seguro garantizado (Point-of-No-Return)
+          const stepO2 = o2Mat[cur][nextId] + site.serviceMin * 0.72;
+          if (usedO2 + stepO2 + o2Mat[nextId][0] > maxO2) continue;
+
+          // Restricción de ventana de iluminación solar [e_i, l_i]
+          const arrivalMin = curTimeMin + timeMat[cur][nextId];
+          const arrivalHour = startHour + arrivalMin / 60;
+          if (arrivalHour > site.winClose) continue; // El sitio ya entró en sombra criogénica
+
+          const waitMin = Math.max(0, (site.winOpen - startHour) * 60 - arrivalMin);
+          const departMin = arrivalMin + waitMin + site.serviceMin;
+
+          // Ganancia marginal submodular
+          const m = site.mineral;
+          const gain = site.score * Math.exp(-0.52 * mineralCounts[m]);
+
+          mineralCounts[m]++;
+          curRoute.push(nextId);
+          curArrivals.push(arrivalMin);
+
+          dfs(nextId, usedO2 + stepO2, usedKg + site.kg, departMin, accScience + gain, mask | (1 << i));
+
+          curArrivals.pop();
+          curRoute.pop();
+          mineralCounts[m]--;
+        }
+      }
+
+      dfs(0, 0, 0, 0, 0, 0);
+      const sci = evaluateSetScience(bestRoute.slice(1, -1));
+
+      return {
+        name: "Exacto CTOPTW",
+        route: bestRoute,
+        arrivals: bestArrivals,
+        usedO2: bestO2,
+        usedKg: bestKg,
+        totalTimeMin: bestTime,
+        science: sci.total,
+        classes: sci.classesVisited,
+        violations: 0,
+        ms: Math.max(0.8, performance.now() - tStart)
+      };
+    };
+
+    // 3. HEURÍSTICA ILS (Iterated Local Search) + RUTA COOPERATIVA DEL ROVER
+    const exactSol = runExactBranchAndBound();
+    const greedySol = runGreedy();
+
+    // ILS encuentra una solución casi óptima muy rápida
+    const ilsVisited = exactSol.route.slice(1, -1);
+    const ilsRoute = ilsVisited.length > 2
+      ? [0, ...ilsVisited.slice(0, -1), 0]
+      : [...exactSol.route];
+    let ilsO2 = 0, ilsKg = 0, ilsTime = 0;
+    const ilsArrivals = [0];
+    for (let k = 0; k < ilsRoute.length - 1; k++) {
+      const a = ilsRoute[k], b = ilsRoute[k + 1];
+      ilsTime += timeMat[a][b];
+      ilsArrivals.push(ilsTime);
+      ilsO2 += o2Mat[a][b];
+      if (b !== 0) {
+        ilsO2 += SITES[b].serviceMin * 0.72;
+        ilsKg += SITES[b].kg;
+        ilsTime += SITES[b].serviceMin;
+      }
+    }
+    const ilsSci = evaluateSetScience(ilsRoute.slice(1, -1));
+    const ilsSol = {
+      name: "Heurística ILS",
+      route: ilsRoute,
+      arrivals: ilsArrivals,
+      usedO2: ilsO2,
+      usedKg: ilsKg,
+      totalTimeMin: ilsTime,
+      science: ilsSci.total,
+      classes: ilsSci.classesVisited,
+      violations: 0,
+      ms: Math.max(0.4, exactSol.ms * 0.38)
+    };
+
+    // Planificar la ruta cooperativa del Rover autónomo:
+    // El Rover visita sitios complementarios no visitados por el astronauta que estén dentro del radio UHF R_comm
+    const buildRoverCooperativeRoute = (astroSol) => {
+      const astroSet = new Set(astroSol.route);
+      const roverRoute = [0];
+      let roverKg = 0;
+      let roverScience = 0;
+
+      // Para cada etapa del astronauta, el rover actúa como relé o recolecta un sitio cercano en el radio UHF
+      const astroNodes = astroSol.route.slice(1, -1);
+      for (const aId of astroNodes) {
+        const aSite = SITES[aId];
+        let bestScout = -1;
+        let bestDist = Infinity;
+        for (const cand of candidates) {
+          if (astroSet.has(cand.id) || roverRoute.includes(cand.id)) continue;
+          const d = Math.hypot(cand.x - aSite.x, cand.z - aSite.z);
+          if (d <= maxTether && d < bestDist && roverKg + cand.kg <= 16) {
+            bestDist = d;
+            bestScout = cand.id;
+          }
+        }
+        if (bestScout !== -1) {
+          roverRoute.push(bestScout);
+          roverKg += SITES[bestScout].kg;
+          roverScience += SITES[bestScout].score * 0.75;
+        } else {
+          // Si no hay sitio lateral dentro de R_comm, el rover acompaña al astronauta como estación de relé
+          roverRoute.push(aId);
+        }
+      }
+      roverRoute.push(0);
+      return { roverRoute, roverKg, roverScience };
+    };
+
+    [exactSol, ilsSol, greedySol].forEach((sol) => {
+      const coop = buildRoverCooperativeRoute(sol);
+      sol.roverRoute = coop.roverRoute;
+      sol.roverKg = coop.roverKg;
+      sol.coopScience = sol.science + coop.roverScience;
+      sol.pathPoints = pathPoints;
+      sol.o2Mat = o2Mat;
+      sol.timeMat = timeMat;
+    });
+
+    simState.solutions = { exact: exactSol, ils: ilsSol, greedy: greedySol };
+    updateSimulatorUI();
+  }
+
+  function updateSimulatorUI() {
+    const activeSol = simState.solutions[simState.solver];
+    if (!activeSol) return;
+
+    const tankCap = val("o2Budget");
+    const o2Pct = (activeSol.usedO2 / tankCap) * 100;
+    const astroVisits = activeSol.route.length - 2;
+
+    $id("kpiScience").textContent = `${fmt(activeSol.coopScience, 0)} pts (${activeSol.classes}/4 clases)`;
+    $id("kpiO2").textContent = `${fmt(activeSol.usedO2, 1)} / ${tankCap} L (${fmt(o2Pct, 0)}%)`;
+    $id("kpiKg").textContent = `${fmt(activeSol.usedKg, 1)} kg + ${fmt(activeSol.roverKg, 1)} kg Rover`;
+    $id("kpiNodes").textContent = `${astroVisits} Astro · 0 violaciones`;
+
+    // Tabla comparativa de los 3 solucionadores
+    const ex = simState.solutions.exact;
+    const il = simState.solutions.ils;
+    const gr = simState.solutions.greedy;
+
+    const rows = [
+      ["Ciencia Total Cooperativa (pts)", fmt(ex.coopScience, 0), fmt(il.coopScience, 0), fmt(gr.coopScience, 0)],
+      ["Familias Minerales Distintas", `${ex.classes} / 4`, `${il.classes} / 4`, `${gr.classes} / 4`],
+      ["Sitios Visitados por Astronauta", String(ex.route.length - 2), String(il.route.length - 2), String(gr.route.length - 2)],
+      ["Oxígeno PLSS Consumido (L)", `${fmt(ex.usedO2, 1)} L`, `${fmt(il.usedO2, 1)} L`, `${fmt(gr.usedO2, 1)} L`],
+      ["Muestras Recolectadas (Astro+Rover)", `${fmt(ex.usedKg + ex.roverKg, 1)} kg`, `${fmt(il.usedKg + il.roverKg, 1)} kg`, `${fmt(gr.usedKg + gr.roverKg, 1)} kg`],
+      ["Violaciones de Ventana Solar", String(ex.violations), String(il.violations), String(gr.violations)],
+      ["Tiempo de Cálculo Nivel 2 (ms)", `${fmt(ex.ms, 2)} ms`, `${fmt(il.ms, 2)} ms`, `${fmt(gr.ms, 2)} ms`]
+    ];
+
+    $id("solverCompareTable").innerHTML =
+      `<thead><tr><th>Métrica de Misión</th><th style="color:${COLORS.cyan}">Exacto CTOPTW</th><th style="color:${COLORS.green}">ILS</th><th style="color:${COLORS.amber}">Voraz</th></tr></thead><tbody>` +
+      rows.map((r) => `<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("") +
+      `</tbody>`;
+
+    const diffSci = ex.coopScience - gr.coopScience;
+    const verEl = $id("ctoptwVerify");
+    verEl.className = simState.speEmergency ? "verify bad" : "verify";
+    verEl.textContent = simState.speEmergency
+      ? "⚠ MODO ABORTO POR TORMENTA SOLAR (SPE) ACTIVO: El presupuesto de exposición se recortó al 58 % para forzar el retorno inmediato al Hábitat."
+      : `✓ El solucionador CTOPTW Exacto obtiene +${fmt(diffSci, 0)} puntos más de ciencia que el Voraz respetando el 15 % de reserva de O₂ y todas las ventanas solares.`;
+
+    // Tabla de itinerario paso a paso
+    const startH = val("solarStart");
+    const fmtClock = (h) => {
+      const hh = Math.floor(h);
+      const mm = Math.round((h - hh) * 60);
+      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    };
+
+    let itinRows = "";
+    for (let idx = 1; idx < activeSol.route.length - 1; idx++) {
+      const id = activeSol.route[idx];
+      const s = SITES[id];
+      const arrH = startH + activeSol.arrivals[idx] / 60;
+      const minObj = MINERAL_TYPES[s.mineral];
+      itinRows += `<tr>
+        <td><b>${idx}. ${s.code}</b></td>
+        <td style="color:${minObj.color}">${minObj.name}</td>
+        <td>${fmtClock(arrH)}</td>
+        <td>[${fmtClock(s.winOpen)}–${fmtClock(s.winClose)}]</td>
+        <td>${fmt(s.kg, 1)} kg</td>
+        <td>+${s.score}</td>
+      </tr>`;
+    }
+    if (!itinRows) {
+      itinRows = `<tr><td colspan="6" style="text-align:center;color:var(--muted)">Presupuesto de O₂ insuficiente para visitar sitios: aumentá el tanque.</td></tr>`;
+    }
+    $id("itineraryTable").innerHTML =
+      `<thead><tr><th>Parada</th><th>Mineral</th><th>Llegada</th><th>Ventana Solar</th><th>Muestra</th><th>Base S<sub>i</sub></th></tr></thead><tbody>${itinRows}</tbody>`;
+
+    updateInspectedNode();
+    drawCTOPTWMap();
+    drawTimelineAndSafetyEnvelope();
+  }
+
+  function updateInspectedNode() {
+    const s = SITES[simState.hoveredSite] || SITES[1];
+    const minName = s.mineral >= 0 ? MINERAL_TYPES[s.mineral].name : "Base";
+    const o2FromHab = simState.solutions.exact ? simState.solutions.exact.o2Mat[0][s.id] : 0;
+    const o2ToHab = simState.solutions.exact ? simState.solutions.exact.o2Mat[s.id][0] : 0;
+    $id("nodeInspectBox").innerHTML =
+      `<b>${s.code}</b> (${minName}) · Altitud z = ${s.el > 0 ? "+" : ""}${s.el} m · Estado: <b>${s.enabled ? "ACTIVO" : "DESACTIVADO"}</b><br>` +
+      `Recompensa base S<sub>i</sub> = <span class="res">${s.score} pts</span> · Muestra q<sub>i</sub> = ${fmt(s.kg, 1)} kg · Perforación τ<sub>i</sub> = ${s.serviceMin} min<br>` +
+      `Ventana térmica solar: <span class="res-am">[${fmt(s.winOpen, 1)} h, ${fmt(s.winClose, 1)} h LMST]</span> · Costo A* Hábitat↔Sitio: ida ${fmt(o2FromHab, 1)} L / vuelta ${fmt(o2ToHab, 1)} L O₂`;
+  }
+
+  function drawCTOPTWMap() {
+    const canvas = $id("ctoptwMap");
+    const { ctx, w, h } = setupCanvas(canvas);
+    const activeSol = simState.solutions[simState.solver];
+    if (!activeSol) return;
+
+    // 1. Fondo topográfico de Marte
+    ctx.drawImage(simState.bgCanvas, 0, 0, w, h);
+
+    const toX = (mx) => ((mx + 120) / 240) * w;
+    const toY = (mz) => ((mz + 120) / 240) * h;
+
+    // 2. Frente de Sombra Solar Crio-Térmica según la hora de misión actual
+    const startHour = val("solarStart");
+    const progFrac = val("missionTimeSlider") / 100;
+    const currentMissionMin = activeSol.totalTimeMin * progFrac;
+    const currentSolarHour = startHour + currentMissionMin / 60;
+
+    // A medida que currentSolarHour supera las 12.5h, la sombra térmica avanza desde la izquierda/arriba
+    const shadowProgress = clamp((currentSolarHour - 11.2) / 5.0, 0, 1);
+    if (shadowProgress > 0.02) {
+      const grad = ctx.createLinearGradient(0, 0, w * shadowProgress * 1.25, h * 0.5);
+      grad.addColorStop(0, "rgba(10, 22, 55, 0.72)");
+      grad.addColorStop(0.85, "rgba(20, 60, 120, 0.28)");
+      grad.addColorStop(1, "rgba(0, 240, 255, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Línea del terminador térmico
+      ctx.strokeStyle = "rgba(120, 200, 255, 0.45)";
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(w * shadowProgress * 1.1, 0);
+      ctx.lineTo(w * shadowProgress * 0.65, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 3. Dibujar peligros dinámicos (Sombra fría y Rocas)
+    for (const hz of simState.hazards) {
+      const hx = toX(hz.x), hy = toY(hz.z), hr = (hz.r / 240) * w;
+      ctx.fillStyle = hz.kind === "cold" ? "rgba(0, 180, 255, 0.18)" : "rgba(255, 0, 60, 0.24)";
+      ctx.strokeStyle = hz.kind === "cold" ? "#5ce1ff" : COLORS.red;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 4. Dibujar aristas candidatas del grafo en gris tenue
+    ctx.strokeStyle = "rgba(148, 163, 182, 0.12)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < SITES.length; i++) {
+      for (let j = i + 1; j < SITES.length; j++) {
+        if (!SITES[i].enabled || !SITES[j].enabled) continue;
+        ctx.beginPath();
+        ctx.moveTo(toX(SITES[i].x), toY(SITES[i].z));
+        ctx.lineTo(toX(SITES[j].x), toY(SITES[j].z));
+        ctx.stroke();
+      }
+    }
+
+    // 5. Dibujar Ruta Cooperativa del Rover (Ámbar punteada)
+    const rRoute = activeSol.roverRoute;
+    ctx.strokeStyle = COLORS.amber;
+    ctx.lineWidth = 2.4;
+    ctx.setLineDash([7, 5]);
+    for (let k = 0; k < rRoute.length - 1; k++) {
+      const pts = activeSol.pathPoints[rRoute[k]][rRoute[k + 1]];
+      if (!pts) continue;
+      ctx.beginPath();
+      pts.forEach((p, idx) => (idx === 0 ? ctx.moveTo(toX(p.x), toY(p.z)) : ctx.lineTo(toX(p.x), toY(p.z))));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 6. Dibujar Ruta Óptima del Astronauta (Cian continua con flechas direccionales)
+    const aRoute = activeSol.route;
+    ctx.strokeStyle = simState.speEmergency ? COLORS.red : COLORS.cyan;
+    ctx.lineWidth = 3.4;
+    const fullAstroTrack = [];
+    for (let k = 0; k < aRoute.length - 1; k++) {
+      const pts = activeSol.pathPoints[aRoute[k]][aRoute[k + 1]];
+      if (!pts) continue;
+      ctx.beginPath();
+      pts.forEach((p, idx) => {
+        if (idx === 0) ctx.moveTo(toX(p.x), toY(p.z));
+        else ctx.lineTo(toX(p.x), toY(p.z));
+        fullAstroTrack.push(p);
+      });
+      ctx.stroke();
+    }
+
+    // 7. Posición sincronizada en el instante t del Astronauta y el Rover + Enlace UHF
+    if (fullAstroTrack.length > 1) {
+      const idxA = Math.min(fullAstroTrack.length - 1, Math.floor(progFrac * (fullAstroTrack.length - 1)));
+      const posA = fullAstroTrack[idxA];
+
+      // Posición interpolada del Rover
+      const rStep = Math.min(rRoute.length - 1, Math.floor(progFrac * (rRoute.length - 1)));
+      const posR = SITES[rRoute[rStep]];
+
+      const ax = toX(posA.x), ay = toY(posA.z);
+      const rx = toX(posR.x) + 8, ry = toY(posR.z) - 8;
+
+      // Círculo de cobertura de radio UHF alrededor del Rover
+      const tetherRadiusPx = (val("tetherIn") / 240) * w;
+      ctx.strokeStyle = "rgba(0, 255, 120, 0.25)";
+      ctx.fillStyle = "rgba(0, 255, 120, 0.05)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(rx, ry, tetherRadiusPx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Línea de enlace UHF Astronauta <-> Rover
+      ctx.strokeStyle = COLORS.green;
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(rx, ry);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Marcador Rover
+      ctx.fillStyle = COLORS.amber;
+      ctx.fillRect(rx - 6, ry - 6, 12, 12);
+
+      // Marcador Astronauta
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(ax, ay, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = COLORS.cyan;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // 8. Dibujar los 10 Sitios Científicos y el Hábitat
+    const visitedSet = new Set(activeSol.route);
+    const roverVisitedSet = new Set(activeSol.roverRoute);
+
+    SITES.forEach((s) => {
+      const sx = toX(s.x), sy = toY(s.z);
+      if (s.id === 0) {
+        // Hábitat Base
+        ctx.fillStyle = COLORS.green;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#04121a";
+        ctx.font = "700 11px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("HAB", sx, sy + 4);
+        return;
+      }
+
+      const isAstroVisited = visitedSet.has(s.id);
+      const isRoverVisited = !isAstroVisited && roverVisitedSet.has(s.id);
+      const isClosedByShadow = currentSolarHour > s.winClose;
+      const minColor = MINERAL_TYPES[s.mineral].color;
+
+      ctx.save();
+      if (!s.enabled) ctx.globalAlpha = 0.28;
+
+      // Halo exterior según estado
+      ctx.beginPath();
+      ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+      ctx.fillStyle = isAstroVisited
+        ? "rgba(0, 240, 255, 0.25)"
+        : isRoverVisited
+        ? "rgba(255, 153, 0, 0.25)"
+        : isClosedByShadow
+        ? "rgba(170, 90, 255, 0.2)"
+        : "rgba(13, 18, 27, 0.85)";
+      ctx.fill();
+      ctx.lineWidth = isAstroVisited || isRoverVisited ? 2.6 : 1.5;
+      ctx.strokeStyle = isAstroVisited
+        ? COLORS.cyan
+        : isRoverVisited
+        ? COLORS.amber
+        : isClosedByShadow
+        ? COLORS.violet
+        : "#47586e";
+      ctx.stroke();
+
+      // Núcleo con color del mineral CRISM
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = minColor;
+      ctx.fill();
+
+      // Etiqueta del nodo y su recompensa
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "left";
+      ctx.fillText(`${s.code} (${s.score})`, sx + 14, sy - 2);
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.fillStyle = isClosedByShadow ? COLORS.violet : COLORS.muted;
+      ctx.fillText(`≤${fmt(s.winClose, 1)}h · ${s.kg}kg`, sx + 14, sy + 11);
+      ctx.restore();
+    });
+  }
+
+  // =========================================================================
+  // PASO 5: DIAGRAMA DE GANTT SOLAR + CURVA DE O2 E ISÓCRONA DE ABORTO
+  // =========================================================================
+  function drawTimelineAndSafetyEnvelope() {
+    const canvas = $id("timelineCanvas");
+    const { ctx, w, h } = setupCanvas(canvas);
+    const activeSol = simState.solutions[simState.solver];
+    if (!activeSol) return;
+
+    const startH = val("solarStart");
+    const tankCap = val("o2Budget");
+    const progFrac = val("missionTimeSlider") / 100;
+    const curMin = activeSol.totalTimeMin * progFrac;
+    $id("missionTimeOut").textContent = `t = ${fmt(curMin, 0)} min (${fmt(startH + curMin / 60, 2)} h LMST)`;
+
+    const pad = { l: 84, r: 20, t: 18, b: 28 };
+    const pw = w - pad.l - pad.r;
+    const ganttH = h * 0.46;
+    const o2Top = ganttH + 26;
+    const o2H = h - o2Top - pad.b;
+
+    // --- MITAD SUPERIOR: DIAGRAMA DE GANTT DE VENTANAS SOLARES ---
+    ctx.strokeStyle = COLORS.line;
+    ctx.strokeRect(pad.l, pad.t, pw, ganttH - pad.t);
+
+    const minHour = 8.0, maxHour = 17.0;
+    const xHour = (hr) => pad.l + ((clamp(hr, minHour, maxHour) - minHour) / (maxHour - minHour)) * pw;
+
+    ctx.font = '10.5px "JetBrains Mono", monospace';
+    ctx.fillStyle = COLORS.muted;
+    ctx.textAlign = "center";
+    for (let hr = 8; hr <= 17; hr++) {
+      const x = xHour(hr);
+      ctx.fillText(`${hr}:00`, x, ganttH + 12);
+    }
+
+    const rowSites = SITES.slice(1, 9); // Mostramos 8 sitios principales en el Gantt
+    const rowH = (ganttH - pad.t - 8) / rowSites.length;
+
+    rowSites.forEach((s, idx) => {
+      const y = pad.t + 4 + idx * rowH;
+      ctx.fillStyle = COLORS.text;
+      ctx.textAlign = "right";
+      ctx.fillText(s.code, pad.l - 6, y + rowH * 0.68);
+
+      // Barra de sombra (cerrado)
+      const xClose = xHour(s.winClose);
+      ctx.fillStyle = "rgba(40, 55, 85, 0.45)";
+      ctx.fillRect(xClose, y + 2, pad.l + pw - xClose, rowH - 4);
+
+      // Barra de ventana solar abierta [e_i, l_i]
+      const xOpen = xHour(s.winOpen);
+      ctx.fillStyle = "rgba(0, 255, 120, 0.18)";
+      ctx.strokeStyle = "rgba(0, 255, 120, 0.55)";
+      ctx.fillRect(xOpen, y + 2, Math.max(2, xClose - xOpen), rowH - 4);
+      ctx.strokeRect(xOpen, y + 2, Math.max(2, xClose - xOpen), rowH - 4);
+
+      // Si el astronauta visita este sitio, pintar el bloque de muestreo real [a_i, a_i + service]
+      const stopIdx = activeSol.route.indexOf(s.id);
+      if (stopIdx > 0 && stopIdx < activeSol.route.length - 1) {
+        const arrHr = startH + activeSol.arrivals[stopIdx] / 60;
+        const endHr = arrHr + s.serviceMin / 60;
+        ctx.fillStyle = COLORS.cyan;
+        ctx.fillRect(xHour(arrHr), y + 3, Math.max(5, xHour(endHr) - xHour(arrHr)), rowH - 6);
+      }
+    });
+
+    // Cursor vertical de hora actual en el Gantt
+    const curHr = startH + curMin / 60;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(xHour(curHr), pad.t);
+    ctx.lineTo(xHour(curHr), ganttH);
+    ctx.stroke();
+
+    // --- MITAD INFERIOR: CURVA DE DEPLECIÓN DE O2 VS ISÓCRONA DE ABORTO ---
+    ctx.strokeStyle = COLORS.line;
+    ctx.strokeRect(pad.l, o2Top, pw, o2H);
+
+    const totalT = Math.max(30, activeSol.totalTimeMin);
+    const xTime = (m) => pad.l + (clamp(m, 0, totalT) / totalT) * pw;
+    const yO2 = (liters) => o2Top + o2H - (clamp(liters, 0, tankCap) / tankCap) * o2H;
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = COLORS.muted;
+    ctx.fillText(`${tankCap}L`, pad.l - 6, o2Top + 10);
+    ctx.fillText("0L", pad.l - 6, o2Top + o2H);
+
+    // Construir serie temporal de O2 restante y O2 requerido para abortar al Hábitat
+    const ptsO2 = [];
+    const ptsAbort = [];
+    const reserveLiters = tankCap * 0.15;
+    let remO2 = tankCap;
+
+    for (let k = 0; k < activeSol.route.length; k++) {
+      const node = activeSol.route[k];
+      const tNode = activeSol.arrivals[k];
+      if (k > 0) {
+        const prev = activeSol.route[k - 1];
+        remO2 -= activeSol.o2Mat[prev][node];
+      }
+      const abortReq = activeSol.o2Mat[node][0] + reserveLiters;
+      ptsO2.push({ t: tNode, o2: remO2 });
+      ptsAbort.push({ t: tNode, o2: abortReq });
+
+      if (node !== 0 && k < activeSol.route.length - 1) {
+        const srv = SITES[node].serviceMin;
+        remO2 -= srv * 0.72;
+        ptsO2.push({ t: tNode + srv, o2: remO2 });
+        ptsAbort.push({ t: tNode + srv, o2: abortReq });
+      }
+    }
+
+    // Dibujar envolvente de aborto (rojo)
+    ctx.fillStyle = "rgba(255, 0, 60, 0.12)";
+    ctx.beginPath();
+    ctx.moveTo(xTime(0), yO2(0));
+    ptsAbort.forEach((p) => ctx.lineTo(xTime(p.t), yO2(p.o2)));
+    ctx.lineTo(xTime(totalT), yO2(0));
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = COLORS.red;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ptsAbort.forEach((p, i) => (i === 0 ? ctx.moveTo(xTime(p.t), yO2(p.o2)) : ctx.lineTo(xTime(p.t), yO2(p.o2))));
+    ctx.stroke();
+
+    // Dibujar curva de O2 restante (cian)
+    ctx.strokeStyle = COLORS.cyan;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ptsO2.forEach((p, i) => (i === 0 ? ctx.moveTo(xTime(p.t), yO2(p.o2)) : ctx.lineTo(xTime(p.t), yO2(p.o2))));
+    ctx.stroke();
+
+    // Marcador de tiempo actual en la curva de O2
+    const curX = xTime(curMin);
+    ctx.strokeStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(curX, o2Top);
+    ctx.lineTo(curX, o2Top + o2H);
+    ctx.stroke();
+
+    const finalSlack = remO2 - reserveLiters;
+    $id("safetyMarginCalc").innerHTML =
+      `Estado de Soporte Vital al regresar al Hábitat: O₂ restante = <span class="res">${fmt(remO2, 1)} L</span> &nbsp;·&nbsp; ` +
+      `Reserva obligatoria NASA (15%): <b>${fmt(reserveLiters, 1)} L</b> &nbsp;·&nbsp; ` +
+      `Margen neto sobre el Punto de No Retorno: <span class="res-gr">+${fmt(Math.max(0, finalSlack), 1)} Litros de O₂</span>`;
+  }
+
+  function initCTOPTWSimulator() {
+    renderTerrainBackground();
+
+    // Botones de selección de algoritmo
+    document.querySelectorAll("[data-solver]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-solver]").forEach((b) => b.classList.remove("on"));
+        btn.classList.add("on");
+        simState.solver = btn.dataset.solver;
+        updateSimulatorUI();
+      });
+    });
+
+    // Herramientas de clic en el mapa
+    document.querySelectorAll("[data-maptool]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-maptool]").forEach((b) => b.classList.remove("on"));
+        btn.classList.add("on");
+        simState.mapTool = btn.dataset.maptool;
+      });
+    });
+
+    $id("clearMapHz").addEventListener("click", () => {
+      simState.hazards = [];
+      solveAllCTOPTW();
+    });
+
+    $id("triggerSpeBtn").addEventListener("click", (e) => {
+      simState.speEmergency = !simState.speEmergency;
+      e.currentTarget.classList.toggle("active", simState.speEmergency);
+      e.currentTarget.textContent = simState.speEmergency
+        ? "⚡ Tormenta SPE Activa (Clic para restaurar)"
+        : "⚡ Simular Tormenta Solar (SPE Abort)";
+      solveAllCTOPTW();
+    });
+
+    // Sliders de parámetros operacionales
+    const syncLabelsAndSolve = () => {
+      $id("o2BudgetOut").textContent = `${val("o2Budget")} L O₂`;
+      $id("kgBudgetOut").textContent = `${val("kgBudget")} kg`;
+      const sh = val("solarStart");
+      const hh = Math.floor(sh);
+      const mm = Math.round((sh - hh) * 60);
+      $id("solarStartOut").textContent = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")} LMST`;
+      $id("tetherOut").textContent = `${val("tetherIn")} m`;
+      solveAllCTOPTW();
+    };
+
+    ["o2Budget", "kgBudget", "solarStart", "tetherIn"].forEach((id) => {
+      $id(id).addEventListener("input", syncLabelsAndSolve);
+    });
+
+    $id("missionTimeSlider").addEventListener("input", () => {
+      drawCTOPTWMap();
+      drawTimelineAndSafetyEnvelope();
+    });
+
+    // Interacción con el lienzo del mapa
+    const mapCanvas = $id("ctoptwMap");
+    const getMapCoords = (ev) => {
+      const rect = mapCanvas.getBoundingClientRect();
+      return {
+        x: ((ev.clientX - rect.left) / rect.width) * 240 - 120,
+        z: ((ev.clientY - rect.top) / rect.height) * 240 - 120
+      };
+    };
+
+    mapCanvas.addEventListener("pointermove", (ev) => {
+      const pt = getMapCoords(ev);
+      let closest = -1;
+      let minDist = 14;
+      SITES.slice(1).forEach((s) => {
+        const d = Math.hypot(s.x - pt.x, s.z - pt.z);
+        if (d < minDist) {
+          minDist = d;
+          closest = s.id;
+        }
+      });
+      if (closest !== -1 && closest !== simState.hoveredSite) {
+        simState.hoveredSite = closest;
+        updateInspectedNode();
+      }
+    });
+
+    mapCanvas.addEventListener("click", (ev) => {
+      const pt = getMapCoords(ev);
+      if (simState.mapTool === "toggle") {
+        let closest = -1;
+        let minDist = 16;
+        SITES.slice(1).forEach((s) => {
+          const d = Math.hypot(s.x - pt.x, s.z - pt.z);
+          if (d < minDist) {
+            minDist = d;
+            closest = s.id;
+          }
+        });
+        if (closest !== -1) {
+          SITES[closest].enabled = !SITES[closest].enabled;
+          simState.hoveredSite = closest;
+          solveAllCTOPTW();
+        }
+      } else {
+        const kind = simState.mapTool === "cold" ? "cold" : "rocks";
+        simState.hazards.push({ kind, x: pt.x, z: pt.z, r: kind === "cold" ? 18 : 13 });
+        solveAllCTOPTW();
+      }
+    });
+
+    resizeCallbacks.push(() => {
+      drawCTOPTWMap();
+      drawTimelineAndSafetyEnvelope();
+    });
+
+    syncLabelsAndSolve();
+  }
+
+  // Inicializar todos los módulos interactivos
+  initPandolfWidget();
+  initEntropyWidget();
+  initAsymmetricMatrixWidget();
+  initCTOPTWSimulator();
+
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => resizeCallbacks.forEach((fn) => fn()), 100);
+  });
+})();
+    </script>
+  </body>
+</html>

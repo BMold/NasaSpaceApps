@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>ARES-TWIN · Documentación del sistema</title>
+<!-- Fuente del PDF. Generar con: npm run documentacion (usa Chrome sin interfaz). -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 16mm 18mm;
+    @top-left { content: "ARES-TWIN · Documentación del sistema"; font: 500 7.5pt Inter, Arial, sans-serif; color: #8a96a3; }
+    @top-right { content: "NASA Space Apps · Martian Map"; font: 500 7.5pt Inter, Arial, sans-serif; color: #8a96a3; }
+    @bottom-right { content: counter(page) " / " counter(pages); font: 600 8pt Inter, Arial, sans-serif; color: #6b7785; }
+  }
+  @page cover { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-right { content: none; } }
+  :root { --ink:#15202b; --soft:#4b5866; --mute:#7b8794; --line:#d9e0e6; --wash:#f2f5f7; --teal:#0b6e7f; --mars:#b5520f; --mars-l:#fbefe6; --teal-l:#e5f3f5; --green:#1f7a4c; --green-l:#e6f4ec; --amber:#9a6200; --amber-l:#fbf2df; --red:#ae2335; --red-l:#fbe9eb; --violet:#6b42b8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font: 9.8pt/1.5 Inter, Arial, sans-serif; color: var(--ink); background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  code, .mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: .86em; }
+  code { background: var(--wash); padding: 0 3px; border-radius: 3px; }
+  a { color: var(--teal); text-decoration: none; }
+  p { margin: 0 0 6.5pt; }
+  b { font-weight: 600; }
+  sub, sup { font-size: .72em; line-height: 0; }
+
+  /* ---------- cover ---------- */
+  .cover { page: cover; position: relative; width: 210mm; height: 297mm; overflow: hidden; background: #0b0d12; color: #fff; break-after: page; }
+  .cover > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; filter: saturate(1.05) contrast(1.05); }
+  .cover .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,10,14,.55) 0%, rgba(8,10,14,.05) 26%, rgba(8,10,14,.15) 52%, rgba(8,10,14,.92) 78%, #080a0e 100%); }
+  .cover .top { position: absolute; left: 18mm; right: 18mm; top: 16mm; display: flex; justify-content: space-between; font-size: 9pt; color: #e8d6c6; letter-spacing: .04em; }
+  .cover .txt { position: absolute; left: 18mm; right: 18mm; bottom: 46mm; }
+  .cover .eyebrow { color: #ffae6b; font-weight: 600; font-size: 10.5pt; margin-bottom: 4mm; }
+  .cover h1 { font: 900 50pt/1 Orbitron, Inter, sans-serif; margin: 0 0 4mm; color: #fff; letter-spacing: .03em; }
+  .cover .sub { font-size: 17pt; font-weight: 500; margin-bottom: 6mm; color: #f1e4d8; }
+  .cover .desc { font-size: 10.8pt; line-height: 1.55; color: #cdd5de; max-width: 152mm; }
+  .cover .facts { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; border-top: 1px solid #3a3f48; padding-top: 4mm; }
+  .cover .facts b { display: block; font-size: 15pt; color: #ffcf9e; font-weight: 700; }
+  .cover .facts span { font-size: 8pt; color: #a9b3be; line-height: 1.3; display: block; }
+
+  /* ---------- sections ---------- */
+  section { break-before: page; }
+  section.cont { break-before: auto; margin-top: 7mm; }
+  .opener { display: grid; grid-template-columns: 17mm 1fr; gap: 4mm; align-items: end; padding-bottom: 3mm; margin-bottom: 4mm; border-bottom: 2pt solid var(--ink); }
+  .opener .num { font: 800 30pt/0.9 Inter, sans-serif; color: var(--mars); }
+  .opener h2 { font-size: 20pt; line-height: 1.12; margin: 0; letter-spacing: -.015em; }
+  .opener .kick { font-size: 8.4pt; font-weight: 600; color: var(--mute); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1mm; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; break-after: avoid; }
+  h3 .tagline { font-weight: 500; color: var(--mute); font-size: 9pt; margin-left: 2mm; }
+  .lead { font-size: 11pt; line-height: 1.5; color: #2b3845; margin-bottom: 4mm; }
+
+  figure { margin: 2.5mm 0 4mm; break-inside: avoid; }
+  figure img { display: block; width: 100%; border-radius: 3px; border: .6pt solid #c9d2da; }
+  figcaption { font-size: 8.3pt; line-height: 1.4; color: var(--soft); margin-top: 1.3mm; }
+  figcaption b { color: var(--ink); }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }
+  .side { display: grid; grid-template-columns: 38mm 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin: 2mm 0 4mm; }
+  .side figure { margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 8.7pt; line-height: 1.38; margin: 2mm 0 4mm; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { text-align: left; font-weight: 600; color: var(--soft); border-bottom: 1.2pt solid var(--ink); padding: 1.3mm 2mm 1.3mm 0; vertical-align: bottom; font-size: 8.2pt; }
+  td { border-bottom: .5pt solid var(--line); padding: 1.3mm 2mm 1.3mm 0; vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:nth-child(even) td { background: #fafbfc; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 3mm 0 4mm; }
+  .stat { border-top: 2pt solid var(--teal); background: var(--wash); padding: 2.5mm 3mm; }
+  .stat b { display: block; font-size: 15pt; font-weight: 700; color: var(--teal); line-height: 1.1; }
+  .stat span { font-size: 8.1pt; color: var(--soft); line-height: 1.3; display: block; margin-top: .8mm; }
+
+  .call { border-radius: 3px; padding: 2.6mm 3.6mm; margin: 3mm 0 4mm; font-size: 9.2pt; break-inside: avoid; }
+  .call b:first-child { display: block; margin-bottom: .6mm; }
+  .call.mars { background: var(--mars-l); border-left: 2.4pt solid var(--mars); }
+  .call.mars b:first-child { color: var(--mars); }
+  .call.teal { background: var(--teal-l); border-left: 2.4pt solid var(--teal); }
+  .call.teal b:first-child { color: var(--teal); }
+  .call.red { background: var(--red-l); border-left: 2.4pt solid var(--red); }
+  .call.red b:first-child { color: var(--red); }
+
+  ul { margin: 0 0 6pt; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+
+  .eq { font: 8.5pt/1.75 'JetBrains Mono', Consolas, monospace; background: #f4f6f8; border-left: 2.4pt solid var(--teal); padding: 2mm 3mm; margin: 2mm 0 3mm; white-space: normal; break-inside: avoid; }
+
+  /* status chips */
+  .chip { display: inline-block; font: 600 7.4pt/1 Inter, sans-serif; padding: 1.1mm 2mm; border-radius: 99px; letter-spacing: .02em; white-space: nowrap; vertical-align: middle; }
+  .chip.ok { background: var(--green-l); color: var(--green); }
+  .chip.part { background: var(--amber-l); color: var(--amber); }
+  .chip.no { background: var(--red-l); color: var(--red); }
+
+  /* algorithm flow */
+  .flowmap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; margin: 2mm 0 5mm; counter-reset: fm; }
+  .flowmap div { background: var(--wash); border-top: 2pt solid var(--teal); padding: 2mm 2.2mm; font-size: 7.9pt; line-height: 1.3; color: var(--soft); counter-increment: fm; break-inside: avoid; }
+  .flowmap div b { display: block; color: var(--ink); font-size: 8.6pt; margin-bottom: .6mm; }
+  .flowmap div b::before { content: counter(fm) ". "; color: var(--mars); }
+  .flowmap div.part { border-top-color: var(--amber); }
+  .flowmap div.no { border-top-color: var(--red); }
+  .step { break-inside: avoid; border: .6pt solid var(--line); border-radius: 4px; padding: 3mm 3.6mm 2.4mm; margin: 0 0 3.6mm; }
+  .step header { display: flex; align-items: center; gap: 3mm; margin-bottom: 2mm; }
+  .step header .n { flex: none; width: 7mm; height: 7mm; border-radius: 50%; background: var(--ink); color: #fff; font: 700 9pt/7mm Inter, sans-serif; text-align: center; }
+  .step header h3 { margin: 0; flex: 1; font-size: 11pt; }
+  .io { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; margin-bottom: 2mm; }
+  .io div { background: var(--wash); border-radius: 3px; padding: 1.6mm 2.4mm; font-size: 8.4pt; line-height: 1.35; }
+  .io i { display: block; font-style: normal; font: 600 6.8pt Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin-bottom: .5mm; }
+  .step .how { font-size: 8.9pt; color: #263340; margin: 0; }
+  .step .how b { color: var(--ink); }
+
+  .event { break-inside: avoid; display: grid; grid-template-columns: 80mm 1fr; gap: 5mm; margin: 0 0 4mm; padding-bottom: 3.5mm; border-bottom: .5pt solid var(--line); }
+  .event img { display: block; width: 100%; border-radius: 3px; border: .6pt solid #c9d2da; }
+  .event h3 { margin: 0 0 1mm; }
+  .event .btn { font: 600 7.6pt 'JetBrains Mono', monospace; color: var(--mars); margin-bottom: 1.4mm; }
+  .event p, .event li { font-size: 9pt; line-height: 1.42; }
+  .event ul { margin-bottom: 0; }
+  .event .cap { font-size: 8pt; color: var(--soft); margin-top: 1mm; line-height: 1.35; }
+
+  .sw { display: inline-block; width: 2.6mm; height: 2.6mm; border-radius: .5mm; margin-right: 1.2mm; vertical-align: -.2mm; }
+  .toc { list-style: none; padding: 0; margin: 2mm 0 0; columns: 2; column-gap: 8mm; }
+  .toc li { display: flex; gap: 3mm; margin: 0; padding: 2.1mm 0; border-bottom: .5pt solid var(--line); break-inside: avoid; }
+  .toc .n { color: var(--mars); font-weight: 700; width: 6mm; }
+  .toc a { color: var(--ink); font-weight: 600; }
+  .toc span.d { display: block; color: var(--mute); font-size: 8.2pt; font-weight: 400; }
+  pre { font: 8.1pt/1.42 'JetBrains Mono', Consolas, monospace; background: var(--wash); padding: 3mm; border-radius: 3px; margin: 2mm 0 4mm; white-space: pre; break-inside: avoid; }
+  .cols { columns: 2; column-gap: 7mm; }
+  .cols dt { font-weight: 600; font-size: 9.2pt; break-after: avoid; }
+  .cols dd { margin: 0 0 2mm; font-size: 8.8pt; color: var(--soft); line-height: 1.38; break-inside: avoid; }
+  .muted { color: var(--mute); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <img src="img/cover.jpg" alt="" />
+  <div class="shade"></div>
+  <div class="top"><span>NASA Space Apps · Interplanetary Survival Guide: Martian Map</span><span>Versión 2.0 · noviembre de 2026</span></div>
+  <div class="txt">
+    <div class="eyebrow">Gemelo digital de una caminata en Mount Sharp, Marte</div>
+    <h1>ARES-TWIN</h1>
+    <div class="sub">Documentación del sistema</div>
+    <div class="desc">Un rover autónomo guía a un astronauta por el cráter Gale. Elige qué sitios científicos visitar y en qué orden, calcula cada tramo por el camino de menor oxígeno, decide en todo momento si conviene seguir o volver, y responde a tormentas solares y emergencias médicas según la hora marciana.</div>
+  </div>
+  <div class="facts">
+    <div><b>0,64 m/px</b><span>imagen HiRISE real de la zona de Curiosity</span></div>
+    <div><b>L de O₂</b><span>costo de cada paso, con el modelo de Pandolf</span></div>
+    <div><b>7 sitios</b><span>tour óptimo por ramificación y poda</span></div>
+    <div><b>LTST</b><span>hora solar local de Marte (Mars24)</span></div>
+  </div>
+</div>
+
+<section style="break-before:auto">
+  <div class="opener"><div class="num">·</div><div><div class="kick">Índice</div><h2>Contenido</h2></div></div>
+  <ol class="toc">
+    <li><span class="n">1</span><div><a href="#resumen">Qué es ARES-TWIN</a><span class="d">Propósito, alcance y cifras clave</span></div></li>
+    <li><span class="n">2</span><div><a href="#mision">La misión simulada</a><span class="d">Participantes, sitios, estados y tiempos</span></div></li>
+    <li><span class="n">3</span><div><a href="#flujo">Flujo del algoritmo de rutas</a><span class="d">Los 10 cálculos y su estado</span></div></li>
+    <li><span class="n">4</span><div><a href="#hora">La hora marciana</a><span class="d">Sol, sombras, temperatura y energía</span></div></li>
+    <li><span class="n">5</span><div><a href="#rutas">Rutas y resultados</a><span class="d">A* frente a voraz, Mount Sharp y el cañón</span></div></li>
+    <li><span class="n">6</span><div><a href="#eventos">Los cinco eventos</a><span class="d">Peligros, refugio y rescate</span></div></li>
+    <li><span class="n">7</span><div><a href="#interfaz">La interfaz</a><span class="d">Cámaras, paneles y controles</span></div></li>
+    <li><span class="n">8</span><div><a href="#telemetria">Telemetría y alertas</a><span class="d">Qué se mide y cuándo avisa</span></div></li>
+    <li><span class="n">9</span><div><a href="#marte">Datos reales de Marte</a><span class="d">Mars Trek, HiRISE y calibración</span></div></li>
+    <li><span class="n">10</span><div><a href="#arquitectura">Arquitectura de software</a><span class="d">Tecnologías y estructura</span></div></li>
+    <li><span class="n">11</span><div><a href="#formulas">Fórmulas utilizadas</a><span class="d">Lista y tipo de cada una</span></div></li>
+    <li><span class="n">12</span><div><a href="#limites">Limitaciones</a><span class="d">Qué no hace todavía</span></div></li>
+    <li><span class="n">13</span><div><a href="#uso">Cómo ejecutarlo y presentarlo</a><span class="d">Instalación y guion de demo</span></div></li>
+    <li><span class="n">14</span><div><a href="#glosario">Glosario</a><span class="d">Términos técnicos</span></div></li>
+  </ol>
+  <div class="call teal" style="margin-top:8mm"><b>Qué cambió en la versión 2</b>
+    El costo de cada paso pasó a ser litros de O₂ con la pendiente con signo; se agregaron el tour científico (CTOPTW), el campo de retorno R(p), la hora marciana, el refugio por tormenta y la evacuación médica tras el rescate; el terreno de Gale usa imagen HiRISE real y la pendiente regional de Mount Sharp; la escena 3D se rediseñó con luz solar real y materiales sobrios.</div>
+</section>
+
+<section id="resumen">
+  <div class="opener"><div class="num">1</div><div><div class="kick">Visión general</div><h2>Qué es ARES-TWIN</h2></div></div>
+  <p class="lead">ARES-TWIN es un gemelo digital de una salida extravehicular (EVA) en Marte. Muestra cómo un rover podría acompañar a un astronauta, decidir por dónde caminar y qué estudiar, y responder cuando algo sale mal, siempre cuidando el oxígeno.</p>
+  <p>Se ejecuta completo en el navegador. Responde cuatro preguntas del reto:</p>
+  <ul>
+    <li><b>¿Por dónde conviene ir?</b> Cada paso del mapa cuesta los litros de O₂ que gasta el astronauta, y subir cuesta más que bajar. A* busca el camino más barato, incluso subiendo una loma de Mount Sharp en zigzag.</li>
+    <li><b>¿Qué conviene estudiar?</b> Hay siete sitios científicos con ventanas horarias. El sistema elige cuáles visitar y en qué orden sin pasarse del oxígeno, de la bolsa de muestras ni de la luz del día.</li>
+    <li><b>¿Hasta dónde se puede ir?</b> En cada instante se conoce el oxígeno necesario para volver (R(p)). Si el tanque deja de cubrirlo con un 15 % de reserva, o si no se llegaría antes del atardecer, se aborta.</li>
+    <li><b>¿Qué pasa si algo sale mal?</b> Se pueden provocar una zona helada, un campo de rocas, una tormenta solar, un escaneo con dron o un desvanecimiento. El sistema reacciona solo.</li>
+  </ul>
+  <div class="stats">
+    <div class="stat"><b>240 m</b><span>sitio a escala real junto a Curiosity (sol 5069)</span></div>
+    <div class="stat"><b>73.728</b><span>aristas dirigidas en el grafo de 96 × 96 celdas</span></div>
+    <div class="stat"><b>~1.500</b><span>nodos explora el solucionador exacto del tour</span></div>
+    <div class="stat"><b>&lt; 0,1 s</b><span>tarda en replanificar todo el tour</span></div>
+  </div>
+  <figure>
+    <img src="img/01-interfaz.jpg" alt="" style="width:80%;margin:0 auto" />
+    <figcaption><b>Figura 1. Pantalla principal al iniciar la EVA a las 08:00 hora solar local.</b> A la izquierda, el tour científico y la navegación; al centro, la escena 3D; a la derecha, el radar, el Sol y la telemetría. La interfaz del simulador está en inglés.</figcaption>
+  </figure>
+  <div class="call mars"><b>Alcance</b>Es una demostración técnica, no un sistema de vuelo. La imagen del suelo y la pendiente regional son datos reales de la NASA; la loma, el cañón, los cráteres, los sitios y los umbrales son del escenario, y los modelos fisiológicos no están validados para un traje en Marte.</div>
+</section>
+
+<section id="mision">
+  <div class="opener"><div class="num">2</div><div><div class="kick">Escenario</div><h2>La misión simulada</h2></div></div>
+  <p class="lead">Un astronauta sale del hábitat (A) para un recorrido geológico por la ladera de Mount Sharp y debe volver a él. El rover AresCompanion va 15 m por delante y lleva un dron en su plataforma.</p>
+  <figure>
+    <img src="img/05-dron.jpg" alt="" style="width:78%;margin:0 auto" />
+    <figcaption><b>Figura 2. Vista aérea del inicio del tour.</b> La línea clara es la ruta del astronauta y del rover; la discontinua, la del otro algoritmo. Las banderas marcan los sitios científicos; el terreno oscuro aún no fue explorado.</figcaption>
+  </figure>
+  <h3>Sitios científicos</h3>
+  <table>
+    <thead><tr><th>Sitio</th><th>Mineral</th><th class="num">Valor S</th><th class="num">Masa</th><th class="num">Perforación</th><th>Ventana (LTST)</th><th>Nota</th></tr></thead>
+    <tbody>
+      <tr><td><b>B</b> Afloramiento boxwork</td><td>Sulfatos</td><td class="num">10</td><td class="num">1,2 kg</td><td class="num">90 min</td><td>10:00–16:30</td><td>Necesita el Sol alto para fotografiar</td></tr>
+      <tr><td><b>C</b> Estratos del cañón</td><td>Sedimentos lacustres</td><td class="num">8</td><td class="num">1,0 kg</td><td class="num">75 min</td><td>09:00–17:00</td><td>Sin mapear hasta que pasa el dron</td></tr>
+      <tr><td><b>F</b> Escarcha matinal</td><td>Hielo de agua</td><td class="num">7</td><td class="num">0,3 kg</td><td class="num">30 min</td><td>07:00–09:30</td><td>Se sublima cuando sube el Sol</td></tr>
+      <tr><td><b>K</b> Banco de arcillas</td><td>Filosilicatos</td><td class="num">6</td><td class="num">1,0 kg</td><td class="num">60 min</td><td>08:00–17:00</td><td></td></tr>
+      <tr><td><b>Y</b> Vetas de yeso</td><td>Sulfatos</td><td class="num">5</td><td class="num">0,8 kg</td><td class="num">50 min</td><td>08:00–17:00</td><td>Repite el mineral de B</td></tr>
+      <tr><td><b>D</b> Dunas activas</td><td>Arena basáltica</td><td class="num">4</td><td class="num">0,6 kg</td><td class="num">30 min</td><td>08:00–17:00</td><td>Caminata lenta</td></tr>
+      <tr><td><b>H</b> Nódulos de hematita</td><td>Óxidos</td><td class="num">4</td><td class="num">0,5 kg</td><td class="num">45 min</td><td>08:00–17:00</td><td></td></tr>
+    </tbody>
+  </table>
+  <p>La bolsa admite 4 kg y el tanque lleva 380 L de O₂. Con salida a las 08:00 en Gale, el solucionador elige <b>K → F → B → H → C</b> y planifica volver a las 13:42 con 83 L de O₂ (22 %). Deja fuera las vetas de yeso y las dunas: no caben en la bolsa y valen menos. En la corrida completa de prueba, sin eventos, la tripulación llegó a las 13:37 con 86 L y 4,0 kg de muestras.</p>
+  <h3>Estados de la misión</h3>
+  <table>
+    <thead><tr><th style="width:26mm">Estado</th><th>Cuándo ocurre</th><th>Cómo termina</th></tr></thead>
+    <tbody>
+      <tr><td><b style="color:var(--green)">NOMINAL</b></td><td>Tour en curso.</td><td>Al volver al hábitat, o ante un evento o una regla de aborto.</td></tr>
+      <tr><td><b style="color:var(--amber)">ABORT</b></td><td>Se cruzó el punto de no retorno, no se llegaría antes del atardecer o no queda ningún sitio posible.</td><td>Al llegar al hábitat.</td></tr>
+      <tr><td><b style="color:var(--mars)">SHELTER</b></td><td>Tormenta solar: se camina al refugio de menor dosis.</td><td>Al pasar la tormenta se recalcula el tour con lo que queda.</td></tr>
+      <tr><td><b style="color:var(--red)">RESCUE</b></td><td>El astronauta se desvanece: el rover acude y conecta el umbilical.</td><td>Tras 12 minutos de estabilización pasa a MEDEVAC.</td></tr>
+      <tr><td><b style="color:#a3324f">MEDEVAC</b></td><td>El rover escolta al astronauta, más lento y a 8 m, hasta el hábitat.</td><td>Al llegar al hábitat.</td></tr>
+      <tr><td><b style="color:var(--teal)">COMPLETE</b></td><td>La tripulación está en el hábitat.</td><td>Con RESET EVA.</td></tr>
+    </tbody>
+  </table>
+  <h3>El tiempo</h3>
+  <p>El movimiento ocurre en tiempo real multiplicado por la velocidad elegida (×1, ×4 o ×10). Cuando todos están quietos (perforando, esperando una ventana, en el refugio o estabilizando al astronauta), el reloj se acelera ×60 para no esperar horas. Así, una EVA de casi seis horas marcianas se ve en pocos minutos sin que nadie se teletransporte.</p>
+</section>
+
+<section id="flujo">
+  <div class="opener"><div class="num">3</div><div><div class="kick">El núcleo matemático</div><h2>Flujo del algoritmo de rutas</h2></div></div>
+  <p class="lead">Estos son los diez cálculos que el equipo definió como los más adecuados para el rover. Cada uno indica qué entra, qué sale, la fórmula y cómo quedó en el simulador.</p>
+  <div class="flowmap">
+    <div class="part"><b>Entradas</b>Relieve, terreno, sitios, misión</div>
+    <div><b>Pendiente</b>Con signo, por arista</div>
+    <div><b>Costo en O₂</b>Pandolf a 0,38 g</div>
+    <div><b>Matriz D</b>Asimétrica entre sitios</div>
+    <div><b>Aborto</b>Campo de retorno R(p)</div>
+    <div><b>CTOPTW</b>Qué sitios y en qué orden</div>
+    <div><b>Diversidad</b>Rendimientos decrecientes</div>
+    <div><b>Solver</b>Ramificación y poda</div>
+    <div class="part"><b>Replanificar</b>Eventos y hora solar</div>
+    <div class="no"><b>Extensión</b>Incertidumbre de posición</div>
+  </div>
+  <p class="muted" style="font-size:8.4pt">Estado: <span class="chip ok">Implementado</span> funciona en el simulador tal como está descrito · <span class="chip part">Parcial</span> funciona con una simplificación · <span class="chip no">Propuesto</span> todavía no está en el código.</p>
+
+  <div class="step"><header><span class="n">1</span><h3>Entradas</h3><span class="chip part">Parcial</span></header>
+    <div class="io"><div><i>Entra</i>Relieve, inercia térmica, sitios minerales, parámetros de misión y hora de inicio.</div><div><i>Sale</i>Malla de 96 × 96 celdas de 2,5 m y lista de N sitios.</div></div>
+    <div class="eq">V = {0 (hábitat), 1…N (sitios), N+1 (regreso)} · cada sitio i: S<sub>i</sub>, m<sub>i</sub>, q<sub>i</sub>, τ<sub>i</sub>, [e<sub>i</sub>, l<sub>i</sub>] · Q<sub>O₂</sub> = 380 L, Q<sub>kg</sub> = 4 kg, ρ = 0,15</div>
+    <p class="how"><b>En el simulador:</b> el relieve sale de HiRISE y MOLA (Mars Trek). No hay datos THEMIS ni CRISM: el factor de terreno se aproxima con la arena del modelo y los siete sitios son de escenario, con valores elegidos por el equipo.</p></div>
+
+  <div class="step"><header><span class="n">2</span><h3>Pendiente con signo por arista</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>Alturas z de dos celdas vecinas.</div><div><i>Sale</i>Pendiente G en %, distinta al subir y al bajar.</div></div>
+    <div class="eq">G(a → b) = 100 · (z<sub>b</sub> − z<sub>a</sub>) / Δd · Δd = 2,5 m (recto) ó 2,5·√2 m (diagonal) · vecindad de 8</div>
+    <p class="how"><b>En el simulador:</b> se calcula para las 8 aristas de cada celda. Un paso con |G| &gt; 45 % no se permite, y una celda con más de 30° de pendiente máxima no tiene apoyo: por eso las laderas de 25° se suben en zigzag.</p></div>
+
+  <div class="step"><header><span class="n">3</span><h3>Costo en O₂ (Pandolf a 0,38 g)</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>G, factor de terreno η, masas del astronauta y del traje, gravedad.</div><div><i>Sale</i>Peso de cada arista w<sub>O₂</sub> en litros.</div></div>
+    <div class="eq">L<sub>eff</sub> = (W + m<sub>traje</sub>)·(g<sub>M</sub>/g<sub>T</sub>) − W = (80 + 150)·0,38 − 80 = 7,4 kg<br />
+      M = 1,5·W + 2·(W + L<sub>eff</sub>)·(L<sub>eff</sub>/W)² + η·(W + L<sub>eff</sub>)·(1,5·v² + máx(0; 0,35·v·G)) [W]<br />
+      v = v<sub>0</sub>·e<sup>−0,042·|G|</sup>·(1 − 0,28·η) · w<sub>O₂</sub> = M·Δd/(60·v)·κ · κ ≈ 0,00298 L/(W·min)</div>
+    <p class="how"><b>En el simulador:</b> v<sub>0</sub> = 1,2 m/s y η = 1 + 0,9·arena. En plano cuesta 1,3 L cada 100 m; subiendo al 20 %, 4,9 L, y bajando al 20 %, 1,9 L. Para decidir, el peso se multiplica por factores de riesgo (sin mapear ×7, zona fría ×4, Sol bajo de frente ×1,25, sombra ×1,08). La telemetría descuenta el O₂ de Pandolf sin esos factores.</p></div>
+
+  <div class="step"><header><span class="n">4</span><h3>Matriz D asimétrica</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>Pesos w<sub>O₂</sub> de todas las aristas.</div><div><i>Sale</i>D<sub>O₂</sub>[i][j], tiempos y la polilínea de cada tramo.</div></div>
+    <div class="eq">D<sub>O₂</sub>(i, j) = Σ<sub>e ∈ π*(i→j)</sub> w<sub>O₂</sub>(e) · h(n) = d<sub>octil</sub>(n, meta)·w<sub>mín</sub> · D(i, j) ≠ D(j, i)</div>
+    <p class="how"><b>En el simulador:</b> un Dijkstra por sitio da una fila entera de D. Los tramos que se caminan se trazan con A* y la heurística octil por w<sub>mín</sub>, el costo por metro más barato del mapa, que nunca sobreestima. La octil es más ajustada que la euclidiana del documento y sigue siendo admisible. Cada tramo se suaviza con Chaikin.</p></div>
+
+  <div class="step"><header><span class="n">5</span><h3>Aborto: campo de retorno y punto de no retorno</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>Malla de costos y posición del hábitat.</div><div><i>Sale</i>R(p) para todas las celdas y la regla de seguridad.</div></div>
+    <div class="eq">R(p) = Dijkstra desde el hábitat sobre el grafo invertido · ∀t: O₂(t) ≥ (1 + ρ)·R(p(t)), ρ = 0,15 · y LTST + T<sub>vuelta</sub>(p) ≤ atardecer − 30 min</div>
+    <p class="how"><b>En el simulador:</b> R(p) se recalcula con cada cambio del mapa y se revisa cada segundo de misión. Si se viola, se cancela la ciencia y se toma la ruta de menor O₂ al hábitat. Se agregó la condición de luz.</p></div>
+
+  <div class="step"><header><span class="n">6</span><h3>CTOPTW: el problema de decisión</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>D<sub>O₂</sub>, ventanas, capacidades.</div><div><i>Sale</i>Qué sitios visitar y en qué orden.</div></div>
+    <div class="eq">máx Z = Σ S<sub>i</sub>·ψ(m<sub>i</sub>, n) − λ·riesgo · O₂: lo gastado + perforación (300 W) + espera (121 W) ≤ Q<sub>O₂</sub>, con (1 + ρ)·R de reserva · masa: Σ q<sub>i</sub> ≤ 4 kg · tiempo: e<sub>i</sub> ≤ a<sub>i</sub> ≤ l<sub>i</sub></div>
+    <p class="how"><b>En el simulador:</b> un solo equipo (astronauta + rover). La restricción de radio UHF se cumple siempre, porque el rover va a 15 m. Se agregó un desempate de 0,01 por litro para preferir, entre tours de igual valor, el que gasta menos O₂.</p></div>
+
+  <div class="step"><header><span class="n">7</span><h3>Diversidad: rendimientos decrecientes</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>Clase mineral de cada muestra ya tomada.</div><div><i>Sale</i>Factor ψ que castiga repetir.</div></div>
+    <div class="eq">ψ(m, n) = e<sup>−α·(n−1)</sup>, α = 0,5 · segunda muestra del mismo mineral ≈ 61 %, tercera ≈ 37 %</div>
+    <p class="how"><b>En el simulador:</b> B y Y son sulfatos, así que tomar ambos rinde menos que diversificar. ψ es submodular y monótona (Nemhauser, Wolsey y Fisher, 1978).</p></div>
+
+  <div class="step"><header><span class="n">8</span><h3>Solver: ramificación y poda</h3><span class="chip ok">Implementado</span></header>
+    <div class="io"><div><i>Entra</i>Matriz D, ventanas, ψ.</div><div><i>Sale</i>Secuencia óptima de paradas.</div></div>
+    <pre>dfs(ruta, O₂, kg, t, Z):
+  for j in no_visitados:
+    si O₂ − D[i][j] − espera − τ_j·300W·κ &lt; (1+ρ)·R(j): podar   // aborto
+    si llegada &gt; l_j:                                   podar   // ventana
+    si kg + q_j &gt; 4:                                     podar   // bolsa
+    si salida + T_vuelta(j) &gt; atardecer − 30 min:        podar   // luz
+    si Z + Σ S_restantes ≤ mejor Z:                      podar   // cota
+    dfs(ruta + [j], …)</pre>
+    <p class="how"><b>En el simulador:</b> con 7 sitios explora unos 1.500 nodos en 30 a 80 ms y da el óptimo exacto. No hacen falta heurísticas de respaldo con este N.</p></div>
+
+  <div class="step"><header><span class="n">9</span><h3>Replanificar: eventos y tormenta solar</h3><span class="chip part">Parcial</span></header>
+    <div class="io"><div><i>Entra</i>Peligro nuevo, escaneo del dron, tormenta, paso del tiempo.</div><div><i>Sale</i>Tour actualizado, ruta a refugio o ruta de escape.</div></div>
+    <div class="eq">peligro o escaneo → recalcular aristas y R(p) → solver desde la posición actual con el O₂ restante · tormenta → refugio de menor dosis · ventanas y luz con la hora solar actual</div>
+    <p class="how"><b>En el simulador:</b> recalcula todo con A* y Dijkstra desde cero, sin D* Lite (con este mapa tarda milisegundos). Ante una tormenta no va siempre al hábitat: compara el hábitat con paredes de cráter y el cañón, con el rover de escudo, integrando la dosis del perfil de la tormenta; al terminar, retoma el tour si todavía alcanza. Las sombras se actualizan cada 10 minutos marcianos.</p></div>
+
+  <div class="step"><header><span class="n">10</span><h3>Extensión: incertidumbre de posición</h3><span class="chip no">Propuesto</span></header>
+    <div class="io"><div><i>Entra</i>Odometría ruidosa e hitos de relocalización.</div><div><i>Sale</i>Aborto robusto por percentil.</div></div>
+    <div class="eq">R<sub>95</sub> = percentil<sub>95</sub>{R(p<sup>(k)</sup>)} · O₂(t) ≥ (1 + ρ)·R<sub>95</sub></div>
+    <p class="how"><b>En el simulador:</b> no está implementado. La posición del astronauta se conoce sin error. Al tener ya el campo R(p), agregarlo sería barato: cada partícula es una consulta a ese campo.</p></div>
+</section>
+
+<section id="hora">
+  <div class="opener"><div class="num">4</div><div><div class="kick">Peligros y beneficios según el reloj</div><h2>La hora marciana</h2></div></div>
+  <p class="lead">La misión toma la fecha real del día en que se ejecuta y la hora solar local elegida para la salida. Con el algoritmo Mars24 se obtienen la estación y la posición del Sol en el sitio, y eso cambia el mapa, la energía y las decisiones.</p>
+  <div class="eq">LTST = LMST + EOT · δ<sub>s</sub> = asin(0,42565·sen L<sub>s</sub>) + 0,25°·sen L<sub>s</sub> · sen(elev) = sen φ·sen δ + cos φ·cos δ·cos H · H = (LTST − 12)·15°</div>
+  <table>
+    <thead><tr><th style="width:42mm">Efecto</th><th>Cómo se calcula</th><th style="width:44mm">Consecuencia</th></tr></thead>
+    <tbody>
+      <tr><td><b>Luz y sombras de la escena</b></td><td>La luz direccional sigue el vector solar; el cielo pasa de ocre a un halo azul al amanecer y al atardecer.</td><td>Sombras largas a primera y última hora.</td></tr>
+      <tr><td><b>Celdas en sombra</b></td><td>Se lanza un rayo desde cada celda hacia el Sol sobre el relieve.</td><td>Costo ×1,08, suelo hasta 18 °C más frío y sin carga solar.</td></tr>
+      <tr><td><b>Encandilamiento</b></td><td>Con el Sol a menos de 15°, los pasos que van hacia él (±25°) cuestan ×1,25.</td><td>A primera y última hora, la ruta evita caminar de frente al Sol.</td></tr>
+      <tr><td><b>Temperatura del suelo</b></td><td>Modelo diurno con 1,5 h de retraso térmico: unos −85 °C al amanecer, cerca de 0 °C a la tarde.</td><td>Riesgo de congelamiento de motores y gasto de calefactores.</td></tr>
+      <tr><td><b>Energía del rover</b></td><td>Irradiancia con atenuación por polvo (τ = 0,6) sobre un panel de 3,2 m² al 28 %.</td><td>Al mediodía el panel cubre buena parte del consumo; en sombra, no.</td></tr>
+      <tr><td><b>Ventanas y atardecer</b></td><td>Cada sitio tiene su ventana; hay que volver 30 min antes de la puesta.</td><td>La escarcha sólo se toma temprano; el boxwork, con el Sol alto.</td></tr>
+    </tbody>
+  </table>
+  <div class="g2">
+    <figure><img src="img/h-0700.jpg" alt="" /><figcaption><b>Figura 3. Salida a las 07:00.</b> Sol bajo, sombras largas y suelo cerca de −80 °C.</figcaption></figure>
+    <figure><img src="img/h-1400.jpg" alt="" /><figcaption><b>Figura 4. Salida a las 14:00.</b> Luz alta y suelo más templado, pero poco tiempo antes del atardecer.</figcaption></figure>
+  </div>
+  <div class="side" style="grid-template-columns:44mm 1fr">
+    <figure><img src="img/panel-izq-1400.png" alt="" /><figcaption><b>Figura 5.</b> Tour planificado con salida a las 14:00.</figcaption></figure>
+    <div>
+      <h3 style="margin-top:0">La hora cambia el tour</h3>
+      <p>Con salida a las 08:00 entran cinco sitios. Saliendo a las 14:00 el tour se reduce a K → B → D, de vuelta a las 17:21: sólo queda tiempo para lo que pueda terminarse antes de las 17:27 (atardecer menos 30 min); la escarcha ya se sublimó y su ventana está cerrada, y el solucionador la informa como «window closed».</p>
+      <p>El selector <b>EVA start</b> del panel izquierdo permite comparar 07, 08, 10, 12 y 14 h sobre el mismo terreno.</p>
+      <div class="call teal"><b>Datos del día de prueba</b>9 de noviembre de 2026: L<sub>s</sub> ≈ 20° (primavera del norte), declinación solar ≈ 8°, atardecer en Gale a las 17:57 LTST, Sol a 77° al mediodía.</div>
+    </div>
+  </div>
+</section>
+
+<section id="rutas">
+  <div class="opener"><div class="num">5</div><div><div class="kick">Resultados medidos</div><h2>Rutas y resultados</h2></div></div>
+  <p class="lead">El simulador compara siempre dos planificadores sobre el mismo orden de paradas: A*, que garantiza el mínimo, y un voraz local que imita a un procesador modesto.</p>
+  <div class="g3">
+    <figure><img src="img/mapa-astar.jpg" alt="" /><figcaption><b>Figura 6. A*.</b> Tour completo con cinco paradas.</figcaption></figure>
+    <figure><img src="img/mapa-voraz.jpg" alt="" /><figcaption><b>Figura 7. Voraz.</b> Mismo orden, tramos con rodeos.</figcaption></figure>
+    <figure><img src="img/mapa-canon.jpg" alt="" /><figcaption><b>Figura 8. Tras escanear el cañón.</b> El tour se reoptimiza.</figcaption></figure>
+  </div>
+  <h3>Tour completo en Gale (salida 08:00, A*)</h3>
+  <table>
+    <thead><tr><th>Métrica</th><th class="num">A*</th><th class="num">Voraz</th></tr></thead>
+    <tbody>
+      <tr><td>O₂ al caminar (Pandolf)</td><td class="num">20,6 L</td><td class="num">29,0 L</td></tr>
+      <tr><td>Distancia</td><td class="num">752 m</td><td class="num">1.118 m</td></tr>
+      <tr><td>Desnivel subido</td><td class="num">49 m</td><td class="num">64 m</td></tr>
+      <tr><td>Batería del rover al final (estimada)</td><td class="num">66,7 %</td><td class="num">56,8 %</td></tr>
+      <tr><td>Ahorro de O₂ de A* frente al voraz</td><td class="num" colspan="2" style="text-align:center">29 %</td></tr>
+    </tbody>
+  </table>
+  <h3>Cruzar Mount Sharp y el atajo del cañón (tramo A → B)</h3>
+  <p>La loma atraviesa todo el sitio: no hay forma de rodearla. Sus laderas tienen entre 25° y 30°, así que se puede cruzar, pero sólo en zigzag, porque un paso recto superaría el 45 %.</p>
+  <div class="g2">
+    <figure><img src="img/realmap-unscanned.png" alt="" /><figcaption><b>Figura 9. Cañón sin mapear.</b> A* sube la loma en zigzag.</figcaption></figure>
+    <figure><img src="img/realmap-scanned.png" alt="" /><figcaption><b>Figura 10. Cañón escaneado por el dron.</b> A* usa el atajo.</figcaption></figure>
+  </div>
+  <table>
+    <thead><tr><th>Tramo A → B en Gale</th><th class="num">Distancia</th><th class="num">O₂</th><th class="num">Desnivel</th><th class="num">Pendiente máx. de paso</th></tr></thead>
+    <tbody>
+      <tr><td>Sobre la loma (cañón sin mapear)</td><td class="num">277 m</td><td class="num">9,62 L</td><td class="num">32 m</td><td class="num">37 %</td></tr>
+      <tr><td>Por el cañón (tras el escaneo)</td><td class="num">266 m</td><td class="num">8,24 L</td><td class="num">27 m</td><td class="num">22 %</td></tr>
+      <tr><td>Línea recta (referencia)</td><td class="num">242 m</td><td class="num">14,48 L</td><td class="num">42 m</td><td class="num">67 % (no transitable)</td></tr>
+    </tbody>
+  </table>
+  <div class="call mars"><b>Cómo leer estos números</b>La recta es más corta pero no se puede caminar: tiene pasos del 67 %. Ir de B a A cuesta menos que de A a B, porque el sitio sube hacia Mount Sharp: el grafo es asimétrico. En este mapa el voraz suele quedar atrapado en el tramo A → B y el sistema usa A* de respaldo.</div>
+</section>
+
+<section id="eventos">
+  <div class="opener"><div class="num">6</div><div><div class="kick">Consola de desastres</div><h2>Los cinco eventos</h2></div></div>
+  <p class="lead">Se activan desde el panel derecho y muestran cómo reacciona el sistema sin intervención humana.</p>
+
+  <div class="event">
+    <div><img src="img/06-frio.jpg" alt="" /><div class="cap">Figura 11. Zona fría con escarcha y la ruta desviada.</div></div>
+    <div><h3>1. Sombra fría</h3><div class="btn">COLD SHADOW</div>
+      <p>Aparece a unos 24 m por delante una trampa fría de −100 °C y 12 m de radio.</p>
+      <ul><li>Sus aristas cuestan ×4: el planificador la evita si hay una alternativa razonable.</li><li>Se recalcula el tour completo desde la posición del rover.</li><li>Si el rover se acerca, salta la alerta de congelamiento y se encienden los calefactores.</li></ul></div>
+  </div>
+  <div class="event">
+    <div><img src="img/07-rocas.jpg" alt="" /><div class="cap">Figura 12. Campo de rocas sobre la ruta.</div></div>
+    <div><h3>2. Campo de rocas</h3><div class="btn">ROCK FIELD</div>
+      <p>Surgen 46 rocas y arena suelta en 7,5 m de radio, a unos 20 m por delante.</p>
+      <ul><li>Esa zona queda prohibida y su borde se encarece.</li><li>El tour se reoptimiza y la ruta rodea el campo.</li></ul></div>
+  </div>
+  <div class="event">
+    <div><img src="img/h-refugio.jpg" alt="" /><div class="cap">Figura 13. Tripulación en un refugio natural durante la tormenta.</div></div>
+    <div><h3>3. Tormenta solar: refugio</h3><div class="btn">SOLAR STORM</div>
+      <p>El flujo tiene un pico de 7,5 mSv/h a cielo abierto y decae en unos 40 minutos marcianos.</p>
+      <ul><li>Candidatos: el hábitat (factor 0,08) y los mínimos del cielo visible (paredes de cráter, fondo del cañón), donde el rover se estaciona del lado abierto como escudo (factor de cielo × 0,45).</li><li>Se elige el de menor dosis integrada: camino al aire libre durante el pico más la espera.</li><li>Cerca de la base gana el hábitat; junto a la escarcha, la pared del cráter (0,71 mSv frente a 0,83 en el hábitat).</li><li>Al terminar la tormenta se recalcula el tour con lo que queda de O₂ y de luz.</li></ul></div>
+  </div>
+  <div class="event">
+    <div><img src="img/08-dron-lidar.jpg" alt="" /><div class="cap">Figura 14. El dron barre el cañón con lidar.</div></div>
+    <div><h3>4. Despliegue del dron</h3><div class="btn">DEPLOY DRONE</div>
+      <p>El dron despega de la plataforma del rover, vuela al cañón y lo escanea durante 5,5 s.</p>
+      <ul><li>El cañón deja de costar ×7 y su sitio (C) pasa a ser atractivo.</li><li>Se reoptimiza el tour; el dron vuelve solo y se acopla.</li></ul></div>
+  </div>
+  <div class="event">
+    <div><img src="img/11-rescate.jpg" alt="" /><div class="cap">Figura 15. Rover junto al astronauta, con el umbilical conectado.</div></div>
+    <div><h3>5. Rescate y evacuación médica</h3><div class="btn">CRITICAL RESCUE MODE</div>
+      <p>El astronauta se desvanece: más de 165 latidos por minuto y consumo de O₂ alto.</p>
+      <ul><li>El rover gira y corre hasta él (hasta 3,4 m/s), con un vigilante que replanifica si no se acerca.</li><li>Conecta el umbilical: el traje recibe O₂ y el pulso baja durante 12 minutos de estabilización.</li><li>El astronauta se levanta y el rover lo escolta al hábitat a 8 m, más despacio (MEDEVAC).</li></ul></div>
+  </div>
+  <div class="call teal"><b>Corrección del cuelgue en el rescate</b>En la versión 1 la simulación quedaba detenida para siempre en RESCUE después de conectar el umbilical. Ahora el rescate termina: estabiliza, evacúa y completa la misión en el hábitat. Además, el tránsito del rover tiene un vigilante: si deja de acercarse, replanifica, y a los 90 s se detiene donde está. Probado de punta a punta.</div>
+</section>
+
+<section id="interfaz">
+  <div class="opener"><div class="num">7</div><div><div class="kick">Cómo se ve</div><h2>La interfaz</h2></div></div>
+  <p class="lead">Tres cámaras (teclas 1, 2 y 3), dos paneles que se pueden ocultar y una barra superior con la hora solar local, el Sol y la velocidad de simulación. La escena usa luz solar real, cielo según la hora y materiales sobrios.</p>
+  <div class="g2">
+    <figure><img src="img/h-astronauta.jpg" alt="" /><figcaption><b>Figura 16. Visor del astronauta.</b> Brújula, O₂, pulso, temperatura del traje, margen de regreso y radiación.</figcaption></figure>
+    <figure><img src="img/h-rover.jpg" alt="" /><figcaption><b>Figura 17. Cámara del rover.</b> El mapa de clases de terreno se proyecta sólo en esta vista.</figcaption></figure>
+  </div>
+  <div class="side" style="grid-template-columns:42mm 1fr">
+    <figure><img src="img/panel-izq.png" alt="" /><figcaption><b>Figura 18.</b> Panel de navegación.</figcaption></figure>
+    <div>
+      <table>
+        <thead><tr><th style="width:34mm">Bloque</th><th>Qué muestra</th></tr></thead>
+        <tbody>
+          <tr><td><b>Tactical navigation</b></td><td>A* o voraz para los tramos, y hora de salida de la EVA.</td></tr>
+          <tr><td><b>Science tour · CTOPTW</b></td><td>Paradas en orden con llegada, espera, salida y O₂ restante; valor Z, O₂ al volver y hora de regreso; sitios descartados y por qué.</td></tr>
+          <tr><td><b>Savings</b></td><td>Ahorro de O₂ frente al otro planificador, O₂ al caminar y batería al final.</td></tr>
+          <tr><td><b>Live comparison</b></td><td>Los dos planificadores lado a lado: litros, distancia, desnivel, pendiente, batería, cómputo y nodos.</td></tr>
+          <tr><td><b>Point of no return</b></td><td>O₂ del tanque frente a (1 + ρ)·R(p) y el O₂ previsto al volver.</td></tr>
+          <tr><td><b>Mars data source</b></td><td>Región, posición de Curiosity, pendiente regional y capas usadas.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="side" style="grid-template-columns:42mm 1fr">
+    <figure><img src="img/panel-der.png" alt="" /><figcaption><b>Figura 19.</b> Panel de telemetría.</figcaption></figure>
+    <div>
+      <table>
+        <thead><tr><th style="width:34mm">Bloque</th><th>Qué muestra</th></tr></thead>
+        <tbody>
+          <tr><td><b>Radar locator</b></td><td>Imagen HiRISE del sitio, ruta, sitios (en ámbar los planificados, en verde los hechos), refugio y posiciones. Debajo: distancia al rover y al hábitat, O₂ para volver y actividad actual.</td></tr>
+          <tr><td><b>Sun · thermal · power</b></td><td>Elevación del Sol, temperatura del suelo, potencia del panel y potencia metabólica.</td></tr>
+          <tr><td><b>Biometrics</b></td><td>Pulso, O₂ (en % y litros), radiación con el porcentaje de cielo visible, batería y motor.</td></tr>
+          <tr><td><b>Disaster console</b></td><td>Los cinco eventos y RESET EVA.</td></tr>
+          <tr><td><b>Event log</b></td><td>Cada decisión con su hora solar local.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="telemetria">
+  <div class="opener"><div class="num">8</div><div><div class="kick">Lo que mide el sistema</div><h2>Telemetría y alertas</h2></div></div>
+  <p class="lead">Los valores se recalculan 10 veces por segundo. El O₂ sale de los mismos litros de Pandolf que usa el planificador, así que lo que se planifica y lo que se consume coinciden.</p>
+  <table>
+    <thead><tr><th style="width:36mm">Variable</th><th>De qué depende</th><th style="width:46mm">Alerta o regla</th></tr></thead>
+    <tbody>
+      <tr><td><b>O₂ del traje</b> (L y %)</td><td>Tanque de 380 L. Se descuenta la potencia del momento: Pandolf al caminar, 121 W parado, 300 W perforando, 430 W desvanecido. Con el umbilical, el rover lo recarga.</td><td>Aborto si O₂ &lt; (1 + 0,15)·R(p). En rojo bajo el 25 %.</td></tr>
+      <tr><td><b>O₂ para volver</b> R(p)</td><td>Dijkstra inverso desde el hábitat.</td><td>Margen en minutos al ritmo actual.</td></tr>
+      <tr><td><b>Pulso</b></td><td>Potencia metabólica y tormenta; ~172 desvanecido, baja con el umbilical.</td><td>En rojo sobre 150.</td></tr>
+      <tr><td><b>Radiación</b></td><td>0,21 mSv/h de fondo; en tormenta, el perfil de pico y decaimiento por el factor del lugar (cielo visible, × 0,45 con el rover de escudo, 0,08 en el hábitat).</td><td>En rojo sobre 1 mSv/h.</td></tr>
+      <tr><td><b>Sol y suelo</b></td><td>Mars24, elevación y modelo diurno; sombra hasta −18 °C.</td><td>Hay que volver antes del atardecer − 30 min.</td></tr>
+      <tr><td><b>Batería del rover</b></td><td>Potencia del panel (3,2 m², 28 %) menos marcha, calefactores, focos y dron.</td><td>Reserva prevista al final del tour.</td></tr>
+      <tr><td><b>Motor e infrarrojo adelante</b></td><td>Temperatura del suelo y actividad del rover.</td><td>Congelamiento bajo −25 °C en el motor o −85 °C adelante.</td></tr>
+      <tr><td><b>Deslizamiento de ruedas</b></td><td>Arena, pendiente y velocidad. Sólo se muestra.</td><td>Amarillo sobre 20 %, rojo sobre 45 %.</td></tr>
+    </tbody>
+  </table>
+  <div class="side" style="grid-template-columns:46mm 1fr">
+    <figure><img src="img/panel-der-tormenta.png" alt="" /><figcaption><b>Figura 20.</b> Telemetría en el refugio durante la tormenta.</figcaption></figure>
+    <div>
+      <h3 style="margin-top:0">Coherencia de los números</h3>
+      <p>En la versión 1, las previsiones del panel resultaban optimistas: el consumo corría acelerado y la previsión no. Ahora el planificador, la regla de aborto y el tablero usan los mismos litros y el mismo reloj. En la corrida de prueba, el tour planificó volver con 83 L a las 13:42 y llegó con 86 L a las 13:37.</p>
+      <p>La radiación muestra el porcentaje de cielo visible: en la pared de un cráter, con el rover al lado, la tasa baja a menos de la mitad aunque la tormenta siga.</p>
+    </div>
+  </div>
+</section>
+
+<section id="marte">
+  <div class="opener"><div class="num">9</div><div><div class="kick">Fuentes de datos</div><h2>Datos reales de Marte</h2></div></div>
+  <p class="lead">El sitio de Gale está a escala real y centrado en la última posición publicada de Curiosity (sol 5069): −4,8253°, 137,3889°, a 3.479 m bajo el nivel de referencia, en la ladera de Mount Sharp.</p>
+  <table>
+    <thead><tr><th style="width:60mm">Capa (NASA Mars Trek)</th><th>Resolución</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">curiosity_hirise_mosaic</td><td>0,64 m/px (zoom 16)</td><td>Superficie del sitio de 240 m: textura del terreno y radar.</td></tr>
+      <tr><td class="mono">Gale_DEM_SMG_1m</td><td>DEM HiRISE, servido en 8 bits</td><td>Plano regional ajustado en 1,2 km alrededor del sitio.</td></tr>
+      <tr><td class="mono">Mars_MGS_MOLA_DEM_mosaic_global_463m_8</td><td>463 m/px</td><td>Relieve análogo de Jezero y Meridiani.</td></tr>
+      <tr><td class="mono">Mars_Viking_MDIM21_ClrMosaic_global_232m</td><td>232 m/px</td><td>Color análogo de Jezero y Meridiani.</td></tr>
+    </tbody>
+  </table>
+  <h3>Calibración del modelo de elevación</h3>
+  <p>Mars Trek sirve el DEM de Gale como imagen de 8 bits, sin metros. Se cruzaron 174 puntos del recorrido de Curiosity (con su altura medida) con el nivel de gris del mosaico y se ajustó una recta:</p>
+  <div class="eq">altura ≈ −4.600 m + 18,613 m × nivel de gris · error cuadrático medio 5,7 m</div>
+  <p>Con esa calibración se ajusta un plano en una ventana de 1,2 km: la ladera sube unos 9° hacia el sur-sureste, hacia la cumbre de Mount Sharp. El simulador la limita a 6,8° para que el sitio siga siendo caminable, y sobre ella agrega la loma, el cañón, los cráteres y las rocas del escenario.</p>
+  <div class="call mars"><b>Qué es real y qué no</b>Real: la imagen del suelo, la ubicación, la altura de referencia y la dirección de la pendiente regional. De escenario: la loma, el cañón, los cráteres, los sitios y la posición de las rocas. Jezero y Meridiani siguen en modo análogo (1,6° comprimidos en 240 m): Mars Trek no sirve en mosaicos un DEM de Jezero y no tiene imagen de alta resolución de Meridiani.</div>
+  <p class="muted" style="font-size:8.4pt">La posición viva de Curiosity está disponible en el servicio MMGIS de la NASA, pero bloquea las peticiones desde el navegador (CORS). Por eso la posición quedó fija en el código con la fecha de consulta.</p>
+</section>
+
+<section id="arquitectura">
+  <div class="opener"><div class="num">10</div><div><div class="kick">Cómo está hecho</div><h2>Arquitectura de software</h2></div></div>
+  <p class="lead">Aplicación web de una sola página, sin servidor propio ni base de datos. Todo el cálculo ocurre en el navegador.</p>
+  <table>
+    <thead><tr><th style="width:52mm">Tecnología</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td>React 18 y TypeScript 5.6</td><td>Interfaz y lógica.</td></tr>
+      <tr><td>Three.js, React Three Fiber y Drei</td><td>Escena 3D, cámaras, sombras y modelos.</td></tr>
+      <tr><td>Postprocessing</td><td>Resplandor leve, grano de sensor (sube con la radiación) y viñeta.</td></tr>
+      <tr><td>Zustand · Tailwind CSS · Vite 5</td><td>Estado, estilos y empaquetado.</td></tr>
+      <tr><td>NASA Mars Trek (WMTS)</td><td>Mosaicos de imagen y elevación.</td></tr>
+    </tbody>
+  </table>
+<pre>src/lib/
+  energy.ts       Pandolf a 0,38 g: velocidad, watts y litros de O₂
+  costmap.ts      Grafo dirigido 96 × 96: aristas en litros, riesgo, sombras
+  pathfinding.ts  A*, voraz, Dijkstra directo e inverso, Chaikin
+  tour.ts         CTOPTW: matriz D, ramificación y poda, ψ
+  sites.ts        Sitios científicos, factor de visión del cielo, refugios
+  marsTime.ts     Mars24, Sol, irradiancia, temperatura del suelo
+  marsTrek.ts     Mars Trek: HiRISE, DEM calibrado, MOLA, Viking
+  terrain.ts      Relieve, loma de Mount Sharp, cañón, cráteres, rocas
+  metrics.ts      Evaluación de rutas (O₂, Wh, riesgo)
+src/store/
+  simEngine.ts    Motor: tour, reloj, reglas de aborto, eventos, refugio, rescate
+src/hooks/        Telemetría a 10 Hz, carga de Mars Trek, teclado
+src/components/   Escena 3D y paneles
+src/explicacion/  Página matemática interactiva → explicacion.html
+docs/documentacion/  Fuente de este PDF</pre>
+  <h3>Flujo de datos</h3>
+  <ul>
+    <li><b>Cada cuadro:</b> el motor avanza en pasos de 50 ms como máximo y escribe posiciones en memoria; la escena 3D las lee sin redibujar React.</li>
+    <li><b>Cada 10 minutos marcianos:</b> se recalculan sombras, aristas y R(p).</li>
+    <li><b>Ante un evento:</b> se recalcula el grafo y se reoptimiza el tour, o se busca refugio o el camino a casa.</li>
+    <li><b>10 veces por segundo:</b> la telemetría publica los indicadores en el estado de la interfaz.</li>
+  </ul>
+</section>
+
+<section id="formulas">
+  <div class="opener"><div class="num">11</div><div><div class="kick">Referencia rápida</div><h2>Fórmulas utilizadas</h2></div></div>
+  <p class="lead">Listado de los cálculos. El desarrollo, los ejemplos interactivos y el origen de cada uno están en <code>explicacion.html</code>.</p>
+  <table>
+    <thead><tr><th style="width:52mm">Fórmula o método</th><th>Para qué se usa</th><th style="width:34mm">Tipo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Diferencia central</b></td><td>Pendiente máxima de cada celda</td><td>Método numérico</td></tr>
+      <tr><td><b>Pendiente con signo G</b></td><td>Subida o bajada de cada paso</td><td>Definición</td></tr>
+      <tr><td><b>Ecuación de Pandolf a 0,38 g</b></td><td>Litros de O₂ de cada paso</td><td>Modelo empírico</td></tr>
+      <tr><td><b>Factores de riesgo y límites</b></td><td>Evitar lo peligroso o imposible</td><td>Diseño propio</td></tr>
+      <tr><td><b>Grafo dirigido de 8 vecinas</b></td><td>Representar el mapa</td><td>Definición</td></tr>
+      <tr><td><b>A* con heurística octil · w<sub>mín</sub></b></td><td>Tramo de menor O₂</td><td>Algoritmo con teorema</td></tr>
+      <tr><td><b>Búsqueda voraz</b></td><td>Planificador local de comparación</td><td>Algoritmo</td></tr>
+      <tr><td><b>Dijkstra (directo e inverso)</b></td><td>Matriz D y campo de retorno R(p)</td><td>Algoritmo con teorema</td></tr>
+      <tr><td><b>Regla de no retorno</b></td><td>Decidir si seguir o volver</td><td>Diseño del equipo</td></tr>
+      <tr><td><b>CTOPTW</b></td><td>Elegir sitios y orden</td><td>Definición</td></tr>
+      <tr><td><b>Ramificación y poda</b></td><td>Resolver el tour exacto</td><td>Algoritmo con teorema</td></tr>
+      <tr><td><b>Diversidad ψ</b></td><td>Premiar minerales distintos</td><td>Modelo</td></tr>
+      <tr><td><b>Mars24</b></td><td>Estación y hora solar local</td><td>Algoritmo</td></tr>
+      <tr><td><b>Elevación solar e irradiancia</b></td><td>Luz, sombras, panel solar</td><td>Modelo</td></tr>
+      <tr><td><b>Temperatura del suelo</b></td><td>Frío, motores y traje</td><td>Diseño propio</td></tr>
+      <tr><td><b>Factor de visión del cielo</b></td><td>Dosis en tormenta y refugio</td><td>Definición</td></tr>
+      <tr><td><b>Suavizado de Chaikin</b></td><td>Curva caminable</td><td>Algoritmo con teorema</td></tr>
+      <tr><td><b>Control de distancia y modelo de uniciclo</b></td><td>Los 15 m y el tránsito del rover</td><td>Modelo de control</td></tr>
+      <tr><td><b>Calibración lineal del DEM</b></td><td>Pasar el gris del mosaico a metros</td><td>Método numérico</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="limites">
+  <div class="opener"><div class="num">12</div><div><div class="kick">Honestidad técnica</div><h2>Limitaciones</h2></div></div>
+  <table>
+    <thead><tr><th style="width:44mm">Tema</th><th>Situación actual</th></tr></thead>
+    <tbody>
+      <tr><td><b>Pandolf en Marte</b></td><td>La adaptación a 0,38 g con carga efectiva no está validada para un traje en gravedad reducida. Hay que contrastarla con estudios de locomoción antes de presentarla como validada.</td></tr>
+      <tr><td><b>Datos de terreno</b></td><td>No se usan THEMIS ni CRISM; el factor de terreno sale de la arena del modelo y los sitios son de escenario.</td></tr>
+      <tr><td><b>Relieve</b></td><td>En Gale, imagen y pendiente regional reales; la loma, el cañón y los cráteres son de escenario. Jezero y Meridiani, en modo análogo.</td></tr>
+      <tr><td><b>Incertidumbre de posición</b></td><td>El paso 10 del flujo (aborto por percentil con partículas) no está implementado.</td></tr>
+      <tr><td><b>Replanificación</b></td><td>Desde cero, sin D* Lite. Rápido en este mapa, pero no escala a mapas grandes.</td></tr>
+      <tr><td><b>Suavizado</b></td><td>La curva final no se revalida contra el grafo; puede marcar pasos de hasta ~50 % en tramos de pocos metros.</td></tr>
+      <tr><td><b>Radiación</b></td><td>La dosis escala con el cielo visible y un escudo fijo del rover (0,45); el perfil de la tormenta es ilustrativo. No modela espectro ni blindaje del suelo.</td></tr>
+      <tr><td><b>Física del rover</b></td><td>Sin suspensión ni tracción reales; el deslizamiento sólo se muestra.</td></tr>
+      <tr><td><b>Posición de Curiosity</b></td><td>Fija (sol 5069): el servicio vivo bloquea peticiones del navegador.</td></tr>
+      <tr><td><b>Pruebas</b></td><td>No hay batería de pruebas automáticas; se probó manualmente cada evento y una misión completa.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="uso">
+  <div class="opener"><div class="num">13</div><div><div class="kick">Puesta en marcha</div><h2>Cómo ejecutarlo y presentarlo</h2></div></div>
+  <p>Se necesita Node.js y un navegador con WebGL. Hace falta internet para Mars Trek; sin conexión se usa el terreno procedural.</p>
+<pre>npm install            # dependencias
+npm run dev            # http://localhost:5173
+npm run build          # verificación de tipos + versión final en dist/
+npm run documentacion  # regenera este PDF (requiere Google Chrome)</pre>
+  <h3>Controles</h3>
+  <table>
+    <tbody>
+      <tr><td style="width:46mm"><b>Teclas 1, 2 y 3</b></td><td>Cámara del astronauta, del rover o del dron.</td></tr>
+      <tr><td><b>×1 · ×4 · ×10</b></td><td>Velocidad de simulación (la barra muestra la aceleración ×60 cuando todos están quietos).</td></tr>
+      <tr><td><b>EVA start</b></td><td>Hora solar local de salida: 07, 08, 10, 12 o 14.</td></tr>
+      <tr><td><b>Arrastrar y rueda</b></td><td>Girar y acercar la vista del dron.</td></tr>
+      <tr><td><b>RESET EVA</b></td><td>Reiniciar la misión.</td></tr>
+    </tbody>
+  </table>
+  <h3>Guion sugerido de 6 minutos</h3>
+  <ol style="padding-left:5mm">
+    <li>Vista del dron a ×10: el sitio real de Curiosity, la loma de Mount Sharp y el tour planificado en el panel izquierdo.</li>
+    <li>Cambiar entre voraz y A* y comparar los litros de O₂.</li>
+    <li>Cambiar la hora de salida a 07:00 y a 14:00: la luz, el frío y el tour cambian.</li>
+    <li>DEPLOY DRONE: el cañón se abre y el tour se reoptimiza.</li>
+    <li>Esperar a que el astronauta esté lejos y activar SOLAR STORM: elige refugio y después retoma el tour.</li>
+    <li>RESET y CRITICAL RESCUE MODE: rescate, estabilización y evacuación hasta el hábitat.</li>
+  </ol>
+</section>
+
+<section id="glosario">
+  <div class="opener"><div class="num">14</div><div><div class="kick">Términos</div><h2>Glosario</h2></div></div>
+  <dl class="cols">
+    <dt>A* (A estrella)</dt><dd>Algoritmo que encuentra el camino de menor costo en un grafo usando una estimación de lo que falta.</dd>
+    <dt>Algoritmo voraz</dt><dd>Elige en cada paso la opción que parece mejor en ese momento.</dd>
+    <dt>Boxwork</dt><dd>Red de crestas minerales en Mount Sharp, formada por vetas que resistieron la erosión.</dd>
+    <dt>CTOPTW</dt><dd>Problema de orientación con capacidad y ventanas de tiempo: elegir y ordenar visitas con recursos limitados.</dd>
+    <dt>DEM</dt><dd>Modelo digital de elevación.</dd>
+    <dt>Dijkstra</dt><dd>Algoritmo de caminos mínimos desde una fuente a todos los nodos.</dd>
+    <dt>EVA</dt><dd>Actividad extravehicular: salida del astronauta fuera del hábitat.</dd>
+    <dt>HiRISE</dt><dd>Cámara de alta resolución de la sonda Mars Reconnaissance Orbiter.</dd>
+    <dt>LTST</dt><dd>Hora solar local verdadera: la que marca un reloj de Sol en el sitio.</dd>
+    <dt>L<sub>s</sub></dt><dd>Longitud solar: indica la estación de Marte (0° = equinoccio de primavera del norte).</dd>
+    <dt>Mars24</dt><dd>Algoritmo de la NASA para la hora y la posición del Sol en Marte.</dd>
+    <dt>MEDEVAC</dt><dd>Evacuación médica.</dd>
+    <dt>Mount Sharp (Aeolis Mons)</dt><dd>Montaña central del cráter Gale, que Curiosity asciende desde 2014.</dd>
+    <dt>Pandolf</dt><dd>Ecuación empírica del gasto metabólico al caminar con carga.</dd>
+    <dt>PLSS</dt><dd>Sistema portátil de soporte vital del traje.</dd>
+    <dt>R(p)</dt><dd>Oxígeno necesario para volver al hábitat desde el punto p.</dd>
+    <dt>Ramificación y poda</dt><dd>Búsqueda exacta que descarta ramas que no pueden mejorar la mejor solución.</dd>
+    <dt>SPE</dt><dd>Evento de partículas solares: una tormenta de radiación.</dd>
+    <dt>SVF</dt><dd>Factor de visión del cielo: fracción del cielo visible desde un punto.</dd>
+    <dt>WMTS</dt><dd>Estándar web para servir mapas en mosaicos.</dd>
+  </dl>
+</section>
+
+</body>
+</html>
