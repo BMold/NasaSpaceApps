@@ -1,26 +1,26 @@
 # CLAUDE.md — ARES-TWIN (NASA Space Apps · Martian Map)
 
-Referencia técnica para agentes de programación. Contratos v1.0, al 2026-11-12 (terreno con datos reales).
+Referencia técnica para agentes de programación. Contratos v1.0, al 2026-11-13 (terreno real; datos del astronauta simulados; sin telemetría ni rover).
 Si algo de aquí contradice el código, **este archivo manda** hasta que se cambie con versión nueva.
 
 ---
 
 ## 1. Qué es
 
-Optimizador de rutas de EVA en Marte (Mount Sharp, cráter Gale). Planifica qué sitios científicos visita un astronauta y en qué orden, con el **O₂ como única unidad de costo**, una reserva para abortar y replanificación ante eventos en vivo (peligros, sombra, fatiga, tormenta solar). Lo acompañan un frontend de mapa por capas y HUD, una simulación 3D/VR y una telemetría simulada en streaming. El contrato de integración completo está en `contratos/INTEGRACION.md`.
+Optimizador de rutas de EVA en Marte (Mount Sharp, cráter Gale). Planifica qué sitios científicos visita un astronauta y en qué orden, con el **O₂ como única unidad de costo**, una reserva para abortar y replanificación ante eventos en vivo (peligros, sombra, fatiga, tormenta solar). Lo acompañan un frontend de mapa por capas y HUD, una simulación 3D/VR y una **simulación de datos** del astronauta. No hay telemetría real ni rover: todo dato del astronauta es simulado. El contrato de integración completo está en `contratos/INTEGRACION.md`.
 
 ## 2. Equipo y dueños
 
 | Parte | Dueño | Carpeta |
 |---|---|---|
 | Optimizador (A* + CTOPTW), datos y paquete de terreno | Ignacio | `optimizador/`, `terreno/`, `herramientas/` |
-| Telemetría: biodatos y eventos simulados (streaming) | Dana, Erick | `telemetria/` |
+| Simulación de datos del astronauta y de los eventos | Dana | `simulacion/` |
 | Backend (API, WebSocket) | Albert | `backend/` |
 | Frontend: mapa por capas y HUD | Frank | `front/` |
 | Simulación 3D y VR | Luis | `vr/` |
 | Contratos compartidos | todos | `contratos/` |
 
-Cada dueño define su propio contrato. Este archivo recoge los contratos del **optimizador** y de la **telemetría**, y las convenciones de visualización acordadas. En el resto del documento, "Dana" = equipo de telemetría (Dana y Erick).
+Cada dueño define su propio contrato. Este archivo recoge los contratos del **optimizador** y de la **simulación de datos** (Dana), y las convenciones de visualización acordadas. Erick se incorporó para la telemetría, que ya no existe: su parte está por asignar.
 
 ## 3. Estado de las decisiones
 
@@ -30,7 +30,7 @@ Cada dueño define su propio contrato. Este archivo recoge los contratos del **o
 - Conversión de ejes del marco local a la escena 3D (Luis y Frank).
 - Contrato propio del backend (rutas HTTP, roles del WebSocket, formato de error del servidor): lo define Albert. Propuesta en `contratos/INTEGRACION.md` §7.
 - Término de riesgo λ en la función objetivo.
-- Capa térmica: el archivo descargado (TES) no trae georreferencia y no se pudo usar.
+- Capa térmica con variación dentro de la ventana (hoy es un único valor de TES).
 
 **Fechas:** contratos v1 congelados el 2026-11-18 · prueba de integración el 2026-11-25.
 
@@ -47,8 +47,8 @@ contratos/
   ejemplos/         pedido.json, guion_mision.json
 optimizador/        librería Python: Motor, pandolf(); pruebas/ (test_nucleo.py, simular_guion.py)
 demo/               visor autónomo con capas y botones de salto (visor_mision.html)
-logs/               sesion-<fecha>-mision.jsonl + .marcadores.json
-telemetria/         Dana, Erick
+logs/               sesion-<fecha>-mision.jsonl + .marcadores.json (el conjunto de datos simulados)
+simulacion/         Dana (simulación de datos)
 backend/            Albert
 front/              Frank
 vr/                 Luis
@@ -68,15 +68,15 @@ vr/                 Luis
 | `hora_solar` | hora solar local de Marte, horas decimales: `t0_hora_solar + t / 3699` |
 | `seq` | entero creciente de 1 en 1 por emisor; nunca baja |
 | Escala demo | factor ×30 (misión de ~152 min simulados ≈ 5 min reales); el visor permite saltar entre hitos |
-| Telemetría | cada 10 s simulados (~3 mensajes/s reales) |
+| `estado_astronauta` | cada 10 s simulados |
 
 ## 6. Terreno (datos reales; detalle en `contratos/INTEGRACION.md` §3)
 
 - Malla de **192 × 192 celdas de 2,5 m (480 m de lado)**. El tamaño lo limita el ancho útil de la imagen HiRISE en color (~495 m).
 - Centro de la celda (i, j): `x = (j + 0.5)·2.5`, `y = (i + 0.5)·2.5`. Fila 0 = sur. Origen = esquina suroeste.
-- Capas float32 little-endian, fila por fila: `elevacion` (altura sobre `z_ref_m`), `eta_terreno`, `pendiente_deg`, `crism_*` (NaN = sin dato); `peligro` (u8); `ortofoto.jpg` (1920 × 1920, **fila 0 = norte**); `sitios.json`.
+- Capas float32 little-endian, fila por fila: `elevacion` (altura sobre `z_ref_m`), `eta_terreno`, `pendiente_deg`, `crism_*`, `tes_inercia_termica` (NaN = sin dato); `peligro` (u8); `ortofoto.jpg` (1920 × 1920, **fila 0 = norte**); `sitios.json`.
 - `manifest.json`: `sitio`, `fuente_dem`, `origen`, `marco`, `tam_celda_m`, `filas`, `columnas`, `fila_0`, `capas`, `habitat`; además `georreferencia`, `corregistro`, `supuestos`, `z_ref_m`.
-- Fuentes: DEM de USGS (1 m) · HiRISE `ESP_087149_1750_COLOR` (0,25 m) · CRISM `FRT0000B6F1` MTRDR (18 m). El DEM es la referencia; HiRISE y CRISM se **corregistran** (−9 / −136 m y +126 / −90 m).
+- Fuentes: DEM de USGS (1 m) · HiRISE `ESP_087149_1750_COLOR` (0,25 m) · CRISM `FRT0000B6F1` MTRDR (18 m) · TES, inercia térmica de Putzig y Mellon 2007 (~3 km: un único valor, 241). El DEM es la referencia; HiRISE y CRISM se **corregistran** (−9 / −136 m y +126 / −90 m).
 - `peligro` = pendiente > 30° (supuesto de diseño). η = desviación típica de la pendiente en ventana 3 × 3, normalizada a [1, 2].
 - Sitios = máximos locales de los índices CRISM por encima del percentil 90 de la escena. En esta ventana hay sulfatos, filosilicatos y sílice débil; **no hay hematita**. `masa_kg`, `perforacion_min` y `ventana` son supuestos de escenario.
 - En esta ventana el DEM **no tiene depresiones de refugio**: no hay `refugios` y el aborto por tormenta va al hábitat. La clave `refugios` (lista de `{id, x, y, radio_m, profundidad_m}`) sigue soportada.
@@ -99,8 +99,6 @@ vr/                 Luis
 | N máx. de sitios | 12 | branch & bound exacto |
 | Tope del solver | 200 000 nodos (~1 s) y, como red de seguridad, 2 s (anytime) | latencia y determinismo |
 | Duración de la EVA | 14 400 s | límite duro |
-| R_comm (UHF) | 150 m | solo aviso visual en v1 |
-| Rover v | 0,8 m/s | solo para dibujar |
 | Δd | 2,5 m (ortogonal), 2,5·√2 m (diagonal) | vecindad de 8 |
 | Suavizado | Chaikin, 2 pasadas | polilínea de salida |
 | Minerales | `filosilicatos`, `sulfatos`, `hematita`, `silice` | lista cerrada |
@@ -147,7 +145,7 @@ Al llegar al tope (de nodos o de tiempo): devolver la mejor solución encontrada
 
 | Disparador | Acción |
 |---|---|
-| Cada telemetría | `R = R(x, y)`; emitir `estado_aborto`. Si `margen_pct ≤ 15` → `abortar` (`no_retorno`) |
+| Cada `estado_astronauta` | `R = R(x, y)`; emitir `estado_aborto`. Si `margen_pct ≤ 15` → `abortar` (`no_retorno`) |
 | VO₂ medido a más de un 20 % del previsto durante 60 s simulados | recalibrar κ con el promedio de esos 60 s y replanificar (`recalibracion`). Máx. 1 cada 300 s simulados |
 | `peligro` | marcar celdas (`bloqueo` = ∞; `multiplicador` = ×factor, de 1 a 5); recalcular D y R localmente; replanificar si el plan lo cruza. `radio_m: 0` lo quita |
 | `ventanas` | si un sitio del plan quedó fuera de su ventana → replanificar (`ventana`) |
@@ -163,15 +161,14 @@ margen_pct  = 100 · (O2_restante_L / R_L − 1)
 
 Dana es la **única** que descuenta el O₂. El optimizador predice y compara.
 
-## 10. Contrato Dana → optimizador (entrada)
+## 10. Contrato simulación de datos (Dana) → optimizador (entrada)
 
 ### 10.1 Perfil (una vez; reinicia la sesión)
 ```json
 { "version": "1.0", "tipo": "perfil", "escenario_id": "demo-01", "semilla": 42,
   "t0_hora_solar": 10.0, "factor_tiempo": 30, "duracion_eva_s": 14400,
   "astronauta": { "masa_kg": 80, "masa_traje_kg": 150, "v0_m_s": 1.2,
-                  "kappa_O2_L_W_min": 0.00298, "O2_inicial_L": 40, "capacidad_muestras_kg": 5 },
-  "rover": { "v_m_s": 0.8, "R_comm_m": 150 } }
+                  "kappa_O2_L_W_min": 0.00298, "O2_inicial_L": 40, "capacidad_muestras_kg": 5 } }
 ```
 
 ### 10.2 Envoltorio de los eventos
@@ -182,8 +179,7 @@ Dana es la **única** que descuenta el O₂. El optimizador predice y compara.
 ### 10.3 `datos` por tipo
 | `tipo` | `datos` |
 |---|---|
-| `telemetria_astronauta` | `x, y, sigma_m (0 en v1), O2_restante_L, VO2_L_min, FC_lpm, velocidad_m_s, carga_kg` |
-| `telemetria_rover` | `x, y, bateria_pct` |
+| `estado_astronauta` (antes `telemetria_astronauta`) | `x, y, sigma_m (0 en v1), O2_restante_L, VO2_L_min, FC_lpm, velocidad_m_s, carga_kg` |
 | `peligro` | `id, forma: "circulo", x, y, radio_m, efecto: "bloqueo"\|"multiplicador", factor` |
 | `ventanas` | `sitios: [{ id, ventana: [ini_h, fin_h] }]` (solo los que cambian) |
 | `SPE` | `nivel: "alerta"\|"critico", llegada_s` |
@@ -235,8 +231,7 @@ Sin ruta factible: `factible: false`, `orden: ["H", "H"]` y la polilínea de vue
 
 | Evento recibido | Salida |
 |---|---|
-| `telemetria_astronauta` | `[estado_aborto]` (+ `plan_actualizado` o `abortar`) |
-| `telemetria_rover` | `[]` |
+| `estado_astronauta` | `[estado_aborto]` (+ `plan_actualizado` o `abortar`) |
 | `peligro`, `ventanas` | `[plan_actualizado]` o `[]` |
 | `SPE` `alerta` | `[plan_actualizado]` |
 | `SPE` `critico` | `[abortar]` |
@@ -249,12 +244,12 @@ from optimizador import Motor
 motor = Motor(ruta_terreno="terreno/")                   # < 1 s, una vez
 motor.cargar_perfil(perfil: dict) -> None                # reinicia la sesión
 motor.planificar(pedido: dict) -> dict                   # ≤ 2 s
-motor.procesar_evento(evento: dict) -> list[dict]        # telemetría < 5 ms; otros ≤ 2 s
+motor.procesar_evento(evento: dict) -> list[dict]        # estado_astronauta < 5 ms; otros ≤ 2 s
 motor.como_mensaje(respuesta: dict) -> dict              # → plan_actualizado, motivo "pedido"
 motor.estado() -> dict                                   # plan vigente, último estado_aborto, peligros activos
 ```
 
-- **Estado interno:** el `Motor` guarda el perfil, el plan vigente, R(p), los peligros activos y la última telemetría. Una sola sesión a la vez.
+- **Estado interno:** el `Motor` guarda el perfil, el plan vigente, R(p), los peligros activos y el último `estado_astronauta`. Una sola sesión a la vez.
 - **Requisitos del que llama:** una llamada a la vez, eventos en orden de `seq`, `cargar_perfil` primero, y las llamadas lentas en un hilo aparte (`asyncio.to_thread`).
 - **Excepciones** (heredan de `ErrorOptimizador`): `PedidoInvalido`, `VersionNoSoportada`, `SinPerfil`.
 - **Garantías:** siempre hay `ruta_escape` · nunca más de 2 s · determinista con la misma entrada y la misma semilla.
@@ -292,7 +287,7 @@ python -m optimizador.pruebas.simular_guion # la misma corrida, solo por consola
 - Colores de seguridad: verde (margen > 30 %), ámbar (15–30 %), rojo (≤ 15 % = zona de aborto). Verde, ámbar y rojo solo para seguridad (O₂, peligros, alertas).
 - Minerales: filosilicatos #7F77DD círculo · sulfatos #D4537E rombo · hematita #712B13 triángulo · sílice #378ADD cuadrado.
 - Ruta por recorrer: línea gruesa clara · recorrida: gris al 40 % · escape: punteada · al replanificar, la ruta vieja se desvanece en 2 s.
-- Vistas: lejana (orbital), astronauta (tercera persona, sobre el hombro), rover. Al llegar un `abortar`: 3 s en la vista lejana.
+- Vistas: lejana (orbital) y astronauta (tercera persona, sobre el hombro). Al llegar un `abortar`: 3 s en la vista lejana.
 - Barra de O₂ con una línea fija en `O2_minimo_L`. Cada `plan_actualizado` con `motivo` distinto de `inicial` muestra un aviso de 4 s.
 - VR: recorrido de 60–90 s reproduciendo el registro JSONL; plan B: video 360° grabado de la misma corrida.
 
@@ -301,7 +296,7 @@ python -m optimizador.pruebas.simular_guion # la misma corrida, solo por consola
 - [x] El pedido de ejemplo da un plan factible en menos de 2 s.
 - [x] Sin O₂ suficiente → `factible: false` con la vuelta directa.
 - [x] El guion de misión produce la reacción esperada en cada evento.
-- [x] La telemetría se procesa en menos de 5 ms.
+- [x] Cada `estado_astronauta` se procesa en menos de 5 ms.
 - [x] Dos corridas con la semilla 42 dan exactamente los mismos mensajes.
 - [x] Toda salida valida contra `contratos/schemas/`.
 
@@ -311,7 +306,7 @@ Las cubre `python -m optimizador.pruebas.test_nucleo` (12 pruebas sobre el terre
 
 - Pandolf a 0,38 g **no está validado**: presentarlo como aproximación de diseño. Contrastar con literatura de locomoción en gravedad reducida.
 - No afirmar compatibilidad con hardware de vuelo (RAD750) sin benchmarks propios.
-- Los valores de VO₂ y frecuencia cardíaca son órdenes de magnitud para la demo, no datos fisiológicos validados.
+- Todo dato del astronauta es **simulado**; no hay telemetría real. Los valores de VO₂ y frecuencia cardíaca son órdenes de magnitud para la demo, no datos fisiológicos validados.
 - La cifra "3,4 veces" que aparecía en material anterior no tiene fuente: no usarla.
 - Los índices CRISM son **indicios** espectrales, no detecciones confirmadas: `BD2210_2` (sílice) es débil y ambiguo con arcillas de Al. El `valor` de cada sitio es un criterio nuestro, no una prioridad de la NASA.
 - El corregistro de CRISM tiene ±9 m; a esa escala un sitio puede caer en el píxel vecino.

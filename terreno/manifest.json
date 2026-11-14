@@ -96,6 +96,14 @@
       "resolucion_nativa_m": 18.0,
       "descripcion": "parametro de resumen BD2210_2 (indicio de silice); p90 de la escena = 0.0032"
     },
+    "crism_bd530_2": {
+      "archivo": "crism_bd530_2.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
+      "resolucion_nativa_m": 18.0,
+      "descripcion": "parametro de resumen BD530_2 (contexto: oxidos ferricos (banda de 0,53 um; alta en casi todo Marte por el polvo)); p90 de la escena = 0.2756"
+    },
     "crism_bd860_2": {
       "archivo": "crism_bd860_2.bin",
       "dtype": "float32",
@@ -111,6 +119,15 @@
       "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
       "resolucion_nativa_m": 18.0,
       "descripcion": "parametro de resumen D2300 (indicio de filosilicatos); p90 de la escena = 0.0013"
+    },
+    "tes_inercia_termica": {
+      "archivo": "tes_inercia_termica.bin",
+      "dtype": "float32",
+      "sin_dato": "nan",
+      "unidad": "J m-2 K-1 s-1/2",
+      "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (se.psi.edu/inertia/2007)",
+      "resolucion_nativa_m": 2960.0,
+      "descripcion": "inercia termica aparente; la ventana cae en una sola celda TES: 241"
     }
   },
   "sitios": "sitios.json",
@@ -118,6 +135,10 @@
     "id": "H",
     "x": 238.75,
     "y": 231.25
+  },
+  "contexto": {
+    "inercia_termica_tiu": 241.0,
+    "nota": "un unico valor TES para toda la ventana (~3 km/celda): describe el tipo de superficie, no cambia la ruta"
   },
   "corregistro": {
     "referencia": "DEM de USGS",

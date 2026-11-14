@@ -1,0 +1,4 @@
+terreno/** -text
+logs/** -text
+*.bin binary
+*.jpg binary

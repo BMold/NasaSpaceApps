@@ -63,11 +63,12 @@ def main(guion: str, fecha: str) -> None:
         "terreno": {"filas": ter.filas, "columnas": ter.columnas, "tam": ter.tam, "sitio": m["sitio"],
                     "elev": (ter.elevacion * 100).round().astype(int).ravel().tolist(),   # cm
                     "peligro": ter.peligro.ravel().tolist(),
-                    "habitat": ter.habitat, "refugios": ter.refugios,
+                    "habitat": ter.habitat, "refugios": ter.refugios, "contexto": m.get("contexto", {}),
                     "sitios": [{k: s[k] for k in ("id", "x", "y", "mineral", "valor")} for s in ter.sitios],
                     "ortofoto": ("data:image/jpeg;base64," + base64.b64encode((carpeta / orto["archivo"]).read_bytes()).decode())
                     if orto else None,
-                    "fuentes": {"elevacion": m["fuente_dem"], "ortofoto": orto["fuente"] if orto else None},
+                    "fuentes": {"elevacion": m["fuente_dem"], "ortofoto": orto["fuente"] if orto else None,
+                                "termica": m["capas"].get("tes_inercia_termica", {}).get("fuente")},
                     "superposiciones": superposiciones},
     }
     plantilla = (RAIZ / "demo/visor_plantilla.html").read_text(encoding="utf-8")

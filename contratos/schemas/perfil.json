@@ -11,8 +11,7 @@
     "t0_hora_solar",
     "factor_tiempo",
     "duracion_eva_s",
-    "astronauta",
-    "rover"
+    "astronauta"
   ],
   "properties": {
     "version": {
@@ -65,21 +64,6 @@
           "type": "number"
         },
         "capacidad_muestras_kg": {
-          "type": "number"
-        }
-      }
-    },
-    "rover": {
-      "type": "object",
-      "required": [
-        "v_m_s",
-        "R_comm_m"
-      ],
-      "properties": {
-        "v_m_s": {
-          "type": "number"
-        },
-        "R_comm_m": {
           "type": "number"
         }
       }
