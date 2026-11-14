@@ -231,7 +231,7 @@ def simular(guion=None, verboso=False):
         if marca_inicio:
             marca(0.0, "inicio", "Salida del habitat", "Plan inicial calculado por el optimizador.", 0)
             marca_inicio = False
-        enviar("telemetria_astronauta", {
+        enviar("estado_astronauta", {
             "x": round(ast.x, 2), "y": round(ast.y, 2), "sigma_m": 0, "O2_restante_L": round(ast.o2, 4),
             "VO2_L_min": round(ast.vo2, 4), "FC_lpm": round(min(190, max(60, 70 + 55 * ast.vo2))),
             "velocidad_m_s": round(ast.vel, 3), "carga_kg": round(ast.carga, 2)})
