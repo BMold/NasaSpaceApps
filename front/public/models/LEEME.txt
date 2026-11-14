@@ -1,0 +1,17 @@
+Traje del astronauta (vista en tercera persona)
+==============================================
+
+Copiá aquí tu modelo con este nombre exacto:
+
+    traje-ligero.glb
+
+Requisitos:
+  - Formato glTF binario (.glb).
+  - Unidades en metros, unos 1,8 m de alto.
+  - Pies en y = 0, centrado en x = 0, z = 0.
+  - Mirando hacia +Z (la convención por defecto de glTF).
+
+Si el archivo no existe, el visor usa su traje incorporado (estilo SpaceX), que camina con
+pasos reales, deja huellas y también se ve en primera persona. Un .glb propio reemplaza al
+incorporado sólo en la vista en tercera persona y no se anima (sigue al cuerpo como una pieza).
+La ruta se define en src/vr/SuitModel.tsx (constante SUIT_GLB_URL).

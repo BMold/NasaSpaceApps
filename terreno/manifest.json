@@ -123,6 +123,10 @@
     "tes_inercia_termica": {
       "archivo": "tes_inercia_termica.bin",
       "dtype": "float32",
+      "unidad": "J m-2 K-1 s-1/2",
+      "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (~3 km)",
+      "resolucion_nativa_m": 2960.0,
+      "descripcion": "vecino mas cercano; la ventana cae en 1 pixel(es) TES, valor 241: no hay detalle termico dentro de la ventana"
       "sin_dato": "nan",
       "unidad": "J m-2 K-1 s-1/2",
       "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (se.psi.edu/inertia/2007)",

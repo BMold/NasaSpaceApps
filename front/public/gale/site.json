@@ -1,0 +1,29 @@
+{
+ "lat": -4.82525828,
+ "lon": 137.3889348,
+ "sol": 5069,
+ "elevation": -3478.1,
+ "tilt": {
+  "east": 0.06025,
+  "north": -0.14901
+ },
+ "siteHalf": 120,
+ "midImageHalf": 1280.0,
+ "regionalHalf": 5500.0,
+ "farHalf": 110000.0,
+ "midDem": {
+  "n": 512,
+  "half": 5500.0,
+  "unit": 0.1
+ },
+ "farDem": {
+  "n": 384,
+  "half": 110000.0,
+  "unit": 1
+ },
+ "sources": [
+  "MGS MOLA MEGDR 128 ppd (PDS Geosciences Node)",
+  "MRO HiRISE Curiosity mosaic and Gale DEM (NASA Mars Trek)",
+  "MRO CTX Gale mosaic (NASA Mars Trek)"
+ ]
+}

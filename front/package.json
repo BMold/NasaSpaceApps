@@ -1,0 +1,46 @@
+{
+  "name": "ares-twin-visor-nasa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ARES-TWIN visor: casco VR en el celular + espectador en la laptop, sincronizados por Socket.io en la red local",
+  "type": "module",
+  "scripts": {
+    "explicacion": "node scripts/build-explicacion.mjs",
+    "predev": "node scripts/build-explicacion.mjs",
+    "prebuild": "node scripts/build-explicacion.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "documentacion": "node scripts/build-documentacion.mjs",
+    "server": "node server.js",
+    "dev:vr": "vite --host",
+    "predev:vr": "node scripts/build-explicacion.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.16.3",
+    "express": "^5.3.0",
+    "lucide-react": "^0.453.0",
+    "postprocessing": "^6.36.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4",
+    "three": "~0.169.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "~0.169.0",
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.10"
+  }
+}
