@@ -35,6 +35,8 @@ export function attachSync(httpServer, { log = console.log } = {}) {
     ltst: null, // local solar time and dust chosen on the laptop
     storm: 0,
     drone: null,
+    bio: null, // suit biodata simulated on the laptop (front/src/hud/bio.ts)
+    hud: { jarvis: true }, // JARVIS or normal visor view, switched from either device
     vr: false,
     host: false,
   };
@@ -77,6 +79,7 @@ export function attachSync(httpServer, { log = console.log } = {}) {
       if (typeof p.storm === 'number') state.storm = p.storm;
       if (p.gaze && typeof p.gaze === 'object') state.gaze = { on: !!p.gaze.on, speed: +p.gaze.speed || 0, thr: +p.gaze.thr || 0, walking: !!p.gaze.walking };
       if (p.drone) state.drone = p.drone;
+      if (p.bio && typeof p.bio === 'object') state.bio = p.bio;
       // Relay the body pose the instant it arrives (like the rotation): the phone
       // no longer waits up to one 60 Hz tick. Volatile: a late pose is dropped, never queued.
       socket.broadcast.volatile.emit('pose', {
@@ -86,6 +89,13 @@ export function attachSync(httpServer, { log = console.log } = {}) {
         vx: +p.vx || 0,
         vz: +p.vz || 0,
       });
+    });
+
+    // Visor view (JARVIS / normal): either device switches it, the other follows at once.
+    socket.on('hud', (h) => {
+      if (!roles.has(socket.id) || !h || typeof h.jarvis !== 'boolean') return;
+      state.hud = { jarvis: h.jarvis };
+      socket.broadcast.emit('hud', state.hud);
     });
 
     socket.on('world', (w) => {

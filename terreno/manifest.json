@@ -111,6 +111,14 @@
       "fuente": "MRO CRISM MTRDR FRT0000B6F1_07_SU165J_MTR3 (PDS Geosciences), 18 m/px",
       "resolucion_nativa_m": 18.0,
       "descripcion": "parametro de resumen D2300 (indicio de filosilicatos); p90 de la escena = 0.0013"
+    },
+    "tes_inercia_termica": {
+      "archivo": "tes_inercia_termica.bin",
+      "dtype": "float32",
+      "unidad": "J m-2 K-1 s-1/2",
+      "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (~3 km)",
+      "resolucion_nativa_m": 2960.0,
+      "descripcion": "vecino mas cercano; la ventana cae en 1 pixel(es) TES, valor 241: no hay detalle termico dentro de la ventana"
     }
   },
   "sitios": "sitios.json",

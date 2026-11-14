@@ -27,6 +27,16 @@ import { siteName } from '../i18n';
 import { Q, toneMap } from '../render/quality';
 import { REAL } from '../lib/realTerrain';
 import { SITES } from '../lib/sites';
+import { VisorHud, bio, bioSnapshot, resetBio, stepBio } from '../hud';
+import { buildMissionView, mission, missionActive } from '../mission/mission';
+import { stepMission } from '../mission/driver';
+import { MissionPanel, ModeLinks, useMissionSource } from '../mission/MissionPanel';
+import { LayerControls } from '../lib/LayerControls';
+import { layerState } from '../lib/layers';
+import { JarvisOverlay } from '../jarvis/JarvisOverlay';
+import { HallazgosPanel } from '../jarvis/HallazgosPanel';
+import { jarvis } from '../jarvis/detector';
+import { bindJarvisSync, toggleJarvis } from '../jarvis/sync';
 
 const keys = new Set<string>();
 /** Look-down-to-walk: tilting the head below `thr` degrees walks forward at `speed` m/s. Set from the laptop. */
@@ -86,7 +96,11 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
     const want = gaze.on && !fwd && !strafe && -pitchDeg > gaze.thr ? Math.min(1, (-pitchDeg - gaze.thr) / 8) : 0;
     gaze.ramp += (want - gaze.ramp) * (1 - Math.exp(-dt * 6)); // ease in/out, no jolts
     gaze.walking = gaze.ramp > 0.05;
-    if (auto.on) moveAstronaut(1, 0, auto.yaw, false, dt, auto.speed);
+    // Mission mode: the astronaut walks the telemetry track; keys and gaze only look around.
+    if (missionActive()) {
+      gaze.walking = false;
+      stepMission(dt);
+    } else if (auto.on) moveAstronaut(1, 0, auto.yaw, false, dt, auto.speed);
     else if (gaze.walking) moveAstronaut(1, 0, viewYaw(), false, dt, gaze.speed * gaze.ramp);
     else moveAstronaut(fwd, strafe, viewYaw(), keys.has('ShiftLeft') || keys.has('ShiftRight'), dt);
 
@@ -95,6 +109,7 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
     suitState.lookPitch = auto.on ? 0 : lookPitch;
     updateBody(suitState.lookYaw, dt);
     stepDrone(dt);
+    if (!missionActive()) stepBio(dt); // mission: the suit numbers come from the messages
     const v = vel.current;
     if (Number.isFinite(v.px) && dt > 0) {
       const a = 1 - Math.exp(-dt * 12);
@@ -121,6 +136,7 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
         storm: rt.stormIntensity,
         gaze: { on: gaze.on, speed: gaze.speed, thr: gaze.thr, walking: gaze.walking },
         drone: { x: d.x, y: d.y, z: d.z, heading: d.heading, state: d.state, rotor: d.rotor, scan: d.scanProgress },
+        bio: bioSnapshot(),
       });
     }
   }, -2);
@@ -131,7 +147,14 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
     const dt = Math.min(dtRaw, 0.05);
     const ground = heightAt(vr.x, vr.z);
     _fwd.set(0, 0, -1).applyQuaternion(camQ);
-    if (!thirdPerson) {
+    if (performance.now() < mission.farViewUntil) {
+      // abortar: 3 s in the far view (CLAUDE.md §14), high above, looking at the astronaut.
+      target.set(vr.x, ground, vr.z);
+      camPos.set(vr.x + 70, ground + 110, vr.z + 70);
+      camera.position.lerp(camPos, 1 - Math.exp(-dt * 4));
+      camera.lookAt(target);
+      follow.current.ready = false;
+    } else if (!thirdPerson) {
       // Eyes: just above and ahead of the neck joint, so the camera rides the body's own motion.
       const yaw = suitState.lookYaw;
       const neckY = suitState.dockValid ? suitState.neck.y : ground + EYE_HEIGHT - DIM.EYE_UP;
@@ -166,12 +189,60 @@ function worldSnapshot(): WorldNet {
     canyonScanned: useSimStore.getState().canyonScanned,
     goal: g ? { code: g.code, x: g.x, z: g.z } : null,
     litres: vr.routeLitres,
+    mission: missionActive() ? buildMissionView() : undefined,
+    capa: layerState.actual,
   };
+}
+
+/** Scenario events for the suit (CLAUDE.md §13 style): they change the inputs, the numbers come from the model. */
+function SuitControls() {
+  const [, force] = useState(0);
+  const set = (fn: () => void) => {
+    fn();
+    force((k) => k + 1);
+  };
+  const btn = (on: boolean) => `px-2 py-1 rounded border ${on ? 'border-amber-400/70 text-amber-200' : 'border-slate-600'}`;
+  return (
+    <div className="rounded border border-slate-700/80 p-2 space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-slate-400">Traje · tiempo</span>
+        <div className="flex gap-1">
+          {[1, 10, 30].map((k) => (
+            <button key={k} onClick={() => set(() => (bio.timeScale = k))} className={`px-2 py-0.5 rounded border ${bio.timeScale === k ? 'border-cyan-300 text-cyan-100' : 'border-slate-600 text-slate-400'}`}>
+              ×{k}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <button onClick={() => set(() => (bio.fatigue = bio.fatigue > 1 ? 1 : 1.3))} className={btn(bio.fatigue > 1)}>
+          Fatiga VO₂ ×1,3
+        </button>
+        <button onClick={() => set(() => (bio.leakLpm = bio.leakLpm > 0 ? 0 : 2))} className={btn(bio.leakLpm > 0)}>
+          Fuga de O₂ 2 L/min
+        </button>
+        <button onClick={() => set(() => (bio.coldManual = !bio.coldManual))} className={btn(bio.coldManual)}>
+          Frío extremo
+        </button>
+        <button onClick={() => set(() => resetBio())} className="px-2 py-1 rounded border border-slate-600">
+          O₂ lleno (40 L)
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function SpectatorView() {
   const status = useVRBoot();
   const [thirdPerson, setThirdPerson] = useState(true);
+  const [menuOpen, setMenuOpenRaw] = useState(() => localStorage.getItem('ares.menu') !== '0');
+  const setMenuOpen = (f: (o: boolean) => boolean) =>
+    setMenuOpenRaw((o) => {
+      const n = f(o);
+      localStorage.setItem('ares.menu', n ? '1' : '0');
+      return n;
+    });
+  const [, force] = useState(0);
   const [gazeUi, setGazeUi] = useState({ on: gaze.on, speed: gaze.speed, thr: gaze.thr });
   const setGaze = (g: Partial<typeof gazeUi>) =>
     setGazeUi((cur) => {
@@ -196,11 +267,14 @@ export function SpectatorView() {
   };
   const [hud, setHud] = useState({ connected: false, vr: false, tilt: false, walking: false, fps: 60, scale: 1, ping: NaN, msg: '', dev: 0, goal: '', dist: 0, litres: 0, recalcs: 0, drone: 'docked', head: 0, headAge: 0 });
   const scanned = useSimStore((s) => s.canyonScanned);
-  useDynamicRoute(status !== 'loading');
+  // Free walk only: in mission mode the optimizer replans, not the view.
+  useDynamicRoute(status !== 'loading' && !missionActive());
+  useMissionSource(status !== 'loading');
 
   // Socket: phone rotation in, world out.
   useEffect(() => {
     const socket = connect('spectator-host');
+    bindJarvisSync(socket);
     socket.on('state', (s: SyncState) => {
       remote.vrConnected = s.vr;
       if (s.vr && s.rotation && !remote.fresh) {
@@ -254,8 +328,10 @@ export function SpectatorView() {
     const down = (e: KeyboardEvent) => {
       keys.add(e.code);
       if (e.code === 'KeyV') setThirdPerson((t) => !t);
+      if (e.code === 'KeyJ') (toggleJarvis(), force((k) => k + 1));
+      if (e.code === 'KeyM') setMenuOpen((o) => !o);
       if (e.code === 'KeyF' || e.code === 'Space') deployDrone();
-      if (e.code === 'KeyR') recalculateRoute('recalculada a pedido');
+      if (e.code === 'KeyR' && !missionActive()) recalculateRoute('recalculada a pedido');
       if (e.code === 'KeyN') nextGoal();
       if (e.code === 'KeyG') setGaze({ on: !gaze.on });
       if (e.code === 'KeyL') setEnvUi((v) => ({ ...v, labels: !v.labels }));
@@ -309,12 +385,32 @@ export function SpectatorView() {
         <SharedWorld />
         <SuitModel firstPerson={!thirdPerson} />
         <HostLoop thirdPerson={thirdPerson} />
+        {/* Suit holograms: on the visor in first person, beside the astronaut in third person. */}
+        <VisorHud anchor={thirdPerson ? 'body' : 'visor'} fxStrength={thirdPerson ? 0.6 : 1} />
+        {/* JARVIS: detection frames on the objects; heading tape on the visor in first person. */}
+        <JarvisOverlay anchor={thirdPerson ? 'world' : 'visor'} />
         <Governor />
         <Effects />
       </Canvas>
 
-      <div className="absolute top-3 left-3 glass p-3 w-[min(360px,calc(100vw-24px))] text-[11px] text-slate-200 space-y-1.5">
-        <div className="font-display tracking-[0.25em] text-cyan-200 text-sm">ARES-TWIN · ESPECTADOR</div>
+      {/* Left menu: folds down to its header (M) so the view keeps the screen. */}
+      <div className={`absolute top-3 left-3 glass p-3 text-[11px] text-slate-200 space-y-1.5 max-h-[calc(100vh-24px)] overflow-y-auto ${menuOpen ? 'w-[min(360px,calc(100vw-24px))]' : 'w-auto'}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-display tracking-[0.25em] text-cyan-200 text-sm">ARES-TWIN{menuOpen ? ' · ESPECTADOR' : ''}</div>
+          <button onClick={() => setMenuOpen((o) => !o)} title="Mostrar u ocultar el menú (M)" className="px-2 py-0.5 rounded border border-slate-600 text-slate-300">
+            {menuOpen ? '◀ ocultar' : '☰ menú'}
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => (toggleJarvis(), force((k) => k + 1))} title="Vista JARVIS o normal (J)" className={`px-2 py-0.5 rounded border ${jarvis.on ? 'border-fuchsia-400/80 text-fuchsia-200' : 'border-slate-600 text-slate-400'}`}>
+            {jarvis.on ? '◆ JARVIS' : '○ Vista normal'} (J)
+          </button>
+          <span className={`font-mono ${hud.connected ? 'text-emerald-300' : 'text-red-300'}`}>●</span>
+          <span className={`font-mono ${hud.vr ? 'text-emerald-300' : 'text-slate-500'}`}>casco</span>
+        </div>
+        {menuOpen && (
+        <>
+        {REAL && <ModeLinks />}
         <div className="flex gap-3 font-mono">
           <span className={hud.connected ? 'text-emerald-300' : 'text-red-300'}>● servidor</span>
           <span className={hud.vr ? 'text-emerald-300' : 'text-slate-500'}>● casco VR {hud.vr ? 'conectado' : 'no conectado'}</span>
@@ -324,12 +420,16 @@ export function SpectatorView() {
           Casco: rumbo <b className="text-cyan-200">{hud.head.toFixed(0)}°</b>{' '}
           {hud.vr ? (hud.headAge < 500 ? <span className="text-emerald-300">· en vivo</span> : <span className="text-amber-300">· sin datos del celular</span>) : <span className="text-slate-500">· mouse / Q-E</span>}
         </div>
-        <div>
-          Objetivo: <b className="text-amber-200">{hud.goal}</b> · {hud.dist.toFixed(0)} m · ruta {hud.litres.toFixed(1)} L de O₂
-        </div>
-        <div className="text-slate-400">
-          Desvío de la ruta óptima: <span className={hud.dev > 3.5 ? 'text-amber-300' : 'text-slate-200'}>{hud.dev.toFixed(1)} m</span> (recalcula sobre 3,5 m) · {hud.recalcs} cálculos A*
-        </div>
+        {!missionActive() && (
+          <>
+            <div>
+              Objetivo: <b className="text-amber-200">{hud.goal}</b> · {hud.dist.toFixed(0)} m · ruta {hud.litres.toFixed(1)} L de O₂
+            </div>
+            <div className="text-slate-400">
+              Desvío de la ruta óptima: <span className={hud.dev > 3.5 ? 'text-amber-300' : 'text-slate-200'}>{hud.dev.toFixed(1)} m</span> (recalcula sobre 3,5 m) · {hud.recalcs} cálculos A*
+            </div>
+          </>
+        )}
         <div className="text-emerald-200/90 leading-snug">{hud.msg}</div>
         {REAL && SITES.length > 0 && (
           <div className="text-slate-400">
@@ -343,9 +443,11 @@ export function SpectatorView() {
           <button onClick={() => setThirdPerson((t) => !t)} className="px-2 py-1 rounded border border-slate-600">
             {thirdPerson ? '1ª persona (V)' : '3ª persona (V)'}
           </button>
-          <button onClick={() => recalculateRoute('recalculada a pedido')} className="px-2 py-1 rounded border border-slate-600">
-            Recalcular (R)
-          </button>
+          {!missionActive() && (
+            <button onClick={() => recalculateRoute('recalculada a pedido')} className="px-2 py-1 rounded border border-slate-600">
+              Recalcular (R)
+            </button>
+          )}
         </div>
         <div className="rounded border border-slate-700/80 p-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
@@ -366,6 +468,8 @@ export function SpectatorView() {
           </label>
           <div className="text-[10px] text-slate-500">[ / ] o − / +: bajar o subir la velocidad · una persona camina a ~1,4 m/s</div>
         </div>
+        {missionActive() ? <MissionPanel /> : <SuitControls />}
+        {REAL && <LayerControls />}
         <div className="rounded border border-slate-700/80 p-2 space-y-1.5">
           <label className="flex items-center gap-2">
             <span className="w-24 text-slate-400">Hora solar</span>
@@ -389,8 +493,11 @@ export function SpectatorView() {
         <div className="text-[10px] text-slate-500 leading-snug">
           WASD / flechas: caminar hacia donde mira el casco · Shift: más rápido · N: siguiente objetivo
           {!hud.vr && ' · sin casco: arrastrá el mouse o Q/E para girar'}
-          {hud.vr && hud.tilt && ' · el celular no tiene giroscopio: girá con Q/E o el mouse'}
+          {hud.vr && hud.tilt && ' · el celular no tiene giroscopio: girá con Q/E o el mouse'} · J: JARVIS / normal · M: menú
         </div>
+        <HallazgosPanel />
+        </>
+        )}
       </div>
       {status === 'loading' && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass px-3 py-1.5 text-[11px] text-cyan-200">{REAL ? 'Cargando el terreno real (DEM, HiRISE, sitios CRISM)…' : 'Cargando Marte desde NASA Mars Trek…'}</div>}
     </div>

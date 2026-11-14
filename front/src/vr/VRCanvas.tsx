@@ -21,6 +21,11 @@ import { compass, compassQuaternion, gravity, gravityQuaternion, headingDeg, mag
 import { rt } from '../store/simEngine';
 import { heightAt } from '../lib/terrain';
 import { Q, toneMap } from '../render/quality';
+import { VisorHud, applyBio } from '../hud';
+import { JarvisOverlay } from '../jarvis/JarvisOverlay';
+import { bindJarvisSync, toggleJarvis } from '../jarvis/sync';
+import { applyMissionView } from '../mission/mission';
+import { layerState, setLayer, type CapaId } from '../lib/layers';
 
 const net = { state: null as SyncState | null, routeId: -1, pose: null as PoseNet | null, poseAt: 0, rtt: NaN };
 /** Longest the phone extrapolates a pose (s): beyond it, a stalled laptop must not drift you away. */
@@ -209,13 +214,32 @@ export function VRCanvas() {
   const sensor = mode === 'sensor';
   const [stereo, setStereo] = useState(true);
   const [recenter, setRecenter] = useState(0);
+  // Cardboard button = one tap: JARVIS ↔ normal view. Two quick taps: recentre (as before).
+  const tap = useRef({ timer: 0 });
+  const onTap = () => {
+    if (!started) return;
+    if (tap.current.timer) {
+      window.clearTimeout(tap.current.timer);
+      tap.current.timer = 0;
+      setRecenter((k) => k + 1);
+      return;
+    }
+    tap.current.timer = window.setTimeout(() => {
+      tap.current.timer = 0;
+      toggleJarvis();
+    }, 300);
+  };
   const [problem, setProblem] = useState('');
   const [hud, setHud] = useState({ connected: false, host: false, ping: NaN, heading: 0, pitch: 0, source: '', samples: 0, sent: 0, walking: false, gazeSpeed: 0, poseRelay: false });
   const secure = window.isSecureContext;
 
   useEffect(() => {
     const socket = connect('vr-client');
-    socket.on('state', (s: SyncState) => (net.state = s));
+    bindJarvisSync(socket);
+    socket.on('state', (s: SyncState) => {
+      net.state = s;
+      if (s.bio) applyBio(s.bio);
+    });
     socket.on('pose', (p: PoseNet) => {
       net.pose = p;
       net.poseAt = performance.now();
@@ -226,6 +250,8 @@ export function VRCanvas() {
         applyRoute(w.route);
       }
       applyCanyonScanned(w.canyonScanned);
+      if (w.mission) applyMissionView(w.mission);
+      if (w.capa && w.capa !== layerState.actual) void setLayer(w.capa as CapaId);
     });
     const id = window.setInterval(async () => {
       net.rtt = await ping();
@@ -287,7 +313,7 @@ export function VRCanvas() {
 
   return (
     // HTML labels are drawn for one camera only: hide them in the split-screen headset.
-    <div className={`fixed inset-0 bg-black select-none ${started && stereo ? 'vr-stereo' : ''}`} onDoubleClick={() => setRecenter((k) => k + 1)}>
+    <div className={`fixed inset-0 bg-black select-none ${started && stereo ? 'vr-stereo' : ''}`} onClick={onTap}>
       <Canvas
         shadows="percentage"
         dpr={[1, Q.dprMax]}
@@ -296,6 +322,9 @@ export function VRCanvas() {
       >
         <SharedWorld />
         {started && <HeadRig mode={mode} recenter={recenter} />}
+        {/* Suit holograms on the visor (one per eye in stereo) and the lens layer. */}
+        {started && <VisorHud stereo={stereo} />}
+        {started && <JarvisOverlay stereo={stereo} />}
         {/* Your own body: look down and you see the suit, the boots and your shadow. */}
         <SuitModel firstPerson />
         <Governor target={38} min={0.7} />
@@ -317,7 +346,7 @@ export function VRCanvas() {
           <button onClick={start} disabled={status === 'loading'} className="px-6 py-3 rounded-lg border border-cyan-300 text-cyan-100 bg-cyan-500/20 text-lg disabled:opacity-40">
             {status === 'loading' ? 'Cargando Marte…' : 'Entrar al casco'}
           </button>
-          <p className="text-[11px] text-slate-500">Doble toque: tomar la dirección actual como «adelante».</p>
+          <p className="text-[11px] text-slate-500">Un toque (botón del Cardboard): vista JARVIS o normal · Doble toque: tomar la dirección actual como «adelante».</p>
         </div>
       )}
 

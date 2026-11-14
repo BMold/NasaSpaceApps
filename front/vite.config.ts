@@ -17,24 +17,29 @@ const BACKEND = process.env.ARES_BACKEND ?? 'http://127.0.0.1:8000';
 
 // The shared terrain package lives at the repo root (../terreno) and is served
 // as is: one copy for the optimizer, the backend and the 3D views.
-const TERRENO = fileURLToPath(new URL('../terreno/', import.meta.url));
-const TYPES: Record<string, string> = { json: 'application/json', bin: 'application/octet-stream', jpg: 'image/jpeg' };
+// The mission logs (../logs: .jsonl + .marcadores.json) are served the same way for the replay mode.
+const SHARED: Record<string, string> = {
+  '/terreno': fileURLToPath(new URL('../terreno/', import.meta.url)),
+  '/logs': fileURLToPath(new URL('../logs/', import.meta.url)),
+};
+const TYPES: Record<string, string> = { json: 'application/json', bin: 'application/octet-stream', jpg: 'image/jpeg', jsonl: 'application/x-ndjson' };
 
 function terrenoPackage(): Plugin {
   return {
     name: 'ares-terreno',
     configureServer(server) {
-      server.middlewares.use('/terreno', (req, res, next) => {
-        const name = decodeURIComponent((req.url ?? '/').split('?')[0]).replace(/^\/+/, '');
-        // Flat package: plain file names only (no sub-folders, no "..").
-        const ext = /^[\w.-]+\.(json|bin|jpg)$/.exec(name)?.[1];
-        const file = ext && !name.includes('..') ? TERRENO + name : '';
-        if (!file || !existsSync(file)) return next();
-        res.setHeader('Content-Type', TYPES[ext!]);
-        res.setHeader('Content-Length', statSync(file).size);
-        res.setHeader('Cache-Control', 'no-cache');
-        createReadStream(file).pipe(res);
-      });
+      for (const [mount, dir] of Object.entries(SHARED))
+        server.middlewares.use(mount, (req, res, next) => {
+          const name = decodeURIComponent((req.url ?? '/').split('?')[0]).replace(/^\/+/, '');
+          // Flat folders: plain file names only (no sub-folders, no "..").
+          const ext = /^[\w.-]+\.(json|bin|jpg|jsonl)$/.exec(name)?.[1];
+          const file = ext && !name.includes('..') ? dir + name : '';
+          if (!file || !existsSync(file)) return next();
+          res.setHeader('Content-Type', TYPES[ext!]);
+          res.setHeader('Content-Length', statSync(file).size);
+          res.setHeader('Cache-Control', 'no-cache');
+          createReadStream(file).pipe(res);
+        });
     },
   };
 }
@@ -71,6 +76,14 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': { target: BACKEND, changeOrigin: true, timeout: 2000, proxyTimeout: 2000 },
+      // Backend WebSocket (live mode). The page's origin is the laptop's LAN address, which the
+      // backend's origin allow-list does not know: drop it, the proxy is the one connecting.
+      '/ws': {
+        target: BACKEND.replace(/^http/, 'ws'),
+        ws: true,
+        changeOrigin: true,
+        configure: (proxy) => proxy.on('proxyReqWs', (proxyReq) => proxyReq.removeHeader('origin')),
+      },
     },
   },
   build: {

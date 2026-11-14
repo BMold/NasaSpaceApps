@@ -1,14 +1,16 @@
 """Construye el paquete terreno/ con DATOS REALES de Gale (contratos/INTEGRACION.md §3).
 
     python herramientas/construir_terreno.py            # usa datos_crudos/ (ver datos_crudos/LEEME.md)
+    python herramientas/construir_terreno.py --solo-tes # solo (re)escribe la capa TES en el paquete existente
 
 Entradas (datos_crudos/):
     usgs/dem_gale_1m_ventana.npy + .json   recorte del USGS "Mars MSL Gale Merged DEM 1m v3" (herramientas/gale.py)
     hirise/.../esp_087149_1750_color.jp2   HiRISE RDR color (IR, RED, BG), 0,25 m/px
     crism/frt0000b6f1_07_su165j_mtr3_bandas.npz   parametros de resumen CRISM MTRDR, 18 m/px
+    tes/tes_nb2007_gale.npz                 inercia termica nocturna de MGS TES (Putzig y Mellon 2007), 20 px/grado
 
 Salida (terreno/): manifest.json, elevacion.bin, eta_terreno.bin, peligro.bin, pendiente_deg.bin, ortofoto.jpg,
-crism_*.bin, sitios.json, vista_previa.jpg, SHA256SUMS.
+crism_*.bin, tes_inercia_termica.bin, sitios.json, vista_previa.jpg, SHA256SUMS.
 
 Marco local: origen = esquina SO de la ventana, x = Este, y = Norte, metros; fila 0 = sur en los .bin.
 Todo es determinista: mismas entradas -> mismos bytes.
@@ -21,9 +23,13 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import rasterio
 from PIL import Image, ImageDraw
-from rasterio.windows import Window
+
+try:  # la reconstruccion completa lo necesita; --solo-tes no
+    import rasterio
+    from rasterio.windows import Window
+except ImportError:
+    rasterio = Window = None
 from scipy.ndimage import gaussian_filter, map_coordinates, median_filter
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -46,6 +52,57 @@ CRISM_X0, CRISM_Y0, CRISM_TAM = 8138478.6, -278195.96, 18.0      # del .hdr (esq
 #   coordenada en el producto = coordenada DEM + desfase   (este, norte) en metros
 REG_HIRISE = (-9.0, -136.0)       # NCC 0,43 (sin corregir: -0,02); precision ~1 m
 REG_CRISM = (126.0, -90.0)        # NCC 0,38 (sin corregir: -0,12); precision ~9 m (medio pixel CRISM)
+
+# Inercia termica de TES: mapa nocturno de Putzig y Mellon (2007), 20 px/grado, recortado a 26 x 26 celdas.
+# Fila 0 del recorte = la mas al SUR; columnas en longitud OESTE creciente (datos_crudos/LEEME.md).
+TES = CRUDOS / "tes/tes_nb2007_gale.npz"
+TES_PX_DEG = 20
+
+
+def capa_tes(x_sw, y_sw, n):
+    """Inercia termica TES en cada celda (vecino mas cercano). Un pixel TES mide ~3 km: no se interpola,
+    porque cualquier variacion dentro de la ventana seria inventada."""
+    z = np.load(TES)
+    ti = z["ti"].astype("<f4")
+    f0, c0 = int(z["fila0"]), int(z["col0"])
+    centros = (np.arange(n) + 0.5) * TAM
+    lat = np.degrees((y_sw + centros) / R_MARTE)          # por fila (fila 0 = sur)
+    lon_e = np.degrees((x_sw + centros) / R_MARTE)        # por columna
+    filas = np.floor((lat + 90.0) * TES_PX_DEG).astype(int) - f0
+    cols = np.floor((360.0 - lon_e) * TES_PX_DEG).astype(int) - c0
+    if filas.min() < 0 or cols.min() < 0 or filas.max() >= ti.shape[0] or cols.max() >= ti.shape[1]:
+        raise SystemExit("La ventana cae fuera del recorte TES de datos_crudos/tes/")
+    a = ti[filas[:, None], cols[None, :]]
+    info = {"archivo": "tes_inercia_termica.bin", "dtype": "float32", "unidad": "J m-2 K-1 s-1/2",
+            "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (~3 km)",
+            "resolucion_nativa_m": 2960.0,
+            "descripcion": f"vecino mas cercano; la ventana cae en {len(np.unique(a))} pixel(es) TES, "
+                           f"valor {', '.join(f'{v:.0f}' for v in np.unique(a))}: no hay detalle termico dentro de la ventana"}
+    return a, info
+
+
+def solo_tes():
+    """Agrega o reemplaza la capa TES en el paquete existente sin tocar las demas capas."""
+    m = json.loads((SALIDA / "manifest.json").read_text(encoding="utf-8"))
+    g = m["georreferencia"]
+    a, info = capa_tes(g["x_sw_m"], g["y_sw_m"], m["filas"])
+    a.astype("<f4").tofile(SALIDA / info["archivo"])
+    m["capas"]["tes_inercia_termica"] = info
+    (SALIDA / "manifest.json").write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    # Solo cambian los hashes de lo que se escribio; los demas se conservan tal cual. En Windows, git puede haber
+    # convertido los .json a CRLF en la copia local, y su hash ya no seria el del archivo del repo.
+    ruta = SALIDA / "SHA256SUMS"
+    sumas = {}
+    if ruta.exists():
+        for linea in ruta.read_text(encoding="utf-8").splitlines():
+            if linea.strip():
+                h, nombre = linea.split("  ", 1)
+                sumas[nombre] = h
+    for nombre in ("manifest.json", info["archivo"]):
+        sumas[nombre] = hashlib.sha256((SALIDA / nombre).read_bytes()).hexdigest()
+    ruta.write_text("".join(f"{h}  {nombre}\n" for nombre, h in sorted(sumas.items())), encoding="utf-8", newline="\n")
+    print(f"terreno/{info['archivo']}: {info['descripcion']}")
+
 
 # Clase del contrato -> parametros de resumen CRISM (Viviano-Beck et al. 2014) que la indican
 INDICES = {
@@ -233,6 +290,10 @@ def main():
         capas[f"crism_{nombre.lower()}"] = {
             "archivo": archivo, "dtype": "float32", "sin_dato": "nan", "fuente": fuente_crism, "resolucion_nativa_m": CRISM_TAM,
             "descripcion": f"parametro de resumen {nombre} (indicio de {clase}); p90 de la escena = {estad[nombre]['p90']:.4f}"}
+    if TES.exists():
+        tes, info_tes = capa_tes(x_sw, y_sw, n)
+        tes.astype("<f4").tofile(SALIDA / info_tes["archivo"])
+        capas["tes_inercia_termica"] = info_tes
     manifest = {
         "version": VERSION,
         "sitio": "Mount Sharp (Aeolis Mons), crater Gale, Marte: unidad de sulfatos, ladera norte",
@@ -304,4 +365,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    solo_tes() if "--solo-tes" in sys.argv else main()

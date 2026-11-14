@@ -12,6 +12,7 @@ import { SKY_GLSL } from './marsSky';
 import { skyUniforms } from '../components/canvas/Environment';
 import { terrainUniforms } from '../lib/gpuMaps';
 import { HALF, WORLD_SIZE } from '../lib/terrain';
+import { layerUniforms } from '../lib/layers';
 import { marsFog } from './marsFog';
 
 const loader = new THREE.TextureLoader();
@@ -221,7 +222,7 @@ export function makeGroundMaterial({ kind }: GroundOptions) {
       uHazeScaleH: skyUniforms.uHazeScaleH,
       uMarsFog: marsFog,
     });
-    if (site) Object.assign(shader.uniforms, terrainUniforms, siteAlbedo, shadeUniforms);
+    if (site) Object.assign(shader.uniforms, terrainUniforms, siteAlbedo, shadeUniforms, layerUniforms);
     else Object.assign(shader.uniforms, regionUniforms, siteAlbedo);
 
     shader.vertexShader = shader.vertexShader
@@ -245,6 +246,7 @@ ${
 uniform sampler2D uShade; uniform vec3 uShadowFocus;
 uniform sampler2D uFow; uniform float uFowStrength;
 uniform sampler2D uCost; uniform float uCostOn;
+uniform sampler2D uLayer; uniform float uLayerOn;
 uniform vec2 uRoverPos; uniform vec2 uRoverDir; uniform float uTime;
 uniform vec3 uScanPos; uniform float uScanOn;
 const float T_HALF = ${HALF.toFixed(1)}; const float T_SIZE = ${WORLD_SIZE.toFixed(1)}; const float T_CELL = 2.5;`
@@ -308,6 +310,14 @@ ${
     vec2 gc = fract((vWPos.xz + T_HALF) / T_CELL);
     float line = 1.0 - smoothstep(0.0, 0.05, min(min(gc.x, 1.0 - gc.x), min(gc.y, 1.0 - gc.y)));
     diffuseColor.rgb = mix(diffuseColor.rgb, cc, (0.22 + line * 0.25) * m);
+  }
+  if (uLayerOn > 0.5) {
+    // Data layer of the package (lib/layers.ts): the mineral / slope colour over the ground, a little self-lit
+    // so it still reads in the shade.
+    vec4 lc = texture2D(uLayer, wuv);
+    vec3 lin = pow(lc.rgb, vec3(2.2));
+    diffuseColor.rgb = mix(diffuseColor.rgb, lin, lc.a * 0.85);
+    gExtraEmit += lin * lc.a * 0.06;
   }
   if (uScanOn > 0.0) {
     float d = distance(vWPos.xz, uScanPos.xz);

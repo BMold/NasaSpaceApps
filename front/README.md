@@ -56,6 +56,67 @@ Por defecto la escena usa el paquete real `../terreno/` (CLAUDE.md §6), el mism
 ARES_BACKEND=http://192.168.1.50:8000 npm run dev:vr
 ```
 
+## Fuentes de la escena: libre, misión registrada y backend en vivo
+
+El panel de la laptop elige la **Fuente** (o la URL `?modo=`):
+
+| Fuente | URL | Qué mueve al astronauta y de dónde salen los números |
+|---|---|---|
+| Libre | `?role=spectator` | Teclado o mirar abajo. Ruta A* local, biodatos simulados (§10.4). Para jugar con la VR. |
+| Misión registrada | `?role=spectator&modo=mision` | Reproduce `../logs/sesion-2026-11-12-mision.jsonl` (`&registro=<nombre>` para otro). Play/pausa, ×10–×120, línea de tiempo y saltos por marcador (empiezan 30 s antes). |
+| Backend en vivo | `?role=spectator&modo=vivo` | WebSocket `/ws?rol=vr` del backend (Vite lo reenvía a `ARES_BACKEND`). |
+
+En los dos modos de misión la vista **no calcula nada** (CLAUDE.md §14). Cada elemento sale de un mensaje:
+- **Posición:** la telemetría, interpolada.
+- **Ruta:** `plan.polilinea`, y después de `abortar`, `ruta_escape`. La ruta vieja se desvanece en 2 s.
+- **O₂, margen y O₂ mínimo:** `estado_aborto`.
+- **Pulso y VO₂:** la telemetría.
+- **Hora solar:** el sol Mars24 de la escena.
+- **Sitios en el plan o recogidos:** `plan.paradas` y `hito` `muestra`.
+- **Peligros:** cilindros rojos para `bloqueo` y ámbar para `multiplicador`.
+- **Avisos:** 4 s en el visor cuando hay replanificación o aborto.
+- **Vista lejana:** 3 s al llegar un `abortar`.
+
+El celular recibe todo esto desde la laptop.
+
+Para probar el modo en vivo sin la telemetría real:
+
+```bash
+python -m uvicorn backend.app.main:app --port 8000      # desde la raíz del repo
+python herramientas/reproducir_en_backend.py            # hace de telemetría: manda el registro al backend a ×30
+```
+
+## Capas del paquete sobre el relieve
+
+**Capa** en la laptop (el celular la sigue):
+- **Minerales:** los índices CRISM de cada mineral, o todos juntos (gana el más fuerte), con su color acordado. La intensidad es cuánto supera el índice el p90 de la escena. Son indicios, no detecciones.
+- **Pendiente:** ámbar hasta 30°, rojo donde no se puede caminar.
+- **Inercia térmica TES:** se muestra como número (241 en toda la ventana, que cae en un único píxel de ~3 km). No se pinta, para no sugerir un detalle que no existe.
+
+## Vista JARVIS (`src/jarvis/`)
+
+Visión aumentada en primera persona, compartida por el casco y la laptop.
+
+- **Detección en tiempo real (simulada):** 10 veces por segundo, el sensor del traje reporta los objetos del campo visual que están al alcance y a la vista (el relieve puede taparlos): rocas y bloques de 0,5 m o más, sitios CRISM, el hábitat, los peligros de la misión y las anomalías de campo. El tamaño medido tiene un error que crece con la distancia. **No hay una red neuronal sobre la cámara:** la escena conoce sus objetos y el sensor los informa.
+- **Comparación con una BD simulada:** un relevamiento orbital (tipo HiRISE) con el 82 % de las rocas grandes, medidas con ruido. Cada detección se compara por posición, tamaño y forma con la entrada más parecida:
+  - **catalogado** (≥ 75 %, cian);
+  - **parecido**, hay que revisarlo (45–75 %, blanco);
+  - **NUEVO** (magenta).
+- **Lo nuevo que vale la pena demostrar:** las anomalías de campo (posible meteorito metálico, veta clara, concreciones) no están en ninguna BD y se marcan con **★ vale la pena documentar** y el motivo. Quedan en el registro de **Hallazgos** de la laptop, con posición y momento.
+- **En el visor:** marcos y etiquetas grandes a la profundidad real de cada objeto (se ven bien en el Cardboard), una cinta de rumbo con el hábitat y el próximo objetivo, y paneles de O₂ y pulso más grandes.
+- **JARVIS o vista normal:** con la tecla **J** o el botón de la laptop, o con **un toque** en el celular (el botón del Cardboard). Los dos dispositivos se sincronizan. La vista normal deja solo las alertas de seguridad y los efectos de lente. El doble toque sigue recentrando.
+- **Menú de la laptop:** se pliega a su encabezado con el botón o la tecla **M**, y recuerda el estado.
+
+## HUD del traje (`src/hud/`)
+
+Sin paneles planos: todo lo que ve el astronauta es un holograma 3D dentro de la escena, así que el Cardboard lo dibuja en cada ojo con su profundidad.
+
+- **Biodatos** ([bio.ts](src/hud/bio.ts)): la laptop los simula con el modelo de CLAUDE.md §10.4. Pandolf al caminar (a paso de 1,4 m/s, aunque la demo te mueva más rápido), 250 W quieto; `VO₂ = M·κ·(1 + ε)`; `FC = 70 + 55·VO₂`. Parte de 40 L de O₂ y los envía al celular en el estado sincronizado. Son órdenes de magnitud para la demo.
+- **Visor** ([VisorHud.tsx](src/hud/VisorHud.tsx)): a la izquierda, O₂ (anillo con la marca fija de `O2_minimo_L`, litros, minutos, margen, O₂ para volver); a la derecha, pulso con ECG en vivo, VO₂ y potencia; arriba, un aviso solo en crisis. En tercera persona, los paneles flotan junto al astronauta.
+- **Barrera de supervivencia** ([ReturnBarrier.tsx](src/hud/ReturnBarrier.tsx)): el campo de retorno R(p) (Dijkstra inverso desde el hábitat) se dibuja como una cortina de luz roja donde `O₂ = 1,15·R(p)`, que es la línea de aborto de §9. Una línea ámbar marca el 30 %. Se cierra hacia el hábitat a medida que baja el O₂.
+- **Efectos de lente:** escarcha desde el borde (zona fría, noche o «Frío extremo»), viñeta roja que late con el pulso (margen ≤ 30 % y ≤ 15 %, taquicardia) y túnel con velo al quedarse sin O₂. En la laptop se suman aberración cromática, desaturación y desenfoque.
+- **Controles de la laptop (Traje):** tiempo ×1 / ×10 / ×30, fatiga VO₂ ×1,3, fuga de O₂, frío extremo y O₂ lleno.
+
 ## Orientación tipo brújula
 
 El celular usa su orientación absoluta cuando la tiene (`deviceorientationabsolute` en Android, `webkitCompassHeading` en iPhone): mirar al norte real es mirar al norte en Marte. Si el teléfono no tiene brújula, usa el giroscopio relativo. El texto arriba de cada ojo muestra el rumbo y la fuente (`brújula` o `giroscopio`). Doble toque toma la dirección actual como «adelante».

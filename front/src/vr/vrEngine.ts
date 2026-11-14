@@ -399,6 +399,29 @@ export function applyRoute(points: [number, number][]) {
   bumpRoute();
 }
 
+// ---------------------------------------------------------------------------
+// Mission mode (laptop): pose and routes come from the optimizer's messages
+// ---------------------------------------------------------------------------
+/** Place the astronaut on the telemetry track. speed = walking speed for the suit animation. */
+export function setMissionPose(x: number, z: number, speed: number, moveYaw: number) {
+  vr.x = x;
+  vr.z = z;
+  vr.speed = speed;
+  if (speed > 0.05) vr.moveYaw = moveYaw;
+  syncRuntime();
+}
+
+/** Route to walk = the optimizer's polyline (scene coordinates); pushed to the phone. */
+export function setMissionRoute(points: XZ[], litres: number, label: string) {
+  rt.route = makeRoute(points.length ? points : [{ x: vr.x, z: vr.z }]);
+  rt.sAstro = 0;
+  vr.routeId++;
+  vr.routeLitres = litres;
+  vr.message = label;
+  bumpRoute();
+  onWorldChange?.();
+}
+
 /** Phone side: place the astronaut where the laptop says. */
 export function applyPose(x: number, z: number, heading: number) {
   vr.x = x;

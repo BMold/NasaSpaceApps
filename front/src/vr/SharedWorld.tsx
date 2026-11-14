@@ -11,6 +11,9 @@ import { ScoutDrone } from '../components/canvas/ScoutDrone';
 import { useMarsTrek } from '../hooks/useMarsTrek';
 import { useSimStore } from '../store/useSimStore';
 import { initVR } from './vrEngine';
+import { ReturnBarrier } from '../hud';
+import { MissionHazards } from '../mission/MissionHazards';
+import { Anomalies } from '../jarvis/Anomalies';
 
 export function SharedWorld() {
   return (
@@ -22,6 +25,9 @@ export function SharedWorld() {
         <Landmarks />
         <HazardVisuals />
         <ProjectedPath />
+        <ReturnBarrier />
+        <MissionHazards />
+        <Anomalies />
         <ScoutDrone />
       </Suspense>
     </>

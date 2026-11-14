@@ -11,7 +11,7 @@
 //
 // Nothing here is computed: id, mineral, value, mass and window come from the
 // site record; "planned / next / sampled" comes from the tour and the goal list.
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSimStore } from '../../store/useSimStore';
@@ -21,6 +21,7 @@ import { heightAt } from '../../lib/terrain';
 import { UNLIT } from '../../render/unlit';
 import { currentGoal } from '../../vr/vrEngine';
 import { formatHours } from '../../lib/marsTime';
+import { missionView } from '../../mission/mission';
 
 const HOVER = 2.7; // metres above the ground (above a suited astronaut's helmet)
 
@@ -182,7 +183,7 @@ function Hologram({ site, status, order, version }: { site: ScienceSite; status:
     const t = state.clock.elapsedTime;
     // The goal may change between React renders (it lives in the VR engine).
     const g = currentGoal();
-    const isNext = g?.code === site.code;
+    const isNext = status === 'next' || (!missionView.activo && g?.code === site.code);
     const gain = status === 'done' ? 0.35 : status === 'out' ? 0.45 : isNext ? 1.35 + 0.25 * Math.sin(t * 4) : 1;
     for (const m of [mats.holo, mats.beam, mats.ring, mats.pillar]) {
       m.uniforms.uTime.value = t + phase;
@@ -230,14 +231,30 @@ function Hologram({ site, status, order, version }: { site: ScienceSite; status:
 
 const _p = new THREE.Vector3();
 
+/** Re-render when the mission view changes (it lives outside React). */
+function useMissionViewVersion() {
+  const [v, setV] = useState(missionView.version);
+  useEffect(() => {
+    const id = window.setInterval(() => setV((cur) => (cur === missionView.version ? cur : missionView.version)), 250);
+    return () => window.clearInterval(id);
+  }, []);
+  return v;
+}
+
 export function MineralHolograms() {
   const version = useSimStore((s) => s.terrainVersion);
   const tour = useSimStore((s) => s.tour);
   useSimStore((s) => s.routeVersion); // a new goal comes with a new route
+  useMissionViewVersion();
   const goal = currentGoal();
   return (
     <>
       {SITES.filter((s) => s.mineralKey).map((s) => {
+        // Mission: planned = in plan.paradas, sampled = hito muestra (INTEGRACION §5.4). Free walk: the local tour.
+        if (missionView.activo) {
+          const st = missionView.sitios[s.realId ?? -1];
+          return <Hologram key={`${s.code}-${version}`} site={s} status={st?.s ?? 'out'} order={st?.o ?? null} version={version} />;
+        }
         const idx = tour?.stops.findIndex((x) => x.code === s.code) ?? -1;
         const stop = idx >= 0 ? tour!.stops[idx] : null;
         const status: Status = stop?.done ? 'done' : goal?.code === s.code ? 'next' : stop ? 'planned' : 'out';

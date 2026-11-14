@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ares_logs:/app/logs
+    environment:
+      ARES_TERRAIN_DIR: /app/terreno
+      ARES_LOGS_DIR: /app/logs
+      ARES_CORS_ORIGINS: ${ARES_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      ARES_WRITE_TOKEN: ${ARES_WRITE_TOKEN:-}
+      ARES_READ_TOKEN: ${ARES_READ_TOKEN:-}
+
+volumes:
+  ares_logs:

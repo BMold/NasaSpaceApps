@@ -2,6 +2,8 @@
 // In development the page and the socket share one origin: Vite proxies
 // /socket.io to the sync server on port 3000, so HTTPS works for both.
 import { io, type Socket } from 'socket.io-client';
+import type { BioNet } from '../hud/bio';
+import type { MissionViewNet } from '../mission/mission';
 
 export type Role = 'vr-client' | 'spectator-host';
 
@@ -26,6 +28,8 @@ export interface SyncState {
   storm?: number;
   gaze?: { on: boolean; speed: number; thr: number; walking: boolean } | null;
   drone: DroneNet | null;
+  /** Suit biodata simulated on the laptop (hud/bio.ts). */
+  bio?: BioNet | null;
   vr: boolean;
   host: boolean;
 }
@@ -45,6 +49,10 @@ export interface WorldNet {
   canyonScanned: boolean;
   goal: { code: string; x: number; z: number } | null;
   litres: number; // O₂ of the remaining route
+  /** Mission mode: sites, hazards, escape and notices built from the optimizer's messages. */
+  mission?: MissionViewNet;
+  /** Package layer draped over the relief (lib/layers.ts). */
+  capa?: string;
 }
 
 let socket: Socket | null = null;
