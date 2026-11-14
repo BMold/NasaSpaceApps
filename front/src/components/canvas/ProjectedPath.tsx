@@ -5,7 +5,7 @@ import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSimStore } from '../../store/useSimStore';
 import { rt, type Route } from '../../store/simEngine';
-import { heightAt } from '../../lib/terrain';
+import { heightAt, meshHeightAt } from '../../lib/terrain';
 import { UNLIT } from '../../render/unlit';
 
 const vert = /* glsl */ `
@@ -57,7 +57,8 @@ function buildRibbon(route: Route, width: number, lift: number): THREE.BufferGeo
     const lz = p.z + nz * width * 0.5;
     const rx = p.x - nx * width * 0.5;
     const rz = p.z - nz * width * 0.5;
-    pos.set([lx, heightAt(lx, lz) + lift, lz, rx, heightAt(rx, rz) + lift, rz], i * 6);
+    // On the triangles actually drawn (not the smooth surface): no clipping into the ground on the 2 m real mesh.
+    pos.set([lx, meshHeightAt(lx, lz) + lift, lz, rx, meshHeightAt(rx, rz) + lift, rz], i * 6);
     uv.set([s, 0, s, 1], i * 4);
     if (i < n - 1) {
       const a = i * 2;
@@ -96,7 +97,36 @@ function Ribbon({ kind }: { kind: 'main' | 'transit' }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [routeVersion, terrainVersion, kind],
   );
-  useEffect(() => () => geometry?.dispose(), [geometry]);
+  // Re-planned: the old ribbon stays and fades out in 2 s (CLAUDE.md §14), then it is freed.
+  const fading = useRef<{ geo: THREE.BufferGeometry; t0: number }[]>([]);
+  const fadeMesh = useRef<THREE.Group>(null);
+  useEffect(
+    () => () => {
+      if (geometry) fading.current.push({ geo: geometry, t0: -1 });
+    },
+    [geometry],
+  );
+  useEffect(
+    () => () => {
+      fading.current.forEach((f) => f.geo.dispose());
+      fading.current = [];
+    },
+    [],
+  );
+  const fadeMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: vert,
+        fragmentShader: frag,
+        uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color('#bfe9ff') }, uProgress: { value: 0 }, uOpacity: { value: 1 } },
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+      }),
+    [],
+  );
 
   const material = useMemo(
     () =>
@@ -124,10 +154,41 @@ function Ribbon({ kind }: { kind: 'main' | 'transit' }) {
     material.uniforms.uProgress.value = kind === 'main' ? rt.sAstro : 0;
     material.uniforms.uOpacity.value = kind === 'main' && missionMode === 'rescue' ? 0.35 : 1;
     (material.uniforms.uColor.value as THREE.Color).set(color);
+
+    // Old ribbons: one mesh each, opacity 1 → 0 over 2 s.
+    const g = fadeMesh.current;
+    if (!g) return;
+    const now = state.clock.elapsedTime;
+    let alpha = 0;
+    for (const f of fading.current) {
+      if (f.t0 < 0) f.t0 = now;
+      alpha = Math.max(alpha, 1 - (now - f.t0) / 2);
+    }
+    const alive = fading.current.filter((f) => now - f.t0 < 2);
+    for (const f of fading.current) if (!alive.includes(f)) f.geo.dispose();
+    fading.current = alive;
+    while (g.children.length > alive.length) g.remove(g.children[g.children.length - 1]);
+    alive.forEach((f, i) => {
+      let m = g.children[i] as THREE.Mesh | undefined;
+      if (!m) {
+        m = new THREE.Mesh(f.geo, fadeMaterial);
+        m.renderOrder = 4;
+        m.frustumCulled = false;
+        g.add(m);
+      }
+      m.geometry = f.geo;
+    });
+    fadeMaterial.uniforms.uOpacity.value = 0.8 * Math.max(0, alpha);
+    fadeMaterial.uniforms.uTime.value = material.uniforms.uTime.value;
+    (fadeMaterial.uniforms.uColor.value as THREE.Color).set(color);
   });
 
-  if (!geometry) return null;
-  return <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} />;
+  return (
+    <>
+      <group ref={fadeMesh} />
+      {geometry && <mesh geometry={geometry} material={material} renderOrder={5} frustumCulled={false} />}
+    </>
+  );
 }
 
 function GhostPath() {

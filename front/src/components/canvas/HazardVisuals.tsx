@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { useSimStore } from '../../store/useSimStore';
 import type { Hazard } from '../../lib/costmap';
 import { CANYON, heightAt } from '../../lib/terrain';
+import { REAL } from '../../lib/realTerrain';
 import { RockInstances } from './Rocks';
 import { UNLIT } from '../../render/unlit';
 
@@ -109,7 +110,7 @@ export function HazardVisuals() {
           <RockField key={h.id} h={h} />
         ),
       )}
-      <CanyonMarker />
+      {!REAL && <CanyonMarker />}
     </group>
   );
 }

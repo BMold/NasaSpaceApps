@@ -5,12 +5,12 @@
 // dropping below the horizon with the curvature of Mars.
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import { tiltAt } from '../../lib/terrain';
+import { HALF, tiltAt } from '../../lib/terrain';
 import { loadGale, regionalHeight } from '../../render/galeData';
 import { makeGroundMaterial } from '../../render/groundMaterial';
 import { Q } from '../../render/quality';
 
-const R_INNER = 96; // under the site tile (its corners reach 170 m)
+const R_INNER = HALF * 0.8; // under the site tile (its corners reach 1.41 × HALF)
 const R_OUTER = 108000;
 const MARS_RADIUS = 3389500;
 
@@ -24,8 +24,8 @@ function farHeight(x: number, z: number): number {
   const r = Math.hypot(x, z);
   // The tile ends on the plane tiltAt − 2; under the tile this mesh stays a little lower.
   const inside = Math.max(Math.abs(x), Math.abs(z));
-  const plane = tiltAt(Math.max(-700, Math.min(700, x)), Math.max(-700, Math.min(700, z))) - 2 - 0.8 * (1 - sstep(117, 121.5, inside));
-  const h = plane + (regionalHeight(x, z) - 2 - plane) * sstep(128, 620, r);
+  const plane = tiltAt(Math.max(-700, Math.min(700, x)), Math.max(-700, Math.min(700, z))) - 2 - 0.8 * (1 - sstep(HALF - 3, HALF + 1.5, inside));
+  const h = plane + (regionalHeight(x, z) - 2 - plane) * sstep(HALF + 8, HALF + 500, r);
   return h - (r * r) / (2 * MARS_RADIUS);
 }
 

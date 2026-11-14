@@ -11,6 +11,7 @@ import { Q, tier } from './quality';
 import { SKY_GLSL } from './marsSky';
 import { skyUniforms } from '../components/canvas/Environment';
 import { terrainUniforms } from '../lib/gpuMaps';
+import { HALF, WORLD_SIZE } from '../lib/terrain';
 import { marsFog } from './marsFog';
 
 const loader = new THREE.TextureLoader();
@@ -246,7 +247,7 @@ uniform sampler2D uFow; uniform float uFowStrength;
 uniform sampler2D uCost; uniform float uCostOn;
 uniform vec2 uRoverPos; uniform vec2 uRoverDir; uniform float uTime;
 uniform vec3 uScanPos; uniform float uScanOn;
-const float T_HALF = 120.0; const float T_SIZE = 240.0; const float T_CELL = 2.5;`
+const float T_HALF = ${HALF.toFixed(1)}; const float T_SIZE = ${WORLD_SIZE.toFixed(1)}; const float T_CELL = 2.5;`
     : `uniform sampler2D uMidAlb; uniform sampler2D uRegAlb; uniform sampler2D uFarAlb; uniform float uRegionOn;
 float boxFade(vec2 p, float half_, float band) { vec2 a = abs(p) / half_; return 1.0 - smoothstep(1.0 - band, 1.0, max(a.x, a.y)); }`
 }
@@ -275,7 +276,7 @@ ${
     macroL = texture2D(uFarAlb, vWPos.xz / 220000.0 + 0.5).r;
     macroL = mix(macroL, texture2D(uRegAlb, vWPos.xz / 11000.0 + 0.5).r, boxFade(vWPos.xz, 5500.0, 0.12));
     macroL = mix(macroL, texture2D(uMidAlb, vWPos.xz / 2560.0 + 0.5).r, boxFade(vWPos.xz, 1280.0, 0.10));
-    if (uSiteAlbOn > 0.5) macroL = mix(macroL, texture2D(uSiteAlb, vWPos.xz / 240.0 + 0.5).r, boxFade(vWPos.xz, 120.0, 0.02));
+    if (uSiteAlbOn > 0.5) macroL = mix(macroL, texture2D(uSiteAlb, vWPos.xz / ${WORLD_SIZE.toFixed(1)} + 0.5).r, boxFade(vWPos.xz, ${HALF.toFixed(1)}, 0.02));
   }
   Ground g = marsGround(vWPos, geoN, 0.0, macroL, camD, uSunDir);
 #ifdef GROUND_STRATA

@@ -2,15 +2,17 @@
 // telemetry and entity placement all sample the same grid so the 3D scene and
 // the simulation never disagree about where the ground is.
 import { fbm, ridged, mulberry32 } from './noise';
+import { REAL, REAL_HALF } from './realTerrain';
 
 export interface XZ {
   x: number;
   z: number;
 }
 
-export const WORLD_SIZE = 240; // metres
+// Real package: the 480 m window of terreno/ (2 m mesh over its 2.5 m DEM). Procedural analog: 240 m at 1 m.
+export const WORLD_SIZE = REAL ? 2 * REAL_HALF : 240; // metres
 export const HALF = WORLD_SIZE / 2;
-export const HF_RES = 241; // vertices per side → 1 m spacing
+export const HF_RES = 241; // vertices per side
 export const HF_STEP = WORLD_SIZE / (HF_RES - 1);
 
 // World frame: +x = east, -z = north. Heading 0 = north, +π/2 = east.
@@ -43,6 +45,8 @@ export const CRATERS: Crater[] = [
   { x: 20, z: -82, r: 10, d: 4 },
   { x: -20, z: -60, r: 6, d: 2 },
 ];
+// The real window has its own relief: no invented craters there.
+if (REAL) CRATERS.length = 0;
 
 export const DUNES = { x: 52, z: 16, r: 28 };
 
@@ -55,6 +59,7 @@ export const RIDGE_H = 12;
 export const RIDGE_W = 29;
 
 export function canyonMask(x: number, z: number): number {
+  if (REAL) return 0; // the canyon only exists in the procedural analog
   const t = x * RD.x + z * RD.z;
   const u = x * RN.x + z * RN.z;
   return Math.exp(-(((t - CANYON_T) / 6.5) ** 4)) * Math.exp(-((u / 12) ** 4));
@@ -183,7 +188,8 @@ function genRocks() {
   const rng = mulberry32(4242);
   ROCKS.length = 0;
   let tries = 0;
-  while (ROCKS.length < 280 && tries++ < 5000) {
+  const count = REAL ? 520 : 280; // same density over the 4× larger real window
+  while (ROCKS.length < count && tries++ < 10000) {
     const x = (rng() * 2 - 1) * (HALF - 6);
     const z = (rng() * 2 - 1) * (HALF - 6);
     if (Math.hypot(x - BASE_A.x, z - BASE_A.z) < 15) continue;
@@ -191,6 +197,12 @@ function genRocks() {
     if (canyonMask(x, z) > 0.05) continue;
     ROCKS.push({ x, z, s: 0.22 + Math.pow(rng(), 3) * 1.8, sy: 0.55 + rng() * 0.5, rot: rng() * Math.PI * 2 });
   }
+}
+
+/** Scatter the boulders again (after the habitat moved), keeping `clear` points free. */
+export function regenRocks(clear: XZ[], r = 7) {
+  genRocks();
+  clearRocksNear(clear, r);
 }
 
 /** Remove boulders around points that must stay walkable (science sites). */
@@ -203,7 +215,7 @@ export function buildHeightfield(
   demData: GridData | null = null,
   albedoData: GridData | null = null,
   source = 'procedural',
-  opts: { hiRes?: boolean; tilt?: { east: number; north: number } } = {},
+  opts: { hiRes?: boolean; tilt?: { east: number; north: number }; real?: (x: number, z: number) => number } = {},
 ) {
   dem = demData;
   albedo = albedoData;
@@ -212,12 +224,18 @@ export function buildHeightfield(
   const tE = opts.tilt?.east ?? 0;
   const tN = opts.tilt?.north ?? 0;
   const g = Math.hypot(tE, tN);
-  const k = g > 0.12 ? 0.12 / g : 1;
+  // (Real DEM: the true regional slope, already in its heights; never scaled.)
+  const k = opts.real || g <= 0.12 ? 1 : 0.12 / g;
   siteTerrain.tiltEast = tE * k;
   siteTerrain.tiltNorth = tN * k;
   const macroAmp = dem ? 2.2 : opts.hiRes ? 1.6 : 6;
-  const sample = (x: number, z: number) =>
-    rawSample(x, z, macroAmp) + (dem ? sampleGrid(dem, x, z, 1, 0) * DEM_AMPLITUDE : 0) + tiltAt(x, z);
+  const real = opts.real;
+  const sample = real
+    ? (x: number, z: number) => {
+        sandOut = 0; // no sand layer in the package: the orthophoto carries the surface
+        return real(x, z);
+      }
+    : (x: number, z: number) => rawSample(x, z, macroAmp) + (dem ? sampleGrid(dem, x, z, 1, 0) * DEM_AMPLITUDE : 0) + tiltAt(x, z);
 
   const padA = sample(BASE_A.x, BASE_A.z);
   const padB = sample(TARGET_B.x, TARGET_B.z);
@@ -231,7 +249,7 @@ export function buildHeightfield(
       sandGrid[k] = sandOut;
       const dA = Math.hypot(x - BASE_A.x, z - BASE_A.z);
       if (dA < 13) h += (padA - h) * (1 - smoothstep(8, 13, dA));
-      const dB = Math.hypot(x - TARGET_B.x, z - TARGET_B.z);
+      const dB = real ? Infinity : Math.hypot(x - TARGET_B.x, z - TARGET_B.z);
       if (dB < 10) h += (padB - h) * (1 - smoothstep(5, 10, dB));
       const edge = smoothstep(HALF - 14, HALF, Math.max(Math.abs(x), Math.abs(z)));
       const edgeH = tiltAt(x, z) - 2;

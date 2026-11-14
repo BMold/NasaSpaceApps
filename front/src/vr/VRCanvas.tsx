@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { StereoEffect } from 'three-stdlib';
 import * as THREE from 'three';
-import { connect, ping, type SyncState, type WorldNet } from '../net/socket';
+import { connect, ping, type PoseNet, type SyncState, type WorldNet } from '../net/socket';
 import { SharedWorld, useVRBoot } from './SharedWorld';
 import { EYE_HEIGHT, applyCanyonScanned, applyPose, applyRoute, setSolarTime, vr } from './vrEngine';
 import { SuitModel } from './SuitModel';
@@ -22,7 +22,9 @@ import { rt } from '../store/simEngine';
 import { heightAt } from '../lib/terrain';
 import { Q, toneMap } from '../render/quality';
 
-const net = { state: null as SyncState | null, routeId: -1 };
+const net = { state: null as SyncState | null, routeId: -1, pose: null as PoseNet | null, poseAt: 0, rtt: NaN };
+/** Longest the phone extrapolates a pose (s): beyond it, a stalled laptop must not drift you away. */
+const MAX_PREDICT = 0.15;
 const live = { heading: 0, pitch: 0, sent: 0, turning: 0 };
 /** Yaw owned by the phone in accelerometer mode (radians, clockwise from north). */
 const headYaw = { v: NaN };
@@ -114,12 +116,25 @@ function HeadRig({ mode, recenter }: { mode: Mode; recenter: number }) {
 
   useFrame((_, dt) => {
     const s = net.state;
-    if (s) {
-      // Position from the laptop, smoothed to hide 60 Hz network steps.
+    const p = net.pose;
+    const age = (performance.now() - net.poseAt) / 1000;
+    if (p && age < 0.5) {
+      // Relayed pose (no wait for the server tick), extrapolated with the laptop's velocity
+      // by its age plus half the round trip: what the laptop shows NOW. Light smoothing on top.
+      const ahead = Math.min(MAX_PREDICT, age + (Number.isFinite(net.rtt) ? net.rtt / 2000 : 0.01));
+      const k = 1 - Math.exp(-dt * 30);
+      vr.x += (p.x + p.vx * ahead - vr.x) * k;
+      vr.z += (p.z + p.vz * ahead - vr.z) * k;
+      applyPose(vr.x, vr.z, p.h);
+    } else if (s) {
+      // No relayed pose (older server): the 60 Hz state, smoothed to hide the network steps.
       const k = 1 - Math.exp(-dt * 18);
       vr.x += (s.position.x - vr.x) * k;
       vr.z += (s.position.z - vr.z) * k;
       applyPose(vr.x, vr.z, s.heading);
+    }
+    if (s) {
+      const k = 1 - Math.exp(-dt * 18);
       if (s.drone) {
         const d = rt.drone;
         d.x += (s.drone.x - d.x) * k;
@@ -195,12 +210,16 @@ export function VRCanvas() {
   const [stereo, setStereo] = useState(true);
   const [recenter, setRecenter] = useState(0);
   const [problem, setProblem] = useState('');
-  const [hud, setHud] = useState({ connected: false, host: false, ping: NaN, heading: 0, pitch: 0, source: '', samples: 0, sent: 0, walking: false, gazeSpeed: 0 });
+  const [hud, setHud] = useState({ connected: false, host: false, ping: NaN, heading: 0, pitch: 0, source: '', samples: 0, sent: 0, walking: false, gazeSpeed: 0, poseRelay: false });
   const secure = window.isSecureContext;
 
   useEffect(() => {
     const socket = connect('vr-client');
     socket.on('state', (s: SyncState) => (net.state = s));
+    socket.on('pose', (p: PoseNet) => {
+      net.pose = p;
+      net.poseAt = performance.now();
+    });
     socket.on('world', (w: WorldNet) => {
       if (w.routeId !== net.routeId) {
         net.routeId = w.routeId;
@@ -209,7 +228,8 @@ export function VRCanvas() {
       applyCanyonScanned(w.canyonScanned);
     });
     const id = window.setInterval(async () => {
-      setHud({ connected: socket.connected, host: !!net.state?.host, ping: await ping(), heading: live.heading, pitch: live.pitch, source: compass.source, samples: compass.samples + gravity.samples, sent: live.sent, walking: !!net.state?.gaze?.walking, gazeSpeed: net.state?.gaze?.speed ?? 0 });
+      net.rtt = await ping();
+      setHud({ connected: socket.connected, host: !!net.state?.host, ping: net.rtt, heading: live.heading, pitch: live.pitch, source: compass.source, samples: compass.samples + gravity.samples, sent: live.sent, walking: !!net.state?.gaze?.walking, gazeSpeed: net.state?.gaze?.speed ?? 0, poseRelay: performance.now() - net.poseAt < 500 });
     }, 250);
     return () => window.clearInterval(id);
   }, []);
@@ -305,7 +325,7 @@ export function VRCanvas() {
         <div className="absolute top-1 inset-x-0 flex justify-around text-[10px] font-mono text-slate-200/85 pointer-events-none">
           {(stereo ? [0, 1] : [0]).map((i) => (
             <span key={i}>
-              {hud.connected ? (hud.host ? 'laptop ✓' : 'esperando laptop') : 'sin servidor'} · {Number.isFinite(hud.ping) ? `${hud.ping.toFixed(0)} ms` : '—'} · rumbo{' '}
+              {hud.connected ? (hud.host ? 'laptop ✓' : 'esperando laptop') : 'sin servidor'} · {Number.isFinite(hud.ping) ? `${hud.ping.toFixed(0)} ms` : '—'}{hud.poseRelay ? ' · pose directa' : ''} · rumbo{' '}
               {hud.heading.toFixed(0)}° {card(hud.heading)}
               {sensor ? (hud.source === 'relative' || hud.source === 'generic-relative' ? ' · giroscopio (sin brújula)' : ' · brújula') : mode === 'gravity' ? (mag.samples ? ' · acelerómetro + brújula' : ` · inclinar para girar${live.turning ? (live.turning > 0 ? ' ▶' : ' ◀') : ''}`) : ' · sin sensor'}
               {' '}· lecturas {hud.samples} · enviados {hud.sent}

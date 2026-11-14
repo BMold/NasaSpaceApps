@@ -7,7 +7,8 @@
 import { cellOf, computeCostmap, costGrid } from '../lib/costmap';
 import { updateCostTexture, revealCircle } from '../lib/gpuMaps';
 import { planAStar } from '../lib/pathfinding';
-import { BASE_A, CANYON, ROCKS, heightAt, sandAt, type XZ } from '../lib/terrain';
+import { BASE_A, CANYON, HALF, ROCKS, heightAt, sandAt, type XZ } from '../lib/terrain';
+import { REAL } from '../lib/realTerrain';
 import { walkSpeed } from '../lib/energy';
 import { SITES } from '../lib/sites';
 import { makeRoute, rt } from '../store/simEngine';
@@ -169,7 +170,7 @@ export function moveAstronaut(fwd: number, strafe: number, viewYaw: number, run:
         nz = r.z + (dz / d) * reach;
       }
     }
-  const lim = 108;
+  const lim = HALF - 12; // the costmap marks the last 12 m of the tile as outside the site
   nx = Math.max(-lim, Math.min(lim, nx));
   nz = Math.max(-lim, Math.min(lim, nz));
   // Speed is what was actually covered: pressed against a rock, the stride shortens with it.
@@ -276,9 +277,12 @@ const anchor = { x: 0, y: 0, z: 0 };
 let droneTarget: XZ = { ...CANYON };
 
 /** DEPLOY DRONE: lift off the backpack, fly to the area, scan, update the costmap, dock again. */
-export function deployDrone(target: XZ = CANYON) {
+export function deployDrone(target?: XZ) {
   const d = rt.drone;
   if (d.state !== 'docked') return false;
+  // Real window: no canyon; the drone surveys the next goal.
+  const g = currentGoal();
+  target ??= REAL && g ? { x: g.x, z: g.z } : CANYON;
   droneTarget = { ...target };
   d.t = 0;
   d.state = 'launch';

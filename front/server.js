@@ -17,6 +17,9 @@ attachSync(http);
 
 const dist = fileURLToPath(new URL('./dist/', import.meta.url));
 if (existsSync(dist)) app.use(express.static(dist));
+// The shared terrain package, served as is from the repo root (../terreno).
+const terreno = fileURLToPath(new URL('../terreno/', import.meta.url));
+if (existsSync(terreno)) app.use('/terreno', express.static(terreno, { index: false, dotfiles: 'deny' }));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 http.listen(PORT, '0.0.0.0', () => {

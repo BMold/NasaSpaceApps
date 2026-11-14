@@ -41,6 +41,21 @@ npm run dev:vr     # un solo proceso: Vite HTTPS en la red local + sincronizaci�
 
 La sincronización corre dentro del mismo servidor de Vite (`sync-core.js`), así que no hace falta un segundo proceso. `server.js` queda para servir la build de producción en el puerto 3000 (`npm run build && npm run server`), pero sin HTTPS el celular no entrega el sensor.
 
+## Terreno real y backend
+
+Por defecto la escena usa el paquete real `../terreno/` (CLAUDE.md §6), el mismo que lee el optimizador: ventana de 480 × 480 m en Mount Sharp, DEM de USGS, ortofoto HiRISE y los sitios minerales de CRISM. **No se copia nada a `public/`:** Vite sirve `../terreno` en `/terreno/` (y `server.js` también).
+
+- **Marco:** paquete ENU con origen en la esquina SO (x = este, y = norte). En la escena: `x_escena = x − 240`, `z_escena = 240 − y` (−z = norte). En los `.bin` la fila 0 es el sur y en `ortofoto.jpg` es el norte; el cargador ([src/lib/realTerrain.ts](src/lib/realTerrain.ts)) ya lo resuelve.
+- **Sitios y capas:** primero se piden al backend de Albert (`/api/v1/terreno`, `/api/v1/terreno/sitios`, `/api/v1/terreno/capas/elevacion`, reenviados a `ARES_BACKEND`, por defecto `http://127.0.0.1:8000`). Si no responde, se leen de `/terreno/`. El panel de la laptop y cada etiqueta dicen de dónde salieron. Si el backend pide token de lectura: `VITE_ARES_TOKEN=…`.
+- **Malla de costos:** 192 × 192 celdas de 2,5 m, la misma grilla del optimizador. A* recalcula desde los pies del astronauta cuando se desvía más de 3,5 m.
+- **Marcadores holográficos:** un prisma por sitio con la forma y el color acordados (filosilicatos: prisma redondo · sulfatos: rombo · hematita: prisma triangular · sílice: cubo), un haz hasta el suelo, un anillo en el punto de muestreo y una etiqueta dibujada como textura, que se ve en los dos ojos del Cardboard.
+- `?terreno=procedural` vuelve al sitio análogo anterior (240 m, cañón y escaneo con dron).
+
+```bash
+# con el backend corriendo en otra máquina o puerto
+ARES_BACKEND=http://192.168.1.50:8000 npm run dev:vr
+```
+
 ## Orientación tipo brújula
 
 El celular usa su orientación absoluta cuando la tiene (`deviceorientationabsolute` en Android, `webkitCompassHeading` en iPhone): mirar al norte real es mirar al norte en Marte. Si el teléfono no tiene brújula, usa el giroscopio relativo. El texto arriba de cada ojo muestra el rumbo y la fuente (`brújula` o `giroscopio`). Doble toque toma la dirección actual como «adelante».
@@ -64,7 +79,12 @@ Abrí `https://IP-DE-LA-LAPTOP:5173/?role=sensor-test` en el celular y tocá **I
 | `vr-client` | Celular | rotación de la cabeza (cuaternión, ~60 Hz) | posición, giro del cuerpo, dron, ruta, hora solar y polvo |
 | `spectator-host` | Laptop | posición `(x, y, z)`, giro del cuerpo, dron, hora solar y polvo (60 Hz); ruta y escaneos (`world`) | rotación de la cabeza |
 
-`server.js` mantiene un estado unificado `{ position, rotation, heading, drone }` y lo emite a todos a 60 Hz con mensajes volátiles (un cuadro atrasado se descarta, no se encola). La ruta y el estado del cañón viajan como eventos `world` y quedan guardados para quien se conecte después.
+`sync-core.js` reenvía al instante, como mensajes volátiles (uno atrasado se descarta, no se encola):
+
+- `rotation`: del celular a la laptop, el cuaternión de la cabeza.
+- `pose`: de la laptop al celular, `x`, `z`, el giro y la **velocidad** del cuerpo. El celular la extrapola por la edad del mensaje más medio ping (hasta 150 ms), así muestra dónde está la laptop *ahora* y no hace falta esperar el tick del servidor. En la red local de prueba, el relevo tarda ~1 ms; esperar el tick de 60 Hz costaba ~27 ms.
+
+Además mantiene un estado unificado `{ position, rotation, heading, drone }` que emite a todos a 60 Hz (para quien se conecta tarde, el dron y el cielo). La ruta viaja como evento `world` y queda guardada para quien se conecte después; al replanificar, la cinta vieja se desvanece en 2 s.
 
 ## Controles (laptop)
 

@@ -9,8 +9,10 @@
 // forces switchbacks on the ridge flanks.
 import { HALF, ROCKS, WORLD_SIZE, canyonMask, heightAt, sandAt, slopeDegAt, type XZ } from './terrain';
 import { edgeO2, type EdgeCost } from './energy';
+import { REAL } from './realTerrain';
 
-export const COST_N = 96;
+// 2.5 m cells in both modes; on the real window this is exactly the optimizer's 192 × 192 grid.
+export const COST_N = REAL ? 192 : 96;
 export const CELL = WORLD_SIZE / COST_N; // 2.5 m cells
 export const MAX_SLOPE = 30; // degrees: no footing above this (any direction)
 export const MAX_GRADE = 45; // %: steepest straight climb/descent allowed (≈ 24°)

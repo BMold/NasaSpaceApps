@@ -4,7 +4,10 @@
 //   vr-client       the phone in the Cardboard headset: owns the ROTATION
 //   spectator-host  the laptop: owns the POSITION (keyboard) and the world
 //
-// Every client receives one unified state at 60 Hz:
+// Low-latency relays (sent the moment they arrive, volatile = dropped, never queued):
+//   'rotation'  phone → laptop   head quaternion
+//   'pose'      laptop → phone   body x, z, heading and velocity (the phone extrapolates)
+// Every client also receives one unified state at 60 Hz (late joiners, drone, sky):
 //   { t, position: {x,y,z}, rotation: [x,y,z,w], heading, drone, vr, host }
 // World changes that are not per-frame (route polyline, scanned canyon, goal)
 // travel as 'world' events and are cached for clients that join later.
@@ -74,6 +77,15 @@ export function attachSync(httpServer, { log = console.log } = {}) {
       if (typeof p.storm === 'number') state.storm = p.storm;
       if (p.gaze && typeof p.gaze === 'object') state.gaze = { on: !!p.gaze.on, speed: +p.gaze.speed || 0, thr: +p.gaze.thr || 0, walking: !!p.gaze.walking };
       if (p.drone) state.drone = p.drone;
+      // Relay the body pose the instant it arrives (like the rotation): the phone
+      // no longer waits up to one 60 Hz tick. Volatile: a late pose is dropped, never queued.
+      socket.broadcast.volatile.emit('pose', {
+        x: state.position.x,
+        z: state.position.z,
+        h: state.heading,
+        vx: +p.vx || 0,
+        vz: +p.vz || 0,
+      });
     });
 
     socket.on('world', (w) => {

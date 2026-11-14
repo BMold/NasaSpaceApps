@@ -30,6 +30,15 @@ export interface SyncState {
   host: boolean;
 }
 
+/** Body pose relayed laptop → phone as soon as it is sent (m, rad, m/s). */
+export interface PoseNet {
+  x: number;
+  z: number;
+  h: number;
+  vx: number;
+  vz: number;
+}
+
 export interface WorldNet {
   routeId: number;
   route: [number, number][]; // x, z pairs (1 m spacing)

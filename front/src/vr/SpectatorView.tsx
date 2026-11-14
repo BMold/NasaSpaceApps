@@ -25,6 +25,8 @@ import { useSimStore } from '../store/useSimStore';
 import { heightAt } from '../lib/terrain';
 import { siteName } from '../i18n';
 import { Q, toneMap } from '../render/quality';
+import { REAL } from '../lib/realTerrain';
+import { SITES } from '../lib/sites';
 
 const keys = new Set<string>();
 /** Look-down-to-walk: tilting the head below `thr` degrees walks forward at `speed` m/s. Set from the laptop. */
@@ -59,6 +61,8 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
   const target = useMemo(() => new THREE.Vector3(), []);
   const camPos = useMemo(() => new THREE.Vector3(), []);
   const follow = useRef({ ready: false });
+  // Body velocity (smoothed), sent with the pose so the phone can extrapolate across network jitter.
+  const vel = useRef({ x: 0, z: 0, px: NaN, pz: NaN });
 
   // 1) Input → body. Runs before the suit is animated (priority −2).
   useFrame((_, dtRaw) => {
@@ -91,6 +95,14 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
     suitState.lookPitch = auto.on ? 0 : lookPitch;
     updateBody(suitState.lookYaw, dt);
     stepDrone(dt);
+    const v = vel.current;
+    if (Number.isFinite(v.px) && dt > 0) {
+      const a = 1 - Math.exp(-dt * 12);
+      v.x += ((vr.x - v.px) / dt - v.x) * a;
+      v.z += ((vr.z - v.pz) / dt - v.z) * a;
+    }
+    v.px = vr.x;
+    v.pz = vr.z;
 
     // 60 Hz position stream to the server (and on to the phone).
     const now = performance.now();
@@ -102,6 +114,8 @@ function HostLoop({ thirdPerson }: { thirdPerson: boolean }) {
         y: heightAt(vr.x, vr.z),
         z: vr.z,
         heading: vr.heading,
+        vx: v.x,
+        vz: v.z,
         lookYaw: viewYaw(),
         ltst: rt.sun.ltst,
         storm: rt.stormIntensity,
@@ -317,9 +331,14 @@ export function SpectatorView() {
           Desvío de la ruta óptima: <span className={hud.dev > 3.5 ? 'text-amber-300' : 'text-slate-200'}>{hud.dev.toFixed(1)} m</span> (recalcula sobre 3,5 m) · {hud.recalcs} cálculos A*
         </div>
         <div className="text-emerald-200/90 leading-snug">{hud.msg}</div>
+        {REAL && SITES.length > 0 && (
+          <div className="text-slate-400">
+            Terreno real 480 m · {SITES.length} sitios CRISM desde <b className="text-slate-200">{SITES[0].source === 'backend' ? 'el backend' : 'terreno/sitios.json'}</b>
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5 pt-1">
           <button onClick={() => deployDrone()} disabled={hud.drone !== 'docked'} className="px-2 py-1 rounded border border-cyan-400/60 text-cyan-100 disabled:opacity-40">
-            {hud.drone === 'docked' ? (scanned ? 'Dron: re-escanear cañón (F)' : 'Dron: escanear cañón (F)') : `Dron: ${hud.drone}`}
+            {hud.drone === 'docked' ? (REAL ? 'Dron: explorar el objetivo (F)' : scanned ? 'Dron: re-escanear cañón (F)' : 'Dron: escanear cañón (F)') : `Dron: ${hud.drone}`}
           </button>
           <button onClick={() => setThirdPerson((t) => !t)} className="px-2 py-1 rounded border border-slate-600">
             {thirdPerson ? '1ª persona (V)' : '3ª persona (V)'}
@@ -373,7 +392,7 @@ export function SpectatorView() {
           {hud.vr && hud.tilt && ' · el celular no tiene giroscopio: girá con Q/E o el mouse'}
         </div>
       </div>
-      {status === 'loading' && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass px-3 py-1.5 text-[11px] text-cyan-200">Cargando Marte desde NASA Mars Trek…</div>}
+      {status === 'loading' && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass px-3 py-1.5 text-[11px] text-cyan-200">{REAL ? 'Cargando el terreno real (DEM, HiRISE, sitios CRISM)…' : 'Cargando Marte desde NASA Mars Trek…'}</div>}
     </div>
   );
 }

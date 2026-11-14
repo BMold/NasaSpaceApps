@@ -1,5 +1,6 @@
 // Science sites for the CTOPTW tour and natural storm shelters.
 import { BASE_A, CANYON, HALF, TARGET_B, clearRocksNear, heightAt, type XZ } from './terrain';
+import { MINERALES, enuToScene, type Mineral, type SitioReal } from './realTerrain';
 
 export interface ScienceSite extends XZ {
   id: number; // node index in the tour graph (0 = habitat)
@@ -12,6 +13,10 @@ export interface ScienceSite extends XZ {
   window: [number, number]; // [e_i, l_i] in LTST hours
   needsScan?: boolean; // inside the uncharted canyon
   note: string;
+  /** Real package only: contract id (sitios.json), closed-list mineral and where the record came from. */
+  realId?: number;
+  mineralKey?: Mineral;
+  source?: 'backend' | 'paquete';
 }
 
 export const Q_KG = 4.0; // sample bag capacity, kg
@@ -51,6 +56,33 @@ export const SITES: ScienceSite[] = [
 clearRocksNear(SITES, 7);
 
 export const HABITAT: XZ = BASE_A;
+
+/**
+ * Replace the analog sites with the real CRISM sites of the package (backend or
+ * terreno/sitios.json). Tour node ids stay 1..n; the contract id is kept in realId.
+ */
+export function setRealSites(list: SitioReal[], source: 'backend' | 'paquete') {
+  SITES.length = 0;
+  list.forEach((s, i) => {
+    const p = enuToScene(s.x, s.y);
+    SITES.push({
+      id: i + 1,
+      code: `S${s.id}`,
+      name: `Sitio ${s.id}`,
+      mineral: MINERALES[s.mineral].nombre,
+      value: s.valor,
+      massKg: s.masa_kg,
+      drillMin: s.perforacion_min,
+      window: [s.ventana[0], s.ventana[1]],
+      x: p.x,
+      z: p.z,
+      note: s.fuente ?? '',
+      realId: s.id,
+      mineralKey: s.mineral,
+      source,
+    });
+  });
+}
 
 /** ψ(m, n) = e^(−α (n − 1)): value multiplier for the n-th sample of a mineral class. */
 export const psi = (n: number, alpha = PSI_ALPHA) => Math.exp(-alpha * (n - 1));

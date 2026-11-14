@@ -7,6 +7,8 @@ import { BASE_A, heightAt } from '../../lib/terrain';
 import { SITES } from '../../lib/sites';
 import { siteName } from '../../i18n';
 import { UNLIT } from '../../render/unlit';
+import { REAL } from '../../lib/realTerrain';
+import { MineralHolograms } from './MineralHolograms';
 
 const shelterRing = new THREE.Color('#ffb070').multiplyScalar(UNLIT);
 
@@ -199,9 +201,8 @@ export function Landmarks() {
   return (
     <>
       <Habitat />
-      {SITES.map((s) => (
-        <SiteFlag key={s.code} code={s.code} name={siteName(s.code, s.name)} x={s.x} z={s.z} />
-      ))}
+      {/* Real package: holographic anchors over the CRISM mineral sites. Analog site: survey flags. */}
+      {REAL ? <MineralHolograms /> : SITES.map((s) => <SiteFlag key={s.code} code={s.code} name={siteName(s.code, s.name)} x={s.x} z={s.z} />)}
       <ShelterMarker />
     </>
   );

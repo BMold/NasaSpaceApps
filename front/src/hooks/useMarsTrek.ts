@@ -1,7 +1,9 @@
 // Loads a real Martian region from NASA Mars Trek and rebuilds the digital twin.
 import { useEffect, useRef } from 'react';
 import { REGIONS, loadMarsTrekRegion } from '../lib/marsTrek';
-import { buildHeightfield } from '../lib/terrain';
+import { BASE_A, TARGET_B, buildHeightfield, regenRocks } from '../lib/terrain';
+import { REAL, demSampler, enuToScene, fitPlane, loadRealPackage } from '../lib/realTerrain';
+import { SITES, setRealSites } from '../lib/sites';
 import { useSimStore } from '../store/useSimStore';
 import { initSimulation, log, setSiteLocation } from '../store/simEngine';
 import { regionName } from '../i18n';
@@ -24,6 +26,48 @@ export function useMarsTrek() {
       initSimulation();
       useSimStore.setState({ trekStatus: status, trekMessage: message, trekPreview: null, siteInfo: null, sol: GALE.sol ?? 0 });
     };
+
+    if (REAL) {
+      useSimStore.setState({ trekStatus: 'loading', trekMessage: 'Cargando el paquete de terreno real (DEM USGS, HiRISE, sitios CRISM)…' });
+      loadRealPackage()
+        .then((pkg) => {
+          if (cancelled) return;
+          const g = pkg.manifest.georreferencia;
+          if (g) setSiteLocation((g.esquina_sw.lat_deg + g.esquina_ne.lat_deg) / 2, (g.esquina_sw.lon_este_deg + g.esquina_ne.lon_este_deg) / 2);
+          else setSiteLocation(GALE.lat, GALE.lon);
+          // Habitat and sites from the package, in scene coordinates.
+          const h = enuToScene(pkg.manifest.habitat.x, pkg.manifest.habitat.y);
+          Object.assign(BASE_A, h);
+          Object.assign(TARGET_B, h);
+          setRealSites(pkg.sitios, pkg.fuenteSitios);
+          // Heights relative to the plane's mean, so the regional tilt (tiltAt) lines up with the land beyond.
+          const plane = fitPlane(pkg);
+          const dem = demSampler(pkg);
+          buildHeightfield(null, pkg.orto, 'Paquete terreno/ · DEM USGS 1 m', {
+            hiRes: !!pkg.orto,
+            tilt: { east: plane.east, north: plane.north },
+            real: (x, z) => dem(x, z) - plane.mean,
+          });
+          regenRocks([BASE_A, ...SITES], 7);
+          bumpTerrain();
+          initSimulation();
+          const slope = (Math.atan(Math.hypot(plane.east, plane.north)) * 180) / Math.PI;
+          useSimStore.setState({
+            trekStatus: 'online',
+            siteInfo: null,
+            trekPreview: null,
+            trekMessage: `${pkg.manifest.sitio} · ${SITES.length} sitios CRISM desde ${pkg.fuenteSitios === 'backend' ? 'el backend' : 'terreno/sitios.json'} · pendiente regional ${slope.toFixed(1)}°`,
+          });
+          log('ok', `Terreno real cargado: ventana de 480 m, DEM ${pkg.fuenteCapas === 'backend' ? 'del backend' : 'del paquete'}, ${SITES.length} sitios.`);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          offline('error', `No se pudo leer el paquete terreno/ (${err instanceof Error ? err.message : 'error'}). Se usa el terreno procedural.`);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (region.mode === 'procedural') {
       offline('procedural', 'Terreno análogo procedural (sin conexión). Sol y estación calculados para Gale.');
