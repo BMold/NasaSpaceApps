@@ -20,7 +20,7 @@ from referencing.jsonschema import DRAFT202012
 DIR = Path(__file__).resolve().parent / "schemas"
 
 # `tipo` del mensaje -> esquema. Pedido y plan no llevan `tipo`: se reconocen por sus campos.
-POR_TIPO = {"perfil": "perfil", "telemetria_astronauta": "telemetria_astronauta", "telemetria_rover": "telemetria_rover",
+POR_TIPO = {"perfil": "perfil", "estado_astronauta": "estado_astronauta",
             "peligro": "peligro", "ventanas": "ventanas", "SPE": "spe", "hito": "hito", "plan_actualizado": "plan_actualizado",
             "abortar": "abortar", "estado_aborto": "estado_aborto", "control": "control", "reinicio": "reinicio", "error": "error"}
 

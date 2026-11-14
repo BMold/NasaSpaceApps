@@ -46,6 +46,7 @@ PENDIENTE_SITIO_DEG = 15.0              # los sitios y el habitat se colocan en 
 
 HIRISE = CRUDOS / "hirise/mrohr_0001/rdr/esp/orb_087100_087199/esp_087149_1750/esp_087149_1750_color.jp2"
 CRISM = CRUDOS / "crism/frt0000b6f1_07_su165j_mtr3_bandas.npz"
+TES = CRUDOS / "tes/tes_nb2007_gale.npz"      # recorte del mapa global TES (Putzig y Mellon 2007), 20 px/grado
 CRISM_X0, CRISM_Y0, CRISM_TAM = 8138478.6, -278195.96, 18.0      # del .hdr (esquina sup. izq., m)
 
 # Corregistro medido con herramientas/corregistro.py. El DEM de USGS (controlado a MOLA) es la referencia:
@@ -111,6 +112,8 @@ INDICES = {
     "silice": ["BD2210_2"],                   # Si-OH / Al-OH a 2,21 um (ambiguo con arcillas de Al)
     "hematita": ["BD860_2"],                  # hematita cristalina
 }
+# Capas CRISM que se publican como contexto pero NO generan sitios
+CONTEXTO_CRISM = {"BD530_2": "oxidos ferricos (banda de 0,53 um; alta en casi todo Marte por el polvo)"}
 # Parametros operativos de cada parada: SUPUESTOS de escenario, no salen de los datos
 MASA_KG, PERFORACION_MIN, VENTANA = 0.3, 15, [10.0, 14.0]
 
@@ -187,11 +190,20 @@ def main():
     cc = np.floor((x_sw + X - cx0) / CRISM_TAM).astype(int)
     cf = np.floor((cy0 - (y_sw + Y)) / CRISM_TAM).astype(int)
     capas_crism, estad = {}, {}
-    for nombre in sorted({b for v in INDICES.values() for b in v}):
+    for nombre in sorted({b for v in INDICES.values() for b in v} | set(CONTEXTO_CRISM)):
         b = bandas[nombre]
         capas_crism[nombre] = b[cf, cc].astype(np.float32)
         ok = b[np.isfinite(b)]
         estad[nombre] = {"p90": float(np.percentile(ok, 90)), "p999": float(np.percentile(ok, 99.9))}
+
+    # 4b) Inercia termica TES: mapa de 0,05 grados (~3 km), oeste positivo, sur primero. Vecino mas cercano.
+    tes = np.load(TES)
+    lon_e = np.degrees((x_sw + X) / R_MARTE)
+    lat = np.degrees((y_sw + Y) / R_MARTE)
+    tf = np.floor((lat + 90.0) * 20).astype(int) - int(tes["fila0"])
+    tc = np.floor((360.0 - lon_e) * 20).astype(int) - int(tes["col0"])
+    inercia = tes["ti"][tf, tc].astype(np.float32)
+    inercia[inercia == 0] = np.nan
 
     # 5) Habitat: celda mas llana (media de pendiente en 15 m) del tercio central
     pend_media = gaussian_filter(pend, 15.0 / TAM / 2)
@@ -286,7 +298,8 @@ def main():
     for nombre, a in capas_crism.items():
         archivo = f"crism_{nombre.lower()}.bin"
         a.astype("<f4").tofile(SALIDA / archivo)
-        clase = next(c for c, v in INDICES.items() if nombre in v)
+        clase = next((c for c, v in INDICES.items() if nombre in v), None)
+        que = f"indicio de {clase}" if clase else f"contexto: {CONTEXTO_CRISM[nombre]}"
         capas[f"crism_{nombre.lower()}"] = {
             "archivo": archivo, "dtype": "float32", "sin_dato": "nan", "fuente": fuente_crism, "resolucion_nativa_m": CRISM_TAM,
             "descripcion": f"parametro de resumen {nombre} (indicio de {clase}); p90 de la escena = {estad[nombre]['p90']:.4f}"}
@@ -294,6 +307,13 @@ def main():
         tes, info_tes = capa_tes(x_sw, y_sw, n)
         tes.astype("<f4").tofile(SALIDA / info_tes["archivo"])
         capas["tes_inercia_termica"] = info_tes
+            "descripcion": f"parametro de resumen {nombre} ({que}); p90 de la escena = {estad[nombre]['p90']:.4f}"}
+    inercia.astype("<f4").tofile(SALIDA / "tes_inercia_termica.bin")
+    capas["tes_inercia_termica"] = {
+        "archivo": "tes_inercia_termica.bin", "dtype": "float32", "sin_dato": "nan", "unidad": "J m-2 K-1 s-1/2",
+        "fuente": "MGS TES, mapa nocturno de inercia termica de Putzig y Mellon (2007), 20 px/grado (se.psi.edu/inertia/2007)",
+        "resolucion_nativa_m": 2960.0,
+        "descripcion": f"inercia termica aparente; la ventana cae en una sola celda TES: {float(np.nanmean(inercia)):.0f}"}
     manifest = {
         "version": VERSION,
         "sitio": "Mount Sharp (Aeolis Mons), crater Gale, Marte: unidad de sulfatos, ladera norte",
@@ -310,6 +330,8 @@ def main():
         "capas": capas,
         "sitios": "sitios.json",
         "habitat": hab,
+        "contexto": {"inercia_termica_tiu": float(np.nanmean(inercia)),
+                     "nota": "un unico valor TES para toda la ventana (~3 km/celda): describe el tipo de superficie, no cambia la ruta"},
         "corregistro": {"referencia": "DEM de USGS", "nota": "coordenada en el producto = coordenada DEM + desfase (este, norte), m",
                         "hirise_m": list(REG_HIRISE), "crism_m": list(REG_CRISM), "precision_m": {"hirise": 1, "crism": 9}},
         "supuestos": {"pendiente_bloqueo_deg": PENDIENTE_BLOQUEO_DEG, "pendiente_max_sitio_deg": PENDIENTE_SITIO_DEG,
@@ -361,6 +383,7 @@ def main():
               f"   escena p90 = {e['p90']:.4f}, p99.9 = {e['p999']:.4f}")
     for s in sitios:
         print(f"  sitio {s['id']:2d} ({s['x']:6.1f}, {s['y']:6.1f}) valor {s['valor']:2d} {s['mineral']:13s} {s['fuente']}")
+    print(f"  inercia termica TES: {np.nanmin(inercia):.0f}..{np.nanmax(inercia):.0f}")
     print("candidatos:", len(candidatos), "| por clase:", por_clase)
 
 

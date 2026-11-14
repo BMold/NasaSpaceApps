@@ -25,8 +25,7 @@ sys.path.insert(0, str(RAIZ))
 PERFIL = {"version": "1.0", "tipo": "perfil", "escenario_id": "prueba-01", "semilla": 42,
           "t0_hora_solar": 10.0, "factor_tiempo": 30, "duracion_eva_s": 14400,
           "astronauta": {"masa_kg": 80, "masa_traje_kg": 150, "v0_m_s": 1.2,
-                         "kappa_O2_L_W_min": 0.00298, "O2_inicial_L": 40, "capacidad_muestras_kg": 5},
-          "rover": {"v_m_s": 0.8, "R_comm_m": 150}}
+                         "kappa_O2_L_W_min": 0.00298, "O2_inicial_L": 40, "capacidad_muestras_kg": 5}}
 
 
 def _motor(terreno=None):
@@ -45,7 +44,7 @@ def _pedido():
 
 def _tele(t, seq, x, y, o2, vo2=0.65, vel=0.85, carga=0.0):
     return {"version": "1.0", "t": t, "hora_solar": 10 + t / 3699, "seq": seq,
-            "tipo": "telemetria_astronauta",
+            "tipo": "estado_astronauta",
             "datos": {"x": x, "y": y, "sigma_m": 0, "O2_restante_L": o2, "VO2_L_min": vo2,
                       "FC_lpm": 105, "velocidad_m_s": vel, "carga_kg": carga}}
 
@@ -133,7 +132,7 @@ def test_sin_o2():
 
 
 def _guion(m):
-    """Mini guion: telemetria, peligro sobre la ruta, ventana, SPE alerta y critico."""
+    """Mini guion: estado del astronauta, peligro sobre la ruta, ventana, SPE alerta y critico."""
     sal = []
     hx, hy = _hab(m)
     sal += m.procesar_evento(_tele(0, 1, hx, hy, 40.0))
@@ -145,7 +144,7 @@ def _guion(m):
     ultimo = sal[-1]["plan"]["paradas"][-1]["id"]
     sal += m.procesar_evento(_ev(20, 3, "ventanas", {"sitios": [{"id": ultimo, "ventana": [9.0, 9.5]}]}))
     sal += m.procesar_evento(_ev(30, 4, "SPE", {"nivel": "alerta", "llegada_s": 600}))
-    sal += m.procesar_evento(_ev(40, 5, "telemetria_rover", {"x": 1, "y": 1, "bateria_pct": 90}))
+    sal += m.procesar_evento(_ev(40, 5, "tipo_desconocido", {"x": 1}))        # se ignora: lista vacia
     sal += m.procesar_evento(_ev(50, 6, "SPE", {"nivel": "critico", "llegada_s": 0}))
     sal += m.procesar_evento(_tele(60, 7, hx, hy, 39.0))
     sal += m.procesar_evento(_ev(70, 8, "SPE", {"nivel": "alerta", "llegada_s": 600}))
@@ -237,7 +236,7 @@ def test_mision_completa():
     assert all(m["plan"]["tiempo_calculo_ms"] < 2000 for m in sal if "plan" in m)
     p1 = next(m for m in log if m["tipo"] == "peligro")["datos"]
     assert all(math.hypot(x - p1["x"], y - p1["y"]) > p1["radio_m"] for x, y in sal[1]["plan"]["polilinea"])
-    o2_alerta = [m for m in log if m["tipo"] == "telemetria_astronauta" and m["t"] == sal[5]["t"]][0]["datos"]["O2_restante_L"]
+    o2_alerta = [m for m in log if m["tipo"] == "estado_astronauta" and m["t"] == sal[5]["t"]][0]["datos"]["O2_restante_L"]
     assert abs(sal[5]["plan"]["O2_reserva_L"] - 0.25 * o2_alerta) < 0.01      # rho = 0,25 sobre el O2 restante
     ab = sal[-1]
     assert ab["ruta_escape"][-1] == [ab["destino"]["x"], ab["destino"]["y"]]
@@ -249,7 +248,7 @@ def test_mision_completa():
     # el astronauta nunca pisa una celda bloqueada
     ter = _motor().terreno
     assert all(ter.peligro[ter.celda(m["datos"]["x"], m["datos"]["y"])] == 0
-               for m in log if m["tipo"] == "telemetria_astronauta")
+               for m in log if m["tipo"] == "estado_astronauta")
 
 
 def test_mision_determinista():
@@ -272,7 +271,7 @@ def test_esquemas():
         assert malos == 0 and desorden == 0, f
     # 2) los esquemas rechazan lo incorrecto
     plan = next(m for m in log if m["tipo"] == "plan_actualizado")
-    tele = next(m for m in log if m["tipo"] == "telemetria_astronauta")
+    tele = next(m for m in log if m["tipo"] == "estado_astronauta")
 
     def roto(m, ruta, valor):
         m = copy.deepcopy(m)
@@ -305,4 +304,4 @@ if __name__ == "__main__":
         if nombre.startswith("test_"):
             t0 = time.perf_counter()
             r = f()
-            print(f"ok  {nombre}  ({time.perf_counter() - t0:.1f} s)" + (f"  [{r:.3f} ms/telemetria]" if isinstance(r, float) else ""))
+            print(f"ok  {nombre}  ({time.perf_counter() - t0:.1f} s)" + (f"  [{r:.3f} ms por estado_astronauta]" if isinstance(r, float) else ""))

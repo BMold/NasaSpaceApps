@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ares-twin.local/schemas/telemetria_astronauta.json",
-  "title": "Evento telemetria_astronauta (§10.3)",
-  "description": "Cada 10 s simulados. Dana es la unica que descuenta el O2.",
+  "$id": "https://ares-twin.local/schemas/estado_astronauta.json",
+  "title": "Evento estado_astronauta (datos simulados; antes telemetria_astronauta)",
+  "description": "Estado simulado del astronauta cada 10 s simulados. La simulacion es la unica que descuenta el O2.",
   "allOf": [
     {
       "$ref": "comunes.json#/$defs/evento_base"
@@ -10,7 +10,7 @@
     {
       "properties": {
         "tipo": {
-          "const": "telemetria_astronauta"
+          "const": "estado_astronauta"
         },
         "datos": {
           "type": "object",

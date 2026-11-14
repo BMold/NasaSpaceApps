@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "nota": "Mision completa (~2,6 h simuladas) sobre el terreno REAL de terreno/ (herramientas/construir_terreno.py). O2 inicial 170 L: parametro del escenario, no del contrato. La tormenta solar es un evento de escenario, no un dato medido.",
+  "nota": "Mision completa (~2,5 h simuladas) sobre el terreno REAL de terreno/. Todos los datos del astronauta son SIMULADOS (no hay telemetria real). O2 inicial 170 L: parametro del escenario. La tormenta solar es un evento de escenario.",
   "terreno": "terreno",
   "perfil": {
     "version": "1.0",
@@ -17,10 +17,6 @@
       "kappa_O2_L_W_min": 0.00298,
       "O2_inicial_L": 170,
       "capacidad_muestras_kg": 5
-    },
-    "rover": {
-      "v_m_s": 0.8,
-      "R_comm_m": 150
     }
   },
   "fatiga": [

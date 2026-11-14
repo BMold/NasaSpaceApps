@@ -60,7 +60,7 @@ input[type=range]{flex:1;min-width:140px;accent-color:var(--acc)}
 <div class="app">
   <main class="card">
     <h1>ARES-TWIN · Misión en Mount Sharp <span class="sub">(datos reales de Gale · Pandolf a 0,38 g sin validar)</span></h1>
-    <div class="sub">Reproducción de un registro JSONL del optimizador. Este visor no calcula nada: todo número sale de un mensaje.</div>
+    <div class="sub">Terreno real (USGS, HiRISE, CRISM, TES). El astronauta y los eventos son <b>simulados</b>. Este visor no calcula nada: todo número sale de un mensaje. <span id="ctx"></span></div>
     <div class="mapwrap" style="margin-top:10px">
       <canvas id="mapa" role="img" aria-label="Mapa cenital de la misión con ruta, sitios, peligros y astronauta"></canvas>
       <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
@@ -120,7 +120,7 @@ const AVISOS = {peligro:'Peligro en la ruta: se recalcula', recalibracion:'Fatig
   ventana:'Ventana cerrada: un sitio sale del plan', spe_alerta:'Alerta de tormenta solar: reserva de aborto al 25 %',
   spe_critico:'TORMENTA SOLAR · ABORTAR · ruta de escape', no_retorno:'SIN RETORNO · ABORTAR'};
 const $ = id => document.getElementById(id);
-const TELE = L.filter(m => m.tipo === 'telemetria_astronauta');
+const TELE = L.filter(m => m.tipo === 'estado_astronauta');
 const KEY = MARC.filter(m => m.nivel === 1);
 const TMAX = L[L.length - 1].t;
 const lead = m => (['muestra','fin','inicio'].includes(m.clase) ? 20 : 40);
@@ -149,7 +149,7 @@ const terrenoCv = (() => {
 const ortoImg = new Image(); let ortoLista = false;
 if (TER.ortofoto) { ortoImg.onload = () => { ortoLista = true; }; ortoImg.src = TER.ortofoto; }
 const CAPA_COLOR = {crism_bd1900_2:[212,83,126], crism_bd2100_2:[212,83,126], crism_d2300:[127,119,221], crism_bd2210_2:[55,138,221],
-  crism_bd860_2:[113,43,19], pendiente_deg:[240,68,58]};
+  crism_bd860_2:[113,43,19], crism_bd530_2:[113,43,19], pendiente_deg:[240,68,58]};
 const capasCv = {};
 function capaCanvas(id) {
   if (capasCv[id]) return capasCv[id];
@@ -172,7 +172,7 @@ function nuevo() { return {tele:null, est:null, plan:null, motivo:null, old:null
   muestras:[], spe:null, fin:null, aviso:null}; }
 function aplicar(m, vivo) {
   switch (m.tipo) {
-    case 'telemetria_astronauta': S.tele = m; S.trail.push([m.datos.x, m.datos.y]); break;
+    case 'estado_astronauta': S.tele = m; S.trail.push([m.datos.x, m.datos.y]); break;
     case 'estado_aborto': S.est = m; break;
     case 'plan_actualizado':
       if (vivo && S.plan) S.old = {poly: S.plan.polilinea, t0: performance.now()};
@@ -319,6 +319,7 @@ $('leyenda').innerHTML = Object.keys(COL).map(k => `<span><span style="color:${C
   '<span>▭ H hábitat</span>' + (TER.refugios.length ? '<span>◌ refugio</span>' : '');
 TER.superposiciones.forEach(sp => { const o = document.createElement('option'); o.value = sp.id; o.textContent = sp.titulo; $('capa').appendChild(o); });
 if (!TER.ortofoto) $('base').value = 'relieve';
+if (TER.contexto && TER.contexto.inercia_termica_tiu) $('ctx').textContent = `Inercia térmica de la zona (TES): ${Math.round(TER.contexto.inercia_termica_tiu)} J m⁻² K⁻¹ s⁻½.`;
 $('capa').onchange = () => { const id = $('capa').value, sp = TER.superposiciones.find(s => s.id === id);
   if (sp) { capaCanvas(id); $('capainfo').textContent = `${sp.fuente} · color de ${sp.rango[0].toFixed(id === 'pendiente_deg' ? 0 : 4)} a ${sp.rango[1].toFixed(id === 'pendiente_deg' ? 0 : 4)}`; }
   else $('capainfo').textContent = ''; };

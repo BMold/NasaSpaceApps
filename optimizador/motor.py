@@ -36,7 +36,7 @@ class Motor:
         self._peligros = {}
         self._plan = None
         self._n_plan = 0
-        self._tele = None            # ultima telemetria: dict(t, x, y, O2, carga)
+        self._tele = None            # ultimo estado_astronauta: dict(t, x, y, O2, carga)
         self._tele_prev = None
         self._ultimo_estado = None
         self._abortado = False
@@ -110,17 +110,17 @@ class Motor:
         self._version(evento)
         tipo, d = evento.get("tipo"), evento.get("datos", {})
         t, seq = float(evento.get("t", 0.0)), evento.get("seq")
-        if tipo == "telemetria_astronauta":
-            return self._telemetria(d, t, seq)
+        if tipo == "estado_astronauta":
+            return self._estado_astronauta(d, t, seq)
         if tipo == "peligro":
             return self._peligro(d, t, seq)
         if tipo == "ventanas":
             return self._ventanas(d, t, seq)
         if tipo == "SPE":
             return self._spe(d, t, seq)
-        return []                    # telemetria_rover y tipos desconocidos
+        return []                    # tipos desconocidos: se ignoran
 
-    def _telemetria(self, d, t, seq):
+    def _estado_astronauta(self, d, t, seq):
         ter = self.terreno
         x, y, o2 = float(d["x"]), float(d["y"]), float(d["O2_restante_L"])
         self._tele_prev, self._tele = self._tele, {
